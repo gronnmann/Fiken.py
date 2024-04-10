@@ -1,0 +1,16 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+[project]
+name = "Fiken.py"
+version = "0.0.1"
+dependencies = [
+    "requests",
+    "pydantic"
+]
+authors = [
+  { name="gronnmann", email="gronnmannthecoder@gmail.com" },
+]
+description = "A Python implementation of the Fiken REST API"
+readme = "README.md"
+requires-python = ">=3.8"

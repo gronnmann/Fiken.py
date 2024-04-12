@@ -1,0 +1,84 @@
+# Fiken.py
+A Python implementation of the [Fiken API](https://api.fiken.no/api/v2/docs/#/contacts/createContact)
+
+## Installation
+Clone the repo
+```bash
+pip install fiken_py
+```
+You can now import the package and use it in your code.
+
+## Usage
+### Private apps
+To use the Fiken API you need to create a private app in Fiken. 
+This will give you a private token. You can create a private app in Fiken by going to Account -> Rediger konto -> 
+API -> Ny API-nøkkel
+
+Then, set the token using the following code:
+```python
+FikenObject.set_auth_token('{your_token_here}')
+```
+
+### General syntax
+All objects reside in the 'fiken_py.models' module.
+Mostly correspond to the objects in the Fiken API.
+
+Generally, all objects have the following methods:
+- `get` - Fetches a single object (class method)
+- `getAll` - Fetches all objects (class method)
+- `save` - Saves the object to Fiken
+- `delete` - Deletes the object from Fiken
+
+Not all methods are available for all objects, please check the Fiken API documentation for more information.
+Errors will give a `UnsupportedMethodException`.
+
+
+### Placeholders and kwargs
+Some API calls require placeholders. These are strings that are replaced by the actual value in the API call.
+For example, the URL `/companies/{companySlug}/contacts` requires the companySlug to be replaced by the actual company slug.
+
+This is done by passing the placeholders as kwargs to the method.
+
+Arguments passed to kwargs, but not used as placeholders, are passed as query parameters to the API call.
+
+When doing `save` or `delete`, some of those (for example `contactId`) are fetched from
+the object itself, and should not be passed as kwargs (unless you wish to override them).
+
+### Objects using Request classes
+Some objects use different classes for create operations (POST).
+For example `POST bankAccounts` uses `BankAccountRequest` instead of `BankAccount`.  
+  
+In those cases, create a new object of the `Request` (for example `BankAccountRequest`) class and pass it to the `save` method.
+The `save` method will then respond with the actual `BankAccount` object.
+
+### Examples
+#### Getting all contacts
+```python
+contacts = Contact.getAll(companySlug='your_company_slug')
+```
+
+#### Getting a single contact
+```python
+contact = Contact.get(contactId='contact_id', companySlug='your_company_slug')
+```
+
+#### Creating and saving new contact
+```python
+contact = Contact(name='John Doe')
+contact.save(companySlug='your_company_slug')
+```
+
+#### Deleting a contact
+```python
+contact = Contact.get(contactId='contact_id', companySlug='your_company_slug')
+contact.delete(companySlug='your_company_slug')
+```
+
+Creating objects using Request classes:
+```python
+new_account_request = BankAccountCreateRequest(name='test_account', bankAccountNumber="11122233334 "
+                                           , type=BankAccountType.NORMAL)
+# new_account_request is <class 'fiken_py.models.bank_account.BankAccountCreateRequest'>
+new_account = new_account_request.save(companySlug='fiken-demo-drage-og-elefant-as')
+# new_account is <class 'fiken_py.models.bank_account.BankAccount'>
+```

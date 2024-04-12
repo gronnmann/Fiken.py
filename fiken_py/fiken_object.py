@@ -1,11 +1,13 @@
+from __future__ import annotations
+
 import re
-from typing import Any, TypeVar
+from typing import Any, TypeVar, ClassVar
 
 import requests
 import platform
 from importlib.metadata import version
 
-from fiken_py.errors import ModelMissingPathException
+from fiken_py.errors import UnsupportedMethodException
 
 T = TypeVar('T', bound='FikenObject')
 
@@ -33,6 +35,8 @@ class FikenObject:
 
     _HEADERS = {}
 
+    BASE_CLASS = None # For FikenObjectRequest and save not to give AttributeError
+
     @classmethod
     def set_auth_token(cls, token):
         cls._AUTH_TOKEN = token
@@ -50,7 +54,7 @@ class FikenObject:
 
         # TODO - better way to do this?
         if cls._GET_PATH_SINGLE.default is None:
-            raise ModelMissingPathException(f"Object {cls.__name__} does not support getting single object")
+            raise UnsupportedMethodException(f"Object {cls.__name__} does not support getting single object")
         print("headers", cls._HEADERS)
         url = f'{cls._PATH_BASE}{cls._GET_PATH_SINGLE.default}'
         url, kwargs = cls._extract_placeholders(url, **kwargs)
@@ -73,7 +77,7 @@ class FikenObject:
             raise ValueError("Auth token not set")
 
         if cls._GET_PATH_MULTIPLE.default is None:
-            raise ModelMissingPathException(f"Object {cls.__name__} does not support getting list")
+            raise UnsupportedMethodException(f"Object {cls.__name__} does not support getting list")
 
         url = f'{cls._PATH_BASE}{cls._GET_PATH_MULTIPLE.default}'
         url, kwargs = cls._extract_placeholders(url, **kwargs)
@@ -94,13 +98,14 @@ class FikenObject:
         return [cls(**item) for item in data]
 
     @classmethod
-    def getFromURL(cls, url: str) -> T:
+    def _getFromURL(cls, url: str) -> T:
         response = requests.get(url, headers=cls._HEADERS)
 
         print("---- GET FROM URL ----")
         print(f"URL: {response.request.url}")
         print(f"BODY: {response.request.body}")
         print(f"HEADERS: {response.request.headers}")
+        print(f"RESPONSE CONTENT: {response.content}")
         print("-------------")
 
         response.raise_for_status()
@@ -108,14 +113,19 @@ class FikenObject:
         data = response.json()
         return cls(**data)
 
-    def save(self, **kwargs: Any) -> T:
+    def save(self, **kwargs: Any) -> T|None:
+        """
+        Saves the object to the server.
+        :param kwargs: arguments to replace placeholders in the path
+        :return: None or the new object
+        """
         # TODO - difference between post and put
         # TODO - maybe somehow check if object has id?
         if self.__class__._AUTH_TOKEN is None:
             raise ValueError("Auth token not set")
 
         if self.__class__._POST_PATH.default is None:
-            raise ModelMissingPathException(f"Object {self.__class__.__name__} does not support saving")
+            raise UnsupportedMethodException(f"Object {self.__class__.__name__} does not support saving")
 
         url = f'{self.__class__._PATH_BASE}{self.__class__._POST_PATH.default}'
 
@@ -143,7 +153,51 @@ class FikenObject:
         # Should give location of new object
         location = response.headers.get("Location")
         if location:
-            return self.__class__.getFromURL(location)
+            print(self.__class__)
+            base_class = self.__class__.BASE_CLASS if issubclass(self.__class__, FikenObjectRequest) else self.__class__
+            new_object = base_class._getFromURL(location)
+
+            if base_class == self.__class__:
+                # Override the current object with the new one
+                self.__dict__.update(new_object.__dict__)
+                return self
+            return new_object
+
+        return None
+
+    def delete(self, **kwargs: Any) -> bool:
+        print("DELETE")
+        if self.__class__._AUTH_TOKEN is None:
+            raise ValueError("Auth token not set")
+
+        if self.__class__._DELETE_PATH.default is None:
+            raise UnsupportedMethodException(f"Object {self.__class__.__name__} does not support saving")
+
+        url = f'{self.__class__._PATH_BASE}{self.__class__._DELETE_PATH.default}'
+
+        url = self._preprocess_placeholders(url)
+        url, kwargs = self.__class__._extract_placeholders(url, **kwargs)
+
+        # POST class using pydantic model dump
+        response = requests.delete(url, headers=self.__class__._HEADERS,
+                                 params=kwargs)
+
+        print("---- DELETE ----")
+        print(f"URL: {response.request.url}")
+        print(f"BODY: {response.request.body}")
+        print(f"HEADERS: {response.request.headers}")
+        print(f"RESPONSE CONTENT: {response.content}")
+        print(f"RESPONSE HEADERS: {response.headers}")
+        print(f"STATUS CODE: {response.status_code}")
+
+        print("-------------")
+
+        response.raise_for_status()
+
+        for attr in self.__dict__:
+            setattr(self, attr, None)
+
+        return True
 
 
     # TODO - better way to do this?
@@ -163,3 +217,45 @@ class FikenObject:
 
         path = path.format(**{placeholder: kwargs.pop(placeholder) for placeholder in placeholders})
         return path, kwargs
+
+    def _preprocess_placeholders(self, path):
+        """
+        Preprocess placeholders in the path.
+        Replace them with the values from the object.
+        :param path: URL
+        :return: the formatted path
+        """
+        placeholders = self._PLACEHOLDER_REGEX.findall(path)
+
+        for placeholder in placeholders:
+            if not hasattr(self, placeholder):
+                continue
+            else:
+                print("placeholder", placeholder)
+                print("Path before: ", path)
+                path = path.replace(f"{{{placeholder}}}", str(getattr(self, placeholder)))
+                print("Path after: ", path)
+
+        return path
+
+class FikenObjectRequest(FikenObject):
+    """
+    Base class for all Fiken object requests.
+
+    They only support save requests.
+    They create their parent object when saved.
+    """
+    BASE_CLASS: ClassVar[FikenObject] = None
+    @classmethod
+    def get(**kwargs):
+        raise UnsupportedMethodException("Request objects can not be fetched")
+    
+    @classmethod
+    def getAll(**kwargs):
+        raise UnsupportedMethodException("Request objects can not be fetched")
+
+    def save(self, **kwargs: Any) -> T|None:
+        if self.__class__.BASE_CLASS is None:
+            raise ValueError("BASE_CLASS not set")
+
+        return super().save(**kwargs)

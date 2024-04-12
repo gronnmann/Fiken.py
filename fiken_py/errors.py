@@ -1,4 +1,4 @@
 # Different exceptions
-class ModelMissingPathException(Exception):
+class UnsupportedMethodException(Exception):
     """Raised when model has no path defined."""
     pass

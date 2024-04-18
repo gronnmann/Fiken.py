@@ -3,7 +3,7 @@ from typing import Optional
 from pydantic import BaseModel
 
 from fiken_py.fiken_object import FikenObject
-from fiken_py.fiken_types import VatType, Address
+from fiken_py.fiken_types import CompanyVatType, Address
 
 
 class Company(BaseModel, FikenObject):
@@ -13,7 +13,7 @@ class Company(BaseModel, FikenObject):
     name: str
     slug: str
     organizationNumber: str
-    vatType: VatType
+    vatType: CompanyVatType
     address: Address
     phoneNumber: Optional[str] = None
     email: str

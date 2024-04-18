@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import logging
 import re
 from typing import Any, TypeVar, ClassVar
 
@@ -10,6 +11,8 @@ from importlib.metadata import version
 from fiken_py.errors import UnsupportedMethodException
 
 T = TypeVar('T', bound='FikenObject')
+
+logger = logging.getLogger("fiken_py")
 
 
 class FikenObject:
@@ -35,7 +38,7 @@ class FikenObject:
 
     _HEADERS = {}
 
-    BASE_CLASS = None # For FikenObjectRequest and save not to give AttributeError
+    BASE_CLASS = None  # For FikenObjectRequest and save not to give AttributeError
 
     @classmethod
     def set_auth_token(cls, token):
@@ -61,11 +64,7 @@ class FikenObject:
 
         response = requests.get(url, headers=cls._HEADERS, params=kwargs)
 
-        print("---- GET ----")
-        print(f"URL: {response.request.url}")
-        print(f"BODY: {response.request.body}")
-        print(f"HEADERS: {response.request.headers}")
-        print("-------------")
+        logger.debug(f"GETting single object for {cls.__name__}")
 
         response.raise_for_status()  # raise exception if the request failed
         data = response.json()
@@ -84,36 +83,26 @@ class FikenObject:
 
         response = requests.get(url, headers=cls._HEADERS, params=kwargs)
 
-        print("---- GET ----")
-        print(f"URL: {response.request.url}")
-        print(f"BODY: {response.request.body}")
-        print(f"HEADERS: {response.request.headers}")
-        print("-------------")
+        logger.debug(f"GETting many objects for {cls.__name__}")
 
         response.raise_for_status()  # raise exception if the request failed
         data = response.json()
 
-        print(f"get all {response}")
-
         return [cls(**item) for item in data]
 
     @classmethod
-    def _getFromURL(cls, url: str) -> T:
+    def _getFromURL(cls, url: str) -> T | list[T]:
         response = requests.get(url, headers=cls._HEADERS)
 
-        print("---- GET FROM URL ----")
-        print(f"URL: {response.request.url}")
-        print(f"BODY: {response.request.body}")
-        print(f"HEADERS: {response.request.headers}")
-        print(f"RESPONSE CONTENT: {response.content}")
-        print("-------------")
+        logger.debug(f"GETting single object from URL {url}")
 
         response.raise_for_status()
 
         data = response.json()
+
         return cls(**data)
 
-    def save(self, **kwargs: Any) -> T|None:
+    def save(self, **kwargs: Any) -> T | None:
         """
         Saves the object to the server.
         Checks if object is new or not and sends a POST or PUT request accordingly.
@@ -127,17 +116,17 @@ class FikenObject:
         if self.__class__._AUTH_TOKEN is None:
             raise ValueError("Auth token not set")
 
-        if self.__class__._PUT_PATH.default is not None and self.is_new is None:
-            raise UnsupportedMethodException(f"Object {self.__class__.__name__} has PUT path specified, but no is_new method")
+        if hasattr(self.__class__, "_PUT_PATH") and self.is_new is None:
+            raise NotImplementedError(f"Object {self.__class__.__name__} has PUT path specified, but no is_new method")
 
         use_post = self.is_new if self.is_new is not None else True
         if use_post:
-            if self.__class__._POST_PATH.default is None:
+            if hasattr(self.__class__, "_POST_PATH") is None or self.__class__._POST_PATH.default is None:
                 raise UnsupportedMethodException(f"Object {self.__class__.__name__} does not support saving")
 
             url = f'{self.__class__._PATH_BASE}{self.__class__._POST_PATH.default}'
         else:
-            if self.__class__._PUT_PATH.default is None:
+            if hasattr(self.__class__, "_PUT_PATH") is None or self.__class__._PUT_PATH.default is None:
                 raise UnsupportedMethodException(f"Object {self.__class__.__name__} does not support updating")
             url = f'{self.__class__._PATH_BASE}{self.__class__._PUT_PATH.default}'
 
@@ -146,31 +135,21 @@ class FikenObject:
 
         # POST class using pydantic model dump
         if use_post:
-            response = requests.post(url, headers=self.__class__._HEADERS, data=self.json(),
+            response = requests.post(url, headers=self.__class__._HEADERS, data=self.json(by_alias=True),
                                      params=kwargs)
+            logger.debug(f"POSTing object for {self.__class__.__name__}")
         else:
-            response = requests.put(url, headers=self.__class__._HEADERS, data=self.json(),
+            response = requests.put(url, headers=self.__class__._HEADERS, data=self.json(by_alias=True),
                                     params=kwargs)
-
-        print(f"---- {'POST' if self.is_new else 'PUT'} ----")
-        print(f"URL: {response.request.url}")
-        print(f"BODY: {response.request.body}")
-        print(f"HEADERS: {response.request.headers}")
-        print(f"DATA: {self.json()}")
-        print(f"RESPONSE CONTENT: {response.content}")
-        print(f"RESPONSE HEADERS: {response.headers}")
-        print(f"STATUS CODE: {response.status_code}")
-        if response.headers.get("Location"):
-            print(f"New resource location: {response.headers['Location']}")
-
-        print("-------------")
+            logger.debug(f"PUTting (updating) object for {self.__class__.__name__}")
 
         response.raise_for_status()
 
         # Should give location of new object
         location = response.headers.get("Location")
         if location:
-            print(self.__class__)
+            logger.debug(f"Location of new object: {location}")
+
             base_class = self.__class__.BASE_CLASS if issubclass(self.__class__, FikenObjectRequest) else self.__class__
             new_object = base_class._getFromURL(location)
 
@@ -183,7 +162,7 @@ class FikenObject:
         return None
 
     def delete(self, **kwargs: Any) -> bool:
-        print("DELETE")
+
         if self.__class__._AUTH_TOKEN is None:
             raise ValueError("Auth token not set")
 
@@ -195,19 +174,11 @@ class FikenObject:
         url = self._preprocess_placeholders(url)
         url, kwargs = self.__class__._extract_placeholders(url, **kwargs)
 
+        logger.debug(f"DELET(E)ing object for {self.__class__.__name__}")
+
         # POST class using pydantic model dump
         response = requests.delete(url, headers=self.__class__._HEADERS,
-                                 params=kwargs)
-
-        print("---- DELETE ----")
-        print(f"URL: {response.request.url}")
-        print(f"BODY: {response.request.body}")
-        print(f"HEADERS: {response.request.headers}")
-        print(f"RESPONSE CONTENT: {response.content}")
-        print(f"RESPONSE HEADERS: {response.headers}")
-        print(f"STATUS CODE: {response.status_code}")
-
-        print("-------------")
+                                   params=kwargs)
 
         response.raise_for_status()
 
@@ -215,7 +186,6 @@ class FikenObject:
             setattr(self, attr, None)
 
         return True
-
 
     # TODO - better way to do this?
     _PLACEHOLDER_REGEX = re.compile(r'{(\w+)}')
@@ -248,20 +218,18 @@ class FikenObject:
             if not hasattr(self, placeholder):
                 continue
             else:
-                print("placeholder", placeholder)
-                print("Path before: ", path)
                 path = path.replace(f"{{{placeholder}}}", str(getattr(self, placeholder)))
-                print("Path after: ", path)
 
         return path
 
     @property
-    def is_new(self) -> None|bool:
+    def is_new(self) -> None | bool:
         """
         Returns whether the object is new or not.
         :return: True if new, False if not, None if not applicable to object
         """
         return None
+
 
 class FikenObjectRequest(FikenObject):
     """
@@ -271,15 +239,16 @@ class FikenObjectRequest(FikenObject):
     They create their parent object when saved.
     """
     BASE_CLASS: ClassVar[FikenObject] = None
+
     @classmethod
     def get(**kwargs):
         raise UnsupportedMethodException("Request objects can not be fetched")
-    
+
     @classmethod
     def getAll(**kwargs):
         raise UnsupportedMethodException("Request objects can not be fetched")
 
-    def save(self, **kwargs: Any) -> T|None:
+    def save(self, **kwargs: Any) -> T | None:
         if self.__class__.BASE_CLASS is None:
             raise ValueError("BASE_CLASS not set")
 

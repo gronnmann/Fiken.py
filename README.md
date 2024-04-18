@@ -82,3 +82,19 @@ new_account_request = BankAccountCreateRequest(name='test_account', bankAccountN
 new_account = new_account_request.save(companySlug='fiken-demo-drage-og-elefant-as')
 # new_account is <class 'fiken_py.models.bank_account.BankAccount'>
 ```
+
+## Notes
+Some objects do behave weirdly or not as expected.
+This is a list of known quirks you might encounter:
+### JournalEntryRequest maps to Transaction
+The `JournalEntryRequest` object maps, when saved, returns the 
+`Transaction` object in Fiken (and not `JournalEntry`).
+
+```python
+journal_entry: JournalEntryRequest
+
+journal_entry = request.save(companySlug='fiken-demo-drage-og-elefant-as')
+# returns header Location: https://api.fiken.no/api/v2/companies/fiken-demo-drage-og-elefant-as/transactions/{some id}
+
+print(type(journal_entry)) # <class 'fiken_py.models.transaction.Transaction'>
+```

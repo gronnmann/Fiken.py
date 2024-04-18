@@ -1,0 +1,7 @@
+- /companies/{company_slug}/groups
+- accessing methods object oritented way
+- init method for all classes that can be submitted
+- pagination support
+- make 404 make object None, else raise exception
+- create HTTP exceptions
+- create class for objects with attachments

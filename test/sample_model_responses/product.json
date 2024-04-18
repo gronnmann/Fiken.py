@@ -5,7 +5,7 @@
     "name": "Spade",
     "unitPrice": 300000,
     "incomeAccount": "3000",
-    "vatType": "HIGH",
+    "vatType": "high",
     "active": true,
     "productNumber": "125-1",
     "stock": 5,

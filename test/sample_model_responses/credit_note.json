@@ -1,0 +1,362 @@
+{
+  "creditNoteId": 2888156,
+  "creditNoteNumber": 10001,
+  "kid": "5855454756",
+  "customer": {
+    "contactId": 2747365,
+    "createdDate": "2018-04-03",
+    "lastModifiedDate": "2018-04-03",
+    "name": "Fiken AS",
+    "email": "kontakt@fiken.gmail",
+    "organizationNumber": "913312465",
+    "customerNumber": 51248,
+    "customerAccountCode": "1500:20001",
+    "supplierNumber": 0,
+    "supplierAccountCode": "2400:20001",
+    "customer": false,
+    "supplier": false,
+    "bankAccountNumber": "11112233334",
+    "contactPerson": [
+      {
+        "contactPersonId": 2747365,
+        "name": "Betty Boop",
+        "email": "bb@gmail.com",
+        "phoneNumber": "98573564",
+        "address": {
+          "streetAddress": "Karl Johan 34",
+          "streetAddressLine2": "H0405",
+          "city": "Oslo",
+          "postCode": "0550",
+          "country": "Norway"
+        }
+      }
+    ],
+    "notes": [
+      {
+        "author": "Betty Boop",
+        "note": "Garage 45"
+      }
+    ],
+    "language": "Norwegian",
+    "inactive": true,
+    "daysUntilInvoicingDueDate": 15,
+    "address": {
+      "streetAddress": "Karl Johan 34",
+      "streetAddressLine2": "H0405",
+      "city": "Oslo",
+      "postCode": "0550",
+      "country": "Norway"
+    },
+    "groups": [
+      "string"
+    ],
+    "documents": [
+      {
+        "identifier": "24760",
+        "downloadUrl": "string",
+        "downloadUrlWithFikenNormalUserCredentials": "string",
+        "comment": "string",
+        "type": "invoice"
+      }
+    ]
+  },
+  "net": 25000,
+  "vat": 5000,
+  "gross": 30000,
+  "netInNok": 25000,
+  "vatInNok": 5000,
+  "grossInNok": 30000,
+  "creditNoteText": "string",
+  "yourReference": "string",
+  "ourReference": "string",
+  "orderReference": "string",
+  "address": {
+    "streetAddress": "Karl Johan 34",
+    "streetAddressLine2": "H0405",
+    "city": "Oslo",
+    "postCode": "0550",
+    "country": "Norway"
+  },
+  "lines": [
+    {
+      "net": 4500,
+      "vat": 500,
+      "vatType": "string",
+      "gross": 5000,
+      "netInNok": 4500,
+      "vatInNok": 500,
+      "grossInNok": 5000,
+      "vatInPercent": 25,
+      "unitPrice": 4550,
+      "quantity": 5,
+      "discount": 25,
+      "productId": 2888156,
+      "productName": "Gardening Gloves VI2",
+      "description": "Goatskin, with extra-long suede cuffs",
+      "comment": "One size fits all",
+      "incomeAccount": "3000"
+    }
+  ],
+  "currency": "NOK",
+  "issueDate": "2018-04-03",
+  "settled": true,
+  "associatedInvoiceId": 2888156,
+  "creditNoteDraftUuid": "123e4567-e89b-12d3-a456-426655440000",
+  "creditNotePdf": {
+    "identifier": "24760",
+    "downloadUrl": "string",
+    "downloadUrlWithFikenNormalUserCredentials": "string",
+    "comment": "string",
+    "type": "invoice"
+  },
+  "project": {
+    "projectId": 73408306,
+    "number": "string",
+    "name": "string",
+    "description": "string",
+    "startDate": "2018-04-03",
+    "endDate": "2018-04-03",
+    "contact": {
+      "contactId": 2747365,
+      "createdDate": "2018-04-03",
+      "lastModifiedDate": "2018-04-03",
+      "name": "Fiken AS",
+      "email": "kontakt@fiken.gmail",
+      "organizationNumber": "913312465",
+      "customerNumber": 51248,
+      "customerAccountCode": "1500:20001",
+      "supplierNumber": 0,
+      "supplierAccountCode": "2400:20001",
+      "customer": false,
+      "supplier": false,
+      "bankAccountNumber": "11112233334",
+      "contactPerson": [
+        {
+          "contactPersonId": 2747365,
+          "name": "Betty Boop",
+          "email": "bb@gmail.com",
+          "phoneNumber": "98573564",
+          "address": {
+            "streetAddress": "Karl Johan 34",
+            "streetAddressLine2": "H0405",
+            "city": "Oslo",
+            "postCode": "0550",
+            "country": "Norway"
+          }
+        }
+      ],
+      "notes": [
+        {
+          "author": "Betty Boop",
+          "note": "Garage 45"
+        }
+      ],
+      "language": "Norwegian",
+      "inactive": true,
+      "daysUntilInvoicingDueDate": 15,
+      "address": {
+        "streetAddress": "Karl Johan 34",
+        "streetAddressLine2": "H0405",
+        "city": "Oslo",
+        "postCode": "0550",
+        "country": "Norway"
+      },
+      "groups": [
+        "string"
+      ],
+      "documents": [
+        {
+          "identifier": "24760",
+          "downloadUrl": "string",
+          "downloadUrlWithFikenNormalUserCredentials": "string",
+          "comment": "string",
+          "type": "invoice"
+        }
+      ]
+    },
+    "completed": true
+  },
+  "sale": {
+    "saleId": 2888156,
+    "lastModifiedDate": "2018-04-03",
+    "transactionId": 3458156,
+    "saleNumber": "XK455L",
+    "date": "2018-04-03",
+    "kind": "external_invoice",
+    "netAmount": 4500,
+    "vatAmount": 5400,
+    "settled": true,
+    "settledDate": "2023-04-03",
+    "writeOff": false,
+    "totalPaid": 524500,
+    "totalPaidInCurrency": 634550,
+    "outstandingBalance": 145,
+    "lines": [
+      {
+        "description": "string",
+        "netPrice": 4500,
+        "vat": 500,
+        "account": 1500,
+        "vatType": "string",
+        "netPriceInCurrency": 4500,
+        "vatInCurrency": 500
+      }
+    ],
+    "customer": {
+      "contactId": 2747365,
+      "createdDate": "2018-04-03",
+      "lastModifiedDate": "2018-04-03",
+      "name": "Fiken AS",
+      "email": "kontakt@fiken.gmail",
+      "organizationNumber": "913312465",
+      "customerNumber": 51248,
+      "customerAccountCode": "1500:20001",
+      "supplierNumber": 0,
+      "supplierAccountCode": "2400:20001",
+      "customer": false,
+      "supplier": false,
+      "bankAccountNumber": "11112233334",
+      "contactPerson": [
+        {
+          "contactPersonId": 2747365,
+          "name": "Betty Boop",
+          "email": "bb@gmail.com",
+          "phoneNumber": "98573564",
+          "address": {
+            "streetAddress": "Karl Johan 34",
+            "streetAddressLine2": "H0405",
+            "city": "Oslo",
+            "postCode": "0550",
+            "country": "Norway"
+          }
+        }
+      ],
+      "notes": [
+        {
+          "author": "Betty Boop",
+          "note": "Garage 45"
+        }
+      ],
+      "language": "Norwegian",
+      "inactive": true,
+      "daysUntilInvoicingDueDate": 15,
+      "address": {
+        "streetAddress": "Karl Johan 34",
+        "streetAddressLine2": "H0405",
+        "city": "Oslo",
+        "postCode": "0550",
+        "country": "Norway"
+      },
+      "groups": [
+        "string"
+      ],
+      "documents": [
+        {
+          "identifier": "24760",
+          "downloadUrl": "string",
+          "downloadUrlWithFikenNormalUserCredentials": "string",
+          "comment": "string",
+          "type": "invoice"
+        }
+      ]
+    },
+    "currency": "NOK",
+    "dueDate": "2018-04-03",
+    "kid": "5855454756",
+    "salePayments": [
+      {
+        "paymentId": 2888156,
+        "date": "2018-04-03",
+        "account": "1920:10001",
+        "amount": 34000,
+        "amountInNok": 500000,
+        "currency": "NOK",
+        "fee": 0
+      }
+    ],
+    "saleAttachments": [
+      {
+        "identifier": "24760",
+        "downloadUrl": "string",
+        "downloadUrlWithFikenNormalUserCredentials": "string",
+        "comment": "string",
+        "type": "invoice"
+      }
+    ],
+    "paymentDate": "2018-04-03",
+    "project": {
+      "projectId": 73408306,
+      "number": "string",
+      "name": "string",
+      "description": "string",
+      "startDate": "2018-04-03",
+      "endDate": "2018-04-03",
+      "contact": {
+        "contactId": 2747365,
+        "createdDate": "2018-04-03",
+        "lastModifiedDate": "2018-04-03",
+        "name": "Fiken AS",
+        "email": "kontakt@fiken.gmail",
+        "organizationNumber": "913312465",
+        "customerNumber": 51248,
+        "customerAccountCode": "1500:20001",
+        "supplierNumber": 0,
+        "supplierAccountCode": "2400:20001",
+        "customer": false,
+        "supplier": false,
+        "bankAccountNumber": "11112233334",
+        "contactPerson": [
+          {
+            "contactPersonId": 2747365,
+            "name": "Betty Boop",
+            "email": "bb@gmail.com",
+            "phoneNumber": "98573564",
+            "address": {
+              "streetAddress": "Karl Johan 34",
+              "streetAddressLine2": "H0405",
+              "city": "Oslo",
+              "postCode": "0550",
+              "country": "Norway"
+            }
+          }
+        ],
+        "notes": [
+          {
+            "author": "Betty Boop",
+            "note": "Garage 45"
+          }
+        ],
+        "language": "Norwegian",
+        "inactive": true,
+        "daysUntilInvoicingDueDate": 15,
+        "address": {
+          "streetAddress": "Karl Johan 34",
+          "streetAddressLine2": "H0405",
+          "city": "Oslo",
+          "postCode": "0550",
+          "country": "Norway"
+        },
+        "groups": [
+          "string"
+        ],
+        "documents": [
+          {
+            "identifier": "24760",
+            "downloadUrl": "string",
+            "downloadUrlWithFikenNormalUserCredentials": "string",
+            "comment": "string",
+            "type": "invoice"
+          }
+        ]
+      },
+      "completed": true
+    },
+    "notes": [
+      {
+        "author": "James Jones",
+        "note": "Invoice sent after telephone conversation with customer"
+      }
+    ],
+    "deleted": true
+  }
+}

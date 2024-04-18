@@ -1,0 +1,39 @@
+{
+  "transactionId": 734083065,
+  "createdDate": "2018-04-03",
+  "lastModifiedDate": "2018-04-03",
+  "description": "string",
+  "type": "General Journal Entry",
+  "entries": [
+    {
+      "journalEntryId": 0,
+      "createdDate": "2018-04-03",
+      "lastModifiedDate": "2018-04-03",
+      "transactionId": 0,
+      "offsetTransactionId": 0,
+      "journalEntryNumber": 18,
+      "description": "Purchase, Schweigaards Gate 34 AS (invoice nr 26083)",
+      "date": "2018-04-03",
+      "lines": [
+        {
+          "amount": 310000,
+          "account": "2400:20079",
+          "vatCode": "1",
+          "projectId": [
+            0
+          ],
+          "lastModifiedDate": "2018-04-03"
+        }
+      ],
+      "attachments": [
+        {
+          "identifier": "24760",
+          "downloadUrl": "string",
+          "downloadUrlWithFikenNormalUserCredentials": "string",
+          "comment": "string",
+          "type": "invoice"
+        }
+      ]
+    }
+  ]
+}

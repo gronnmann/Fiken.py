@@ -1,0 +1,46 @@
+{
+  "offerId": 2888156,
+  "offerDraftUuid": "123e4567-e89b-12d3-a456-426655440000",
+  "date": "2018-04-03",
+  "offerNumber": 10001,
+  "net": 25000,
+  "vat": 5000,
+  "gross": 30000,
+  "comment": "string",
+  "yourReference": "string",
+  "ourReference": "string",
+  "orderReference": "string",
+  "discount": 2500,
+  "address": {
+    "streetAddress": "Karl Johan 34",
+    "streetAddressLine2": "H0405",
+    "city": "Oslo",
+    "postCode": "0550",
+    "country": "Norway"
+  },
+  "lines": [
+    {
+      "net": 4500,
+      "vat": 500,
+      "vatType": "string",
+      "gross": 5000,
+      "netInNok": 4500,
+      "vatInNok": 500,
+      "grossInNok": 5000,
+      "vatInPercent": 25,
+      "unitPrice": 4550,
+      "quantity": 5,
+      "discount": 25,
+      "productId": 2888156,
+      "productName": "Gardening Gloves VI2",
+      "description": "Goatskin, with extra-long suede cuffs",
+      "comment": "One size fits all",
+      "incomeAccount": "3000"
+    }
+  ],
+  "currency": "string",
+  "contactId": 9688154,
+  "contactPersonId": 9688154,
+  "projectId": 2815556,
+  "archived": false
+}

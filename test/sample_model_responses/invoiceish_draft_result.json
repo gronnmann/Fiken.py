@@ -1,0 +1,104 @@
+{
+  "draftId": 2888156,
+  "uuid": "123e4567-e89b-12d3-a456-426655440000",
+  "type": "invoice",
+  "lastModifiedDate": "2023-04-03",
+  "issueDate": "2018-04-03",
+  "daysUntilDueDate": 15,
+  "invoiceText": "string",
+  "currency": "NOK",
+  "yourReference": "string",
+  "ourReference": "string",
+  "orderReference": "string",
+  "lines": [
+    {
+      "invoiceishDraftLineId": 2888156,
+      "lastModifiedDate": "2018-04-03",
+      "productId": 0,
+      "description": "Goatskin, with extra-long suede cuffs",
+      "unitPrice": 4550,
+      "vatType": "string",
+      "quantity": 5,
+      "discount": 25,
+      "comment": "One size fits all",
+      "incomeAccount": "3000"
+    }
+  ],
+  "net": 4500,
+  "gross": 5000,
+  "bankAccountNumber": "11112233334",
+  "iban": "string",
+  "bic": "string",
+  "paymentAccount": "1920:10001",
+  "customers": [
+    {
+      "contactId": 2747365,
+      "createdDate": "2018-04-03",
+      "lastModifiedDate": "2018-04-03",
+      "name": "Fiken AS",
+      "email": "kontakt@fiken.gmail",
+      "organizationNumber": "913312465",
+      "customerNumber": 51248,
+      "customerAccountCode": "1500:20001",
+      "supplierNumber": 0,
+      "supplierAccountCode": "2400:20001",
+      "customer": false,
+      "supplier": false,
+      "bankAccountNumber": "11112233334",
+      "contactPerson": [
+        {
+          "contactPersonId": 2747365,
+          "name": "Betty Boop",
+          "email": "bb@gmail.com",
+          "phoneNumber": "98573564",
+          "address": {
+            "streetAddress": "Karl Johan 34",
+            "streetAddressLine2": "H0405",
+            "city": "Oslo",
+            "postCode": "0550",
+            "country": "Norway"
+          }
+        }
+      ],
+      "notes": [
+        {
+          "author": "Betty Boop",
+          "note": "Garage 45"
+        }
+      ],
+      "language": "Norwegian",
+      "inactive": true,
+      "daysUntilInvoicingDueDate": 15,
+      "address": {
+        "streetAddress": "Karl Johan 34",
+        "streetAddressLine2": "H0405",
+        "city": "Oslo",
+        "postCode": "0550",
+        "country": "Norway"
+      },
+      "groups": [
+        "string"
+      ],
+      "documents": [
+        {
+          "identifier": "24760",
+          "downloadUrl": "string",
+          "downloadUrlWithFikenNormalUserCredentials": "string",
+          "comment": "string",
+          "type": "invoice"
+        }
+      ]
+    }
+  ],
+  "attachments": [
+    {
+      "identifier": "24760",
+      "downloadUrl": "string",
+      "downloadUrlWithFikenNormalUserCredentials": "string",
+      "comment": "string",
+      "type": "invoice"
+    }
+  ],
+  "createdFromInvoiceId": 73408306,
+  "projectId": 73408306
+}

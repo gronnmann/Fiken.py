@@ -1,0 +1,13 @@
+{
+    "productId": 2888156,
+    "createdDate": "2018-04-03",
+    "lastModifiedDate": "2018-04-03",
+    "name": "Spade",
+    "unitPrice": 300000,
+    "incomeAccount": "3000",
+    "vatType": "HIGH",
+    "active": true,
+    "productNumber": "125-1",
+    "stock": 5,
+    "note": "string"
+  }

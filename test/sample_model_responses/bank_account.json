@@ -1,0 +1,9 @@
+{
+  "name": "Utgiftskonto DNB",
+  "bankAccountNumber": "11112233334",
+  "bic": "DNBANOKKXXX",
+  "iban": "NO49 1111 2233 334",
+  "foreignService": "Barclays UK",
+  "type": "normal",
+  "inactive": false
+}

@@ -238,6 +238,9 @@ class FikenObject:
 
         return path
 
+    def is_new(self):
+        raise NotImplementedError("Object does not support checking if it is new")
+
 class FikenObjectRequest(FikenObject):
     """
     Base class for all Fiken object requests.

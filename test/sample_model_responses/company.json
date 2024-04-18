@@ -1,0 +1,18 @@
+{
+  "name": "Fiken AS",
+  "slug": "fiken-as",
+  "organizationNumber": "913312465",
+  "vatType": "no",
+  "address": {
+    "streetAddress": "Karl Johan 34",
+    "streetAddressLine2": "H0405",
+    "city": "Oslo",
+    "postCode": "0550",
+    "country": "Norway"
+  },
+  "email": "kontakt@fiken.gmail",
+  "creationDate": "2018-04-03",
+  "hasApiAccess": true,
+  "testCompany": true,
+  "accountingStartDate": "2018-04-03"
+}

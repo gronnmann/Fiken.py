@@ -21,7 +21,7 @@ class BankAccount(BankAccountBase, FikenObject):
     _GET_PATH_SINGLE = '/companies/{companySlug}/bankAccounts/{bankAccountId}'
     _GET_PATH_MULTIPLE = '/companies/{companySlug}/bankAccounts/'
 
-    bankAccountId: int = None
+    bankAccountId: Optional[int] = None
     accountCode: str = None
     reconciledBalance: int = None
     reconciledDate: Optional[date] = None  # TODO - new date type

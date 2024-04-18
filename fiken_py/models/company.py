@@ -1,3 +1,5 @@
+from typing import Optional
+
 from pydantic import BaseModel
 
 from fiken_py.fiken_object import FikenObject
@@ -13,7 +15,7 @@ class Company(BaseModel, FikenObject):
     organizationNumber: str
     vatType: VatType
     address: Address
-    phoneNumber: str
+    phoneNumber: Optional[str] = None
     email: str
     creationDate: str # TODO - date type
     hasApiAccess: bool

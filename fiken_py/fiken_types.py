@@ -43,7 +43,7 @@ class Attachment(BaseModel):
 
 
 class ContactPerson(BaseModel):
-    contactPersonId: int # TODO should be maybe none here?
+    contactPersonId: Optional[int] = None # TODO should be maybe none here?
     name: str
     email: str
     phoneNumber: Optional[str] = None

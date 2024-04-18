@@ -1,0 +1,38 @@
+{
+  "name": "Fiken AS",
+  "email": "kontakt@fiken.gmail",
+  "organizationNumber": "913312465",
+  "phoneNumber": "62158537",
+  "memberNumber": 5464,
+  "customer": false,
+  "supplier": false,
+  "bankAccountNumber": "11112233334",
+  "contactPerson": [
+    {
+      "name": "Betty Boop",
+      "email": "bb@gmail.com",
+      "phoneNumber": "98573564",
+      "address": {
+        "streetAddress": "Karl Johan 34",
+        "streetAddressLine2": "H0405",
+        "city": "Oslo",
+        "postCode": "0550",
+        "country": "Norway"
+      }
+    }
+  ],
+  "currency": "NOK",
+  "language": "Norwegian",
+  "inactive": true,
+  "daysUntilInvoicingDueDate": 15,
+  "address": {
+    "streetAddress": "Karl Johan 34",
+    "streetAddressLine2": "H0405",
+    "city": "Oslo",
+    "postCode": "0550",
+    "country": "Norway"
+  },
+  "groups": [
+    "string"
+  ]
+}

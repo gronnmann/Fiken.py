@@ -8,12 +8,12 @@ from pydantic import BaseModel
 from sample_data_reader import get_sample_from_json
 
 from fiken_py.fiken_object import FikenObject
-from fiken_py.models import UserInfo, Account, BankAccount, Company, Contact
+from fiken_py.models import UserInfo, Account, BankAccount, Company, Contact, ContactPerson
 
 
 @pytest.fixture(autouse=True)
 def set_auth_token():
-    FikenObject.set_auth_token("123")
+    FikenObject.set_auth_token("SAMPLE_TOKEN")
 
 
 @pytest.fixture
@@ -28,6 +28,7 @@ def m():
     BankAccount,
     Company,
     Contact,
+    ContactPerson,
 ])
 def test_object_methods(object: FikenObject, m: requests_mock.Mocker):
     print(f"---- TESTING {object.__name__} ----")

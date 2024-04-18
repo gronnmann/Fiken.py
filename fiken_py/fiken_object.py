@@ -116,26 +116,43 @@ class FikenObject:
     def save(self, **kwargs: Any) -> T|None:
         """
         Saves the object to the server.
+        Checks if object is new or not and sends a POST or PUT request accordingly.
+        If object has no method for checking if it is new, assumes POST.
+        Throws an exception if object has PUT method defined, but no is new check.
+
         :param kwargs: arguments to replace placeholders in the path
         :return: None or the new object
         """
-        # TODO - difference between post and put
-        # TODO - maybe somehow check if object has id?
+
         if self.__class__._AUTH_TOKEN is None:
             raise ValueError("Auth token not set")
 
-        if self.__class__._POST_PATH.default is None:
-            raise UnsupportedMethodException(f"Object {self.__class__.__name__} does not support saving")
+        if self.__class__._PUT_PATH.default is not None and self.is_new is None:
+            raise UnsupportedMethodException(f"Object {self.__class__.__name__} has PUT path specified, but no is_new method")
 
-        url = f'{self.__class__._PATH_BASE}{self.__class__._POST_PATH.default}'
+        use_post = self.is_new if self.is_new is not None else True
+        if use_post:
+            if self.__class__._POST_PATH.default is None:
+                raise UnsupportedMethodException(f"Object {self.__class__.__name__} does not support saving")
 
+            url = f'{self.__class__._PATH_BASE}{self.__class__._POST_PATH.default}'
+        else:
+            if self.__class__._PUT_PATH.default is None:
+                raise UnsupportedMethodException(f"Object {self.__class__.__name__} does not support updating")
+            url = f'{self.__class__._PATH_BASE}{self.__class__._PUT_PATH.default}'
+
+        url = self._preprocess_placeholders(url)
         url, kwargs = self.__class__._extract_placeholders(url, **kwargs)
 
         # POST class using pydantic model dump
-        response = requests.post(url, headers=self.__class__._HEADERS, data=self.json(),
-                                 params=kwargs)
+        if use_post:
+            response = requests.post(url, headers=self.__class__._HEADERS, data=self.json(),
+                                     params=kwargs)
+        else:
+            response = requests.put(url, headers=self.__class__._HEADERS, data=self.json(),
+                                    params=kwargs)
 
-        print("---- POST ----")
+        print(f"---- {'POST' if self.is_new else 'PUT'} ----")
         print(f"URL: {response.request.url}")
         print(f"BODY: {response.request.body}")
         print(f"HEADERS: {response.request.headers}")
@@ -238,8 +255,13 @@ class FikenObject:
 
         return path
 
-    def is_new(self):
-        raise NotImplementedError("Object does not support checking if it is new")
+    @property
+    def is_new(self) -> None|bool:
+        """
+        Returns whether the object is new or not.
+        :return: True if new, False if not, None if not applicable to object
+        """
+        return None
 
 class FikenObjectRequest(FikenObject):
     """

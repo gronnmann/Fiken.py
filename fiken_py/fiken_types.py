@@ -40,11 +40,3 @@ class Attachment(BaseModel):
     downloadUrlWithFikenNormalUserCredentials: str
     comment: Optional[str] = None
     type: AttachmentType
-
-
-class ContactPerson(BaseModel):
-    contactPersonId: Optional[int] = None # TODO should be maybe none here?
-    name: str
-    email: str
-    phoneNumber: Optional[str] = None
-    address: Optional[Address] = None

@@ -4,7 +4,8 @@ from typing import Optional, List
 from pydantic import BaseModel
 
 from fiken_py.fiken_object import FikenObject
-from fiken_py.fiken_types import Address, ContactPerson, Attachment
+from fiken_py.fiken_types import Address, Attachment
+from fiken_py.models import ContactPerson
 
 
 class Contact(BaseModel, FikenObject):
@@ -14,9 +15,9 @@ class Contact(BaseModel, FikenObject):
     _PUT_PATH = '/companies/{companySlug}/contacts/{contactId}'
     _DELETE_PATH = '/companies/{companySlug}/contacts/{contactId}'
 
-    contactId: int = None
-    createdDate: date = None
-    lastModifiedDate: date = None
+    contactId: Optional[int] = None
+    createdDate: Optional[date] = None
+    lastModifiedDate: Optional[date] = None
     name: str
     email: Optional[str] = None
     organizationNumber: Optional[str] = None
@@ -26,15 +27,19 @@ class Contact(BaseModel, FikenObject):
     memberNumber: Optional[float] = None
     supplierNumber: Optional[int] = None
     supplierAccountCode: Optional[str] = None
-    customer: bool = False
-    supplier: bool = False
+    customer: Optional[bool] = False
+    supplier: Optional[bool] = False
     bankAccountNumber: Optional[str] = None
-    contactPerson: List[ContactPerson] = []
+    contactPerson: Optional[List[ContactPerson]] = []
     notes: List[str] = []
     currency: Optional[str] = None
     language: Optional[str] = None
-    inactive: bool = False
+    inactive: Optional[bool] = False
     daysUntilInvoicingDueDate: Optional[int] = None
-    address: Address = None
+    address: Optional[Address] = None
     groups: list[str] = []
     documents: List[Attachment] = []
+
+    @property
+    def is_new(self):
+        return self.contactId is None

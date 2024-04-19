@@ -6,6 +6,8 @@ import requests_mock
 import random
 
 from pydantic import BaseModel
+
+from fiken_py.fiken_types import CaseInsensitiveEnum
 from sample_data_reader import get_sample_from_json
 
 from fiken_py.fiken_object import FikenObject
@@ -140,6 +142,9 @@ def _compare_object_to_sample_data(obj, sample_data):
 
         elif isinstance(val, date):
             assert val.isoformat() == sample_data.get(attr)
+
+        elif isinstance(val, CaseInsensitiveEnum):
+            assert val == sample_data.get(attr).upper() # CaseInsensitiveEnum matches on upper
 
         elif isinstance(val, list) and all(isinstance(i, BaseModel) for i in val):
             for i, item in enumerate(val):

@@ -5,3 +5,7 @@
 - make 404 make object None, else raise exception
 - create HTTP exceptions
 - create class for objects with attachments
+- inbox post - it uses form data, not json
+- test auto selecting POST/PUT
+- maybe remove _getFromURL and use the other method?
+- when checking POST classes, check if is_new is @attribute. Maybe just try accessing it without calling?

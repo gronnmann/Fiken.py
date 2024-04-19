@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import logging
 import re
+from enum import Enum
 from typing import Any, TypeVar, ClassVar
 
 import requests
@@ -13,6 +14,14 @@ from fiken_py.errors import UnsupportedMethodException
 T = TypeVar('T', bound='FikenObject')
 
 logger = logging.getLogger("fiken_py")
+
+
+class RequestMethod(Enum):
+    GET = "GET",
+    GET_MULTIPLE = "GET_MULTIPLE",
+    POST = "POST",
+    PUT = "PUT",
+    DELETE = "DELETE",
 
 
 class FikenObject:
@@ -52,17 +61,8 @@ class FikenObject:
 
     @classmethod
     def get(cls, **kwargs: Any) -> T:
-        if cls._AUTH_TOKEN is None:
-            raise ValueError("Auth token not set")
 
-        # TODO - better way to do this?
-        if cls._GET_PATH_SINGLE.default is None:
-            raise UnsupportedMethodException(f"Object {cls.__name__} does not support getting single object")
-        print("headers", cls._HEADERS)
-        url = f'{cls._PATH_BASE}{cls._GET_PATH_SINGLE.default}'
-        url, kwargs = cls._extract_placeholders(url, **kwargs)
-
-        response = requests.get(url, headers=cls._HEADERS, params=kwargs)
+        response = cls._execute_method(RequestMethod.GET, **kwargs)
 
         logger.debug(f"GETting single object for {cls.__name__}")
 
@@ -113,35 +113,14 @@ class FikenObject:
         :return: None or the new object
         """
 
-        if self.__class__._AUTH_TOKEN is None:
-            raise ValueError("Auth token not set")
-
-        if hasattr(self.__class__, "_PUT_PATH") and self.is_new is None:
-            raise NotImplementedError(f"Object {self.__class__.__name__} has PUT path specified, but no is_new method")
+        if self._get_method_base_URL(RequestMethod.POST) is not None:
+            if self.is_new is None:
+                raise NotImplementedError(f"Object {self.__class__.__name__} has POST path specified, but no is_new method")
 
         use_post = self.is_new if self.is_new is not None else True
-        if use_post:
-            if hasattr(self.__class__, "_POST_PATH") is None or self.__class__._POST_PATH.default is None:
-                raise UnsupportedMethodException(f"Object {self.__class__.__name__} does not support saving")
+        used_method = RequestMethod.POST if use_post else RequestMethod.PUT
 
-            url = f'{self.__class__._PATH_BASE}{self.__class__._POST_PATH.default}'
-        else:
-            if hasattr(self.__class__, "_PUT_PATH") is None or self.__class__._PUT_PATH.default is None:
-                raise UnsupportedMethodException(f"Object {self.__class__.__name__} does not support updating")
-            url = f'{self.__class__._PATH_BASE}{self.__class__._PUT_PATH.default}'
-
-        url = self._preprocess_placeholders(url)
-        url, kwargs = self.__class__._extract_placeholders(url, **kwargs)
-
-        # POST class using pydantic model dump
-        if use_post:
-            response = requests.post(url, headers=self.__class__._HEADERS, data=self.json(by_alias=True),
-                                     params=kwargs)
-            logger.debug(f"POSTing object for {self.__class__.__name__}")
-        else:
-            response = requests.put(url, headers=self.__class__._HEADERS, data=self.json(by_alias=True),
-                                    params=kwargs)
-            logger.debug(f"PUTting (updating) object for {self.__class__.__name__}")
+        response = self._execute_method(used_method, instance=self, **kwargs)
 
         response.raise_for_status()
 
@@ -163,22 +142,7 @@ class FikenObject:
 
     def delete(self, **kwargs: Any) -> bool:
 
-        if self.__class__._AUTH_TOKEN is None:
-            raise ValueError("Auth token not set")
-
-        if self.__class__._DELETE_PATH.default is None:
-            raise UnsupportedMethodException(f"Object {self.__class__.__name__} does not support saving")
-
-        url = f'{self.__class__._PATH_BASE}{self.__class__._DELETE_PATH.default}'
-
-        url = self._preprocess_placeholders(url)
-        url, kwargs = self.__class__._extract_placeholders(url, **kwargs)
-
-        logger.debug(f"DELET(E)ing object for {self.__class__.__name__}")
-
-        # POST class using pydantic model dump
-        response = requests.delete(url, headers=self.__class__._HEADERS,
-                                   params=kwargs)
+        response = self._execute_method(RequestMethod.DELETE, instance=self, **kwargs)
 
         response.raise_for_status()
 
@@ -221,6 +185,65 @@ class FikenObject:
                 path = path.replace(f"{{{placeholder}}}", str(getattr(self, placeholder)))
 
         return path
+
+    @classmethod
+    def _get_method_base_URL(cls, method: RequestMethod) -> None | str:
+        """Gets the base URL corresponding to the method.
+        If the method is unsupported, returns None"""
+
+        if method == RequestMethod.GET:
+            attr_name = f"_GET_PATH_SINGLE"
+        elif method == RequestMethod.GET_MULTIPLE:
+            attr_name = f"_GET_PATH_MULTIPLE"
+        else:
+            attr_name = f"_{method.name}_PATH"
+
+        if hasattr(cls, attr_name):
+            return f"{cls._PATH_BASE}{getattr(cls, attr_name).default}"
+        return None
+
+    @classmethod
+    def _execute_method(cls, method: RequestMethod, url: str = None, instance: FikenObject = None,
+                        **kwargs: Any) -> requests.Response:
+        """Executes a method on the object
+        :method: RequestMethod - the method to execute
+        :url: str - the URL to execute the method on. If None, will be generated from the method
+        :instance: FikenObject - the instance to execute the method on. If None, will be ignored
+        :kwargs: dict - the arguments to pass to the method
+        """
+
+        if cls._AUTH_TOKEN is None:
+            raise ValueError("Auth token not set")
+
+        if url is None:
+            url = cls._get_method_base_URL(method)
+
+        if url is None:
+            raise UnsupportedMethodException(f"Object {cls.__name__} does not support {method.name}")
+
+        if instance is not None:
+            url = instance._preprocess_placeholders(url)
+
+        url, kwargs = cls._extract_placeholders(url, **kwargs)
+
+        method_name = method.name
+        if method == RequestMethod.GET_MULTIPLE:
+            method_name = "GET"
+
+        request_data = None
+        if method in [RequestMethod.POST, RequestMethod.PUT]:
+            request_data = instance.model_dump_json(by_alias=True)
+
+        logging.debug(f"""Executing {method_name} on {cls.__name__} at {url}
+        params: {kwargs}
+        headers: {cls._HEADERS}
+        data: {request_data}""")
+
+        response = requests.request(method_name, url, headers=cls._HEADERS, params=kwargs, data=request_data)
+
+        response.raise_for_status()
+
+        return response
 
     @property
     def is_new(self) -> None | bool:

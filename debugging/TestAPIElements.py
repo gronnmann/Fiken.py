@@ -1,6 +1,7 @@
 import logging
 import os
 import time
+from random import random
 
 import dotenv
 from urllib3.connection import HTTPConnection
@@ -8,7 +9,7 @@ from urllib3.connection import HTTPConnection
 from fiken_py.fiken_object import FikenObject
 from fiken_py.models import UserInfo, Company, BankAccount, BankAccountCreateRequest, Contact, ContactPerson, \
     ProductSalesReportRequest, Product, Transaction, JournalEntry, Account, JournalEntryRequest
-from fiken_py.fiken_types import BankAccountType, JournalEntryLine
+from fiken_py.fiken_types import BankAccountType, JournalEntryLine, ProductVatType
 
 dotenv.load_dotenv(".env")
 
@@ -94,6 +95,7 @@ def create_and_edit_contact_person():
     # contact_person.delete(companySlug='fiken-demo-drage-og-elefant-as', contactId=contact_for_person.contactId)
     # contact_for_person.delete(companySlug='fiken-demo-drage-og-elefant-as')
 
+
 def get_sales_report():
     sales_report_request = ProductSalesReportRequest(**{
         "from": "2024-01-01",
@@ -101,6 +103,7 @@ def get_sales_report():
     })
     sales_report = sales_report_request.save(companySlug='fiken-demo-drage-og-elefant-as')
     print(sales_report)
+
 
 def get_products():
     products = Product.getAll(companySlug='fiken-demo-drage-og-elefant-as')
@@ -121,12 +124,12 @@ def get_transactions():
     for t in transactions:
         print(t)
 
+
 def test_creating_journal_entry():
     bank_accounts = Account.getAll(companySlug='fiken-demo-drage-og-elefant-as')
 
     ba_1 = bank_accounts[0]
     ba_2 = bank_accounts[1]
-
 
     entry_line = JournalEntryLine(
         amount=1000,
@@ -150,6 +153,33 @@ def test_creating_journal_entry():
     print(journal_entry)
     print(type(journal_entry))
 
+
+def test_create_get_edit_get_and_delete_product():
+    random_str = "Some random string: " + str(random())[:5]
+
+    product = Product(name=random_str, vatType=ProductVatType.HIGH,
+                      incomeAccount="3000")
+    product.save(companySlug='fiken-demo-drage-og-elefant-as')
+    print(product)
+
+    product_get = Product.get(companySlug='fiken-demo-drage-og-elefant-as', productId=product.productId)
+
+    if product_get != product:
+        print("Product get is not equal to product")
+        print(product_get)
+        print(product)
+
+    product_get.name = f"EDITED {random_str}"
+    product_get.save(companySlug='fiken-demo-drage-og-elefant-as')
+    print(product_get)
+
+    prod_id = product_get.productId
+
+    product_get.delete(companySlug='fiken-demo-drage-og-elefant-as')
+    product_get = Product.get(companySlug='fiken-demo-drage-og-elefant-as', productId=prod_id)
+    print(product_get)
+
+
 if __name__ == "__main__":
     # get_bank_accounts()
     # create_and_edit_contact()
@@ -166,4 +196,5 @@ if __name__ == "__main__":
     # HTTPConnection.debuglevel = 1
 
     # get_transactions()
-    test_creating_journal_entry()
+    # test_creating_journal_entry()
+    test_create_get_edit_get_and_delete_product()

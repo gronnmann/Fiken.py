@@ -1,7 +1,3 @@
-import pytest
-from fiken_py.fiken_object import FikenObject
-
-
 def test_extract_placeholders_no_placeholders():
     path = "/api/v2/user"
     kwargs = {"id": 1}

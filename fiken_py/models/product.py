@@ -26,5 +26,6 @@ class Product(BaseModel, FikenObject):
     stock: Optional[float] = None
     notes: Optional[str] = None
 
-    def is_new(self) -> None|bool:
+    @property
+    def is_new(self) -> None | bool:
         return self.productId is None

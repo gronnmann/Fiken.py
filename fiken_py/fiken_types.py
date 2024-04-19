@@ -2,7 +2,18 @@ from datetime import date
 from enum import Enum
 from typing import Optional
 
-from pydantic import BaseModel
+from pydantic import BaseModel, field_validator
+
+
+class CaseInsensitiveEnum(str, Enum):
+    """Enum that matches values case-insensitively.
+    Used in places API returns values non-consistently."""
+    @classmethod
+    def _missing_(cls, value: str):
+        for member in cls:
+            if member.upper() == value.upper():
+                return member
+        return None
 
 
 class CompanyVatType(str, Enum):
@@ -12,34 +23,20 @@ class CompanyVatType(str, Enum):
     BI_MONTHLY = 'bi-monthly'
 
 
-class ProductVatType(str, Enum):
-    NONE = 'none'
-    LOW = 'low'
-    MEDIUM = 'medium'
-    HIGH = 'high'
-    RAW_FISH = 'raw_fish'
+class ProductVatType(CaseInsensitiveEnum):
+    NONE = 'NONE'
+    LOW = 'LOW'
+    MEDIUM = 'MEDIUM'
+    HIGH = 'HIGH'
+    RAW_FISH = 'RAW_FISH'
 
-
-class ProductVatTypeSales(str, Enum):
-    NONE = 'none'
-    LOW = 'low'
-    MEDIUM = 'medium'
-    HIGH = 'high'
-    RAW_FISH = 'raw_fish'
-
-    EXEMPT_IMPORT_EXPORT = 'EXEMPT_IMPORT_EXPORT'  # TODO - make this lower case too
+    # Sales
+    EXEMPT_IMPORT_EXPORT = 'EXEMPT_IMPORT_EXPORT'
     EXEMPT = 'EXEMPT'
     OUTSIDE = 'OUTSIDE'
     EXEMPT_REVERSE = 'EXEMPT_REVERSE'
 
-
-class ProductVatTypePurchase(str, Enum):
-    NONE = 'none'
-    LOW = 'low'
-    MEDIUM = 'medium'
-    HIGH = 'high'
-    RAW_FISH = 'raw_fish'
-
+    # Purcase
     HIGH_DIRECT = 'HIGH_DIRECT'
     HIGH_BASIS = 'HIGH_BASIS'
     MEDIUM_DIRECT = 'MEDIUM_DIRECT'
@@ -97,7 +94,7 @@ class JournalEntryLine(BaseModel):
     account: Optional[str] = None  # TODO - update with account type
     vatCode: Optional[str] = None
     debitAccount: Optional[str] = None  # TODO - update with account type
-    debitVatCode: Optional[int] = None # TODO - code the vat codes?
+    debitVatCode: Optional[int] = None  # TODO - code the vat codes?
     creditAccount: Optional[str] = None  # TODO - update with account type
     creditVatCode: Optional[int] = None  # TODO - code the vat codes?
     projectId: Optional[list] = None  # TODO - find out what list this is

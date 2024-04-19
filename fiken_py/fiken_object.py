@@ -124,7 +124,12 @@ class FikenObject:
 
         response.raise_for_status()
 
-        # Should give location of new object
+        return self._follow_location_and_update_class(response)
+
+    def _follow_location_and_update_class(self, response: requests.Response) -> T:
+        """Follows the location header in the response and returns the new object.
+        If new object is of the same class, updates the current object with the new one.
+        """
         location = response.headers.get("Location")
         if location:
             logger.debug(f"Location of new object: {location}")

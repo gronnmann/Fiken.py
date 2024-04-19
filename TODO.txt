@@ -9,3 +9,4 @@
 - test auto selecting POST/PUT
 - maybe remove _getFromURL and use the other method?
 - when checking POST classes, check if is_new is @attribute. Maybe just try accessing it without calling?
+- add patch method

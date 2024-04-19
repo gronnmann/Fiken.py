@@ -8,7 +8,7 @@ from urllib3.connection import HTTPConnection
 
 from fiken_py.fiken_object import FikenObject
 from fiken_py.models import UserInfo, Company, BankAccount, BankAccountCreateRequest, Contact, ContactPerson, \
-    ProductSalesReportRequest, Product, Transaction, JournalEntry, Account, JournalEntryRequest
+    ProductSalesReportRequest, Product, Transaction, JournalEntry, Account, JournalEntryRequest, InboxDocumentRequest
 from fiken_py.fiken_types import BankAccountType, JournalEntryLine, ProductVatType
 
 dotenv.load_dotenv(".env")
@@ -180,6 +180,18 @@ def test_create_get_edit_get_and_delete_product():
     print(product_get)
 
 
+def upload_and_read_dummy_pdf():
+    with open("dummy.pdf", "rb") as f:
+        file_bytes = f.read()
+
+    # inbox_document = InboxDocumentRequest(name="Testdokument", filename="dummy_doc.pdf", file=file_bytes,
+    #                                       description="Dette er en test")
+
+    inbox_document = InboxDocumentRequest.from_filename(name="Testdokument", filename="dummy.pdf", description="Dette er en test")
+
+    doc = inbox_document.save(companySlug='fiken-demo-drage-og-elefant-as')
+    print(doc)
+
 if __name__ == "__main__":
     # get_bank_accounts()
     # create_and_edit_contact()
@@ -193,8 +205,9 @@ if __name__ == "__main__":
     requests_log.setLevel(logging.DEBUG)
     requests_log.propagate = True
 
-    # HTTPConnection.debuglevel = 1
+    HTTPConnection.debuglevel = 1
 
     # get_transactions()
     # test_creating_journal_entry()
-    test_create_get_edit_get_and_delete_product()
+    # test_create_get_edit_get_and_delete_product()
+    upload_and_read_dummy_pdf()

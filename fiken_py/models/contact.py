@@ -4,7 +4,7 @@ from typing import Optional, List
 from pydantic import BaseModel
 
 from fiken_py.fiken_object import FikenObject
-from fiken_py.fiken_types import Address, Attachment
+from fiken_py.fiken_types import Address, Attachment, Note
 from fiken_py.models import ContactPerson
 
 
@@ -31,7 +31,7 @@ class Contact(BaseModel, FikenObject):
     supplier: Optional[bool] = False
     bankAccountNumber: Optional[str] = None
     contactPerson: Optional[List[ContactPerson]] = []
-    notes: List[str] = []
+    notes: List[Note] = []
     currency: Optional[str] = None
     language: Optional[str] = None
     inactive: Optional[bool] = False

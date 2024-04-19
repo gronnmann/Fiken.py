@@ -1,6 +1,6 @@
 from datetime import date
 from enum import Enum
-from typing import Optional
+from typing import Optional, Union
 
 from pydantic import BaseModel, field_validator
 
@@ -8,6 +8,7 @@ from pydantic import BaseModel, field_validator
 class CaseInsensitiveEnum(str, Enum):
     """Enum that matches values case-insensitively.
     Used in places API returns values non-consistently."""
+
     @classmethod
     def _missing_(cls, value: str):
         for member in cls:
@@ -23,20 +24,34 @@ class CompanyVatType(str, Enum):
     BI_MONTHLY = 'bi-monthly'
 
 
-class ProductVatType(CaseInsensitiveEnum):
+class VatTypeProduct(CaseInsensitiveEnum):
     NONE = 'NONE'
     LOW = 'LOW'
     MEDIUM = 'MEDIUM'
     HIGH = 'HIGH'
     RAW_FISH = 'RAW_FISH'
 
-    # Sales
+
+class VatTypeProductSale(CaseInsensitiveEnum):
+    NONE = 'NONE'
+    LOW = 'LOW'
+    MEDIUM = 'MEDIUM'
+    HIGH = 'HIGH'
+    RAW_FISH = 'RAW_FISH'
+
     EXEMPT_IMPORT_EXPORT = 'EXEMPT_IMPORT_EXPORT'
     EXEMPT = 'EXEMPT'
     OUTSIDE = 'OUTSIDE'
     EXEMPT_REVERSE = 'EXEMPT_REVERSE'
 
-    # Purcase
+
+class VatTypeProductPurcase(CaseInsensitiveEnum):
+    NONE = 'NONE'
+    LOW = 'LOW'
+    MEDIUM = 'MEDIUM'
+    HIGH = 'HIGH'
+    RAW_FISH = 'RAW_FISH'
+
     HIGH_DIRECT = 'HIGH_DIRECT'
     HIGH_BASIS = 'HIGH_BASIS'
     MEDIUM_DIRECT = 'MEDIUM_DIRECT'
@@ -99,3 +114,37 @@ class JournalEntryLine(BaseModel):
     creditVatCode: Optional[int] = None  # TODO - code the vat codes?
     projectId: Optional[list] = None  # TODO - find out what list this is
     lastModifiedDate: Optional[date] = None
+
+
+class Payment(BaseModel):
+    description: Optional[str] = None
+    paymentId: Optional[int] = None
+    date: date
+    account: str  # TODO - update with account type
+    amount: int
+    amountInNok: Optional[int] = None
+    currency: Optional[str] = None
+    fee: Optional[int] = None
+
+
+class SaleKind(str, Enum):
+    CASH_SALE = 'cash_sale'
+    INVOICE = 'invoice'
+    EXTERNAL_INVOICE = 'external_invoice'
+
+
+class OrderLine(BaseModel):
+    description: Optional[str] = None
+    netPrice: Optional[int] = None
+    vat: Optional[int] = None
+    account: Optional[Union[str,int]] = None  # TODO - update with account type
+    vatType: VatTypeProductSale
+    netPriceInCurrency: Optional[int] = None
+    vatInCurrency: Optional[int] = None
+    projectId: Optional[int] = None
+
+
+class Note(BaseModel):
+    description: Optional[str] = None
+    author: Optional[str] = None
+    note: Optional[str] = None

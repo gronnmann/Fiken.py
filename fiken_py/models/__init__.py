@@ -9,3 +9,5 @@ from .product_sales_report import ProductSalesReport, ProductSalesReportRequest
 from .transaction import Transaction, JournalEntryRequest
 from .journal_entry import JournalEntry
 from .inbox_document import InboxDocument, InboxDocumentRequest
+from .project import Project, ProjectRequest
+from .sale import Sale, SaleRequest

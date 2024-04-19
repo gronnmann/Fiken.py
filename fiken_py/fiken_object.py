@@ -113,9 +113,10 @@ class FikenObject:
         :return: None or the new object
         """
 
-        if self._get_method_base_URL(RequestMethod.POST) is not None:
+        if self._get_method_base_URL(RequestMethod.PUT) is not None:
             if self.is_new is None:
-                raise NotImplementedError(f"Object {self.__class__.__name__} has POST path specified, but no is_new method")
+                raise NotImplementedError(
+                    f"Object {self.__class__.__name__} has PUT path specified, but no is_new method")
 
         use_post = self.is_new if self.is_new is not None else True
         used_method = RequestMethod.POST if use_post else RequestMethod.PUT
@@ -126,7 +127,7 @@ class FikenObject:
 
         return self._follow_location_and_update_class(response)
 
-    def _follow_location_and_update_class(self, response: requests.Response) -> T:
+    def _follow_location_and_update_class(self, response: requests.Response) -> None | T:
         """Follows the location header in the response and returns the new object.
         If new object is of the same class, updates the current object with the new one.
         """

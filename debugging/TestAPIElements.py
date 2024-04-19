@@ -1,3 +1,4 @@
+import datetime
 import logging
 import os
 import time
@@ -8,8 +9,9 @@ from urllib3.connection import HTTPConnection
 
 from fiken_py.fiken_object import FikenObject
 from fiken_py.models import UserInfo, Company, BankAccount, BankAccountCreateRequest, Contact, ContactPerson, \
-    ProductSalesReportRequest, Product, Transaction, JournalEntry, Account, JournalEntryRequest, InboxDocumentRequest
-from fiken_py.fiken_types import BankAccountType, JournalEntryLine, ProductVatType
+    ProductSalesReportRequest, Product, Transaction, JournalEntry, Account, JournalEntryRequest, InboxDocumentRequest, \
+    ProjectRequest, SaleRequest
+from fiken_py.fiken_types import BankAccountType, JournalEntryLine, VatTypeProduct, SaleKind, OrderLine
 
 dotenv.load_dotenv(".env")
 
@@ -157,7 +159,7 @@ def test_creating_journal_entry():
 def test_create_get_edit_get_and_delete_product():
     random_str = "Some random string: " + str(random())[:5]
 
-    product = Product(name=random_str, vatType=ProductVatType.HIGH,
+    product = Product(name=random_str, vatType=VatTypeProduct.HIGH,
                       incomeAccount="3000")
     product.save(companySlug='fiken-demo-drage-og-elefant-as')
     print(product)
@@ -192,6 +194,66 @@ def upload_and_read_dummy_pdf():
     doc = inbox_document.save(companySlug='fiken-demo-drage-og-elefant-as')
     print(doc)
 
+
+def create_project():
+    customers = Contact.getAll(companySlug='fiken-demo-drage-og-elefant-as', name="FikenPy Bruker")
+    print(len(customers))
+    if len(customers) == 0:
+        contact = Contact(name="FikenPy Bruker")
+        contact.customer = True
+        contact.save(companySlug='fiken-demo-drage-og-elefant-as')
+    else:
+        contact = customers[0]
+
+    proj = ProjectRequest(name="Et prosjekt",
+                          number=1,
+                          description="Dette er et prosjekt", startDate=datetime.date.today())
+
+    proj = proj.save(companySlug='fiken-demo-drage-og-elefant-as')
+    print(proj)
+
+    proj.delete(companySlug='fiken-demo-drage-og-elefant-as')
+
+
+def create_sale():
+    customers = Contact.getAll(companySlug='fiken-demo-drage-og-elefant-as', name="FikenPy Bruker")
+    print(len(customers))
+    if len(customers) == 0:
+        contact = Contact(name="FikenPy Bruker")
+        contact.customer = True
+        contact.save(companySlug='fiken-demo-drage-og-elefant-as')
+    else:
+        contact = customers[0]
+
+    acc = BankAccount.getAll(companySlug='fiken-demo-drage-og-elefant-as')[0]
+
+    print("Using customer ", contact)
+
+    order_line = OrderLine(
+        vatType=VatTypeProduct.HIGH,
+        netPrice=1000,
+        description="Testprodukt",
+        account=3000,
+    )
+
+    req = SaleRequest(
+        date=datetime.date.today(),
+        dueDate="2024-04-24",
+        kind=SaleKind.CASH_SALE,
+        lines=[order_line],
+        currency="NOK",
+        customerId=contact.contactId,
+        totalPaid=1000,
+        saleNumber="TRALALA",
+        paymentAccount=acc.bankAccountNumber,
+        paymentDate=datetime.date.today(),
+        paymentFee=0,
+    )
+
+    sale = req.save(companySlug='fiken-demo-drage-og-elefant-as')
+
+    print(sale)
+
 if __name__ == "__main__":
     # get_bank_accounts()
     # create_and_edit_contact()
@@ -205,9 +267,11 @@ if __name__ == "__main__":
     requests_log.setLevel(logging.DEBUG)
     requests_log.propagate = True
 
-    HTTPConnection.debuglevel = 1
+    # HTTPConnection.debuglevel = 1
 
     # get_transactions()
     # test_creating_journal_entry()
     # test_create_get_edit_get_and_delete_product()
     upload_and_read_dummy_pdf()
+    # create_project()
+    # create_sale()

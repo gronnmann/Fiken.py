@@ -89,11 +89,11 @@ class AttachmentType(str, Enum):
 
 
 class Attachment(BaseModel):
-    identifier: str
-    downloadUrl: str
-    downloadUrlWithFikenNormalUserCredentials: str
+    identifier: Optional[str] = None
+    downloadUrl: Optional[str] = None
+    downloadUrlWithFikenNormalUserCredentials: Optional[str] = None
     comment: Optional[str] = None
-    type: AttachmentType
+    type: Optional[AttachmentType] = None
 
 
 class ProductSalesLine(BaseModel):

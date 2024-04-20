@@ -2,12 +2,12 @@ from typing import Optional, ClassVar
 
 from pydantic import BaseModel
 
-from fiken_py.fiken_object import FikenObject, FikenObjectRequest
+from fiken_py.fiken_object import FikenObjectAttachable
 from fiken_py.fiken_types import Attachment, JournalEntryLine
 from datetime import date
 
 
-class JournalEntry(BaseModel, FikenObject):
+class JournalEntry(BaseModel, FikenObjectAttachable):
     _GET_PATH_SINGLE = '/companies/{companySlug}/journalEntries/{journalEntryId}'
     _GET_PATH_MULTIPLE = '/companies/{companySlug}/journalEntries/'
 

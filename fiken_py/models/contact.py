@@ -3,12 +3,13 @@ from typing import Optional, List
 
 from pydantic import BaseModel
 
-from fiken_py.fiken_object import FikenObject
+from fiken_py.errors import UnsupportedMethodException
+from fiken_py.fiken_object import FikenObjectAttachable
 from fiken_py.fiken_types import Address, Attachment, Note
 from fiken_py.models import ContactPerson
 
 
-class Contact(BaseModel, FikenObject):
+class Contact(BaseModel, FikenObjectAttachable):
     _GET_PATH_SINGLE = '/companies/{companySlug}/contacts/{contactId}'
     _GET_PATH_MULTIPLE = '/companies/{companySlug}/contacts/'
     _POST_PATH = '/companies/{companySlug}/contacts/'
@@ -43,3 +44,8 @@ class Contact(BaseModel, FikenObject):
     @property
     def is_new(self):
         return self.contactId is None
+
+    # Contact is for some reason only object with no get_attachments method
+    @classmethod
+    def get_attachments_cls(cls, instance: FikenObjectAttachable = None, **kwargs) -> list[Attachment]:
+        raise UnsupportedMethodException("Contact does not support listing attachments.")

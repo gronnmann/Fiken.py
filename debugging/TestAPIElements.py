@@ -189,7 +189,8 @@ def upload_and_read_dummy_pdf():
     # inbox_document = InboxDocumentRequest(name="Testdokument", filename="dummy_doc.pdf", file=file_bytes,
     #                                       description="Dette er en test")
 
-    inbox_document = InboxDocumentRequest.from_filename(name="Testdokument", filename="dummy.pdf", description="Dette er en test")
+    inbox_document = InboxDocumentRequest.from_filepath(name="Testdokument", filepath="dummy.pdf",
+                                                        description="Dette er en test")
 
     doc = inbox_document.save(companySlug='fiken-demo-drage-og-elefant-as')
     print(doc)
@@ -254,6 +255,39 @@ def create_sale():
 
     print(sale)
 
+
+def create_contact_and_add_attachment():
+    contacts = Contact.getAll(companySlug='fiken-demo-drage-og-elefant-as', name="Testbruker")
+    contact = contacts[0]
+
+    # print(contact)
+    # with open("dummy.pdf", "rb") as f:
+    #     file_bytes = f.read()
+    #
+    # contact.add_attachment_bytes("attachment_name.pdf", file_bytes, "Dette er en test av add_attachment_bytes"
+    #                              , companySlug='fiken-demo-drage-og-elefant-as')
+    # contact.add_attachment("dummy.pdf", "add_attachment_test.pdf", companySlug='fiken-demo-drage-og-elefant-as')
+
+    atts = contact.get_attachments(companySlug='fiken-demo-drage-og-elefant-as')
+    for a in atts:
+        print(a)
+
+
+def find_journal_entry_and_add_attachment():
+    entries = JournalEntry.getAll(companySlug='fiken-demo-drage-og-elefant-as', description="Testjournalpost")
+    entry = entries[0]
+
+    with open("dummy.pdf", "rb") as f:
+        file_bytes = f.read()
+
+    entry.add_attachment_bytes("attachment_name.pdf", file_bytes, "Dette er en test av add_attachment_bytes"
+                               , companySlug='fiken-demo-drage-og-elefant-as')
+
+    atts = entry.get_attachments(companySlug='fiken-demo-drage-og-elefant-as')
+    for a in atts:
+        print(a)
+
+
 if __name__ == "__main__":
     # get_bank_accounts()
     # create_and_edit_contact()
@@ -267,11 +301,13 @@ if __name__ == "__main__":
     requests_log.setLevel(logging.DEBUG)
     requests_log.propagate = True
 
-    # HTTPConnection.debuglevel = 1
+    HTTPConnection.debuglevel = 0
 
     # get_transactions()
     # test_creating_journal_entry()
     # test_create_get_edit_get_and_delete_product()
-    upload_and_read_dummy_pdf()
+    # upload_and_read_dummy_pdf()
     # create_project()
     # create_sale()
+    # create_contact_and_add_attachment()
+    find_journal_entry_and_add_attachment()

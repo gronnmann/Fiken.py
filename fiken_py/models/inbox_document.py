@@ -1,3 +1,4 @@
+import os
 from datetime import datetime
 from typing import Optional, ClassVar
 
@@ -29,30 +30,22 @@ class InboxDocumentRequest(FikenObjectRequest, BaseModel):
     file: bytes
 
     @classmethod
-    def from_filename(cls, name: str, filename: str, description: str):
-        with open(filename, 'rb') as f:
-            return cls(name=name, filename=filename, description=description, file=f.read())
+    def from_filepath(cls, name: str, filepath: str, description: str):
+        if not os.path.exists(filepath):
+            raise FileNotFoundError(f"File {filepath} does not exist")
+
+        with open(filepath, 'rb') as f:
+            return cls(name=name, filename=filepath, description=description, file=f.read())
 
     def save(self, **kwargs):
-        if self._AUTH_TOKEN is None:
-            raise ValueError("Auth token not set")
 
-        # using multipart/form-data
-
-        url = self._get_method_base_URL(RequestMethod.POST)
-
-        url = self._preprocess_placeholders(url)
-        url, kwargs = self._extract_placeholders(url, **kwargs)
-
-        headers = self._HEADERS.copy()
-        headers.pop("Content-Type")
-
-        # send request
-        response = requests.post(url, headers=headers, files={
+        file_data = {
             'file': (self.filename, self.file),
             'filename': (None, self.filename),
             'description': (None, self.description),
             'name': (None, self.name)
-        })
+        }
+
+        response = self._execute_file_upload_request(file_data, **kwargs)
 
         return self._follow_location_and_update_class(response)

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import logging
+import os.path
 import re
 from enum import Enum
 from typing import Any, TypeVar, ClassVar
@@ -10,6 +11,7 @@ import platform
 from importlib.metadata import version
 
 from fiken_py.errors import UnsupportedMethodException
+from fiken_py.fiken_types import Attachment
 
 T = TypeVar('T', bound='FikenObject')
 
@@ -251,6 +253,34 @@ class FikenObject:
 
         return response
 
+    @classmethod
+    def _execute_file_upload_request(cls, file_data: dict[str, tuple[Any | None, Any]],
+                                     url: str = None, instance: FikenObject = None,
+                                     **kwargs: Any) -> requests.Response:
+        if cls._AUTH_TOKEN is None:
+            raise ValueError("Auth token not set")
+
+        if url is None:
+            url = cls._get_method_base_URL(RequestMethod.POST)
+
+        if url is None:
+            raise UnsupportedMethodException(f"Object {cls.__name__} does not support POST")
+
+        # using multipart/form-data
+
+        if instance is not None:
+            url = instance._preprocess_placeholders(url)
+        url, kwargs = cls._extract_placeholders(url, **kwargs)
+
+        headers = cls._HEADERS.copy()
+        headers.pop("Content-Type")
+
+        response = requests.post(url, headers=headers, files=file_data)
+
+        response.raise_for_status()
+
+        return response
+
     @property
     def is_new(self) -> None | bool:
         """
@@ -282,3 +312,74 @@ class FikenObjectRequest(FikenObject):
             raise ValueError("BASE_CLASS not set")
 
         return super().save(**kwargs)
+
+
+class FikenObjectAttachable(FikenObject):
+
+    @classmethod  # TODO - some kind of @classproperty ?
+    def _attachment_url(cls):
+        return cls._get_method_base_URL(RequestMethod.GET) + "/attachments"
+
+    @classmethod
+    def get_attachments_cls(cls, instance: FikenObjectAttachable = None, **kwargs) -> list[Attachment]:
+        url = cls._attachment_url()
+
+        response = cls._execute_method(RequestMethod.GET, url, instance, **kwargs)
+
+        data = response.json()
+
+        return [Attachment(**item) for item in data]
+
+    def get_attachments(self, **kwargs) -> list[Attachment]:
+        """Gets all attachments for the resource.
+
+        """
+        return self.__class__.get_attachments_cls(self, **kwargs)
+
+    @classmethod
+    def add_attachment_bytes_cls(cls, filename: str, data: bytes, comment: str = None,
+                                 instance: FikenObjectAttachable = None, **kwargs):
+        """Adds an attachment in form of bytes."""
+        if filename is None or data is None:
+            raise ValueError("Filename and/or data must be provided")
+
+        if '.' not in filename:
+            raise ValueError("Filename must have an extension.")
+
+        sent_data = {
+            'file': (filename, data),
+            'filename': (None, filename),
+            'comment': (None, comment),
+        }
+
+        response = cls._execute_file_upload_request(sent_data, instance=instance, url=cls._attachment_url(), **kwargs)
+
+        response.raise_for_status()
+
+        if response.status_code != 201:
+            return False
+        return True
+
+    @classmethod
+    def add_attachment_cls(cls, filepath, filename: str = None, comment: str = None,
+                           instance: FikenObjectAttachable = None, **kwargs):
+        """Adds an attachment."""
+        if filepath is None:
+            raise ValueError("A path to the attachment must be provided")
+
+        if not os.path.exists(filepath):
+            raise FileNotFoundError(f"File {filepath} does not exist")
+
+        with open(filepath, 'rb') as f:
+            file_data = f.read()
+
+        if filename is None:
+            filename = filepath.split('/')[-1]
+
+        return cls.add_attachment_bytes_cls(filename, file_data, comment, instance, **kwargs)
+
+    def add_attachment(self, filepath, filename: str = None, comment: str = None, **kwargs):
+        return self.add_attachment_cls(filepath, filename, comment, instance=self, **kwargs)
+
+    def add_attachment_bytes(self, filename: str, data: bytes, comment: str = None, **kwargs):
+        return self.add_attachment_bytes_cls(filename, data, comment, instance=self, **kwargs)

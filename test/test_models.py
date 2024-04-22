@@ -130,11 +130,11 @@ def _generate_kwargs_and_url(obj, url) -> tuple[dict, str]:
 
 
 def _url_get_one(obj):
-    return f"{FikenObject._PATH_BASE}{obj._GET_PATH_SINGLE.default}"
+    return f"{FikenObject.PATH_BASE}{obj._GET_PATH_SINGLE.default}"
 
 
 def _url_get_multiple(obj):
-    return f"{FikenObject._PATH_BASE}{obj._GET_PATH_MULTIPLE.default}"
+    return f"{FikenObject.PATH_BASE}{obj._GET_PATH_MULTIPLE.default}"
 
 
 def _compare_object_to_sample_data(obj, sample_data):

@@ -19,6 +19,13 @@ Then, set the token using the following code:
 FikenObject.set_auth_token('{your_token_here}')
 ```
 
+If you wish, you can also set the company slug, as its required for most API calls.
+```python
+FikenObject.set_company_slug('{your_company_slug_here}')
+```
+This is not required, and can be done on a per-call basis (using the kwargs argument).
+It can also be overridden the same way.
+
 ### General syntax
 All objects reside in the 'fiken_py.models' module.
 Mostly correspond to the objects in the Fiken API.

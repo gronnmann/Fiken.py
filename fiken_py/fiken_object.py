@@ -10,6 +10,8 @@ import requests
 import platform
 from importlib.metadata import version
 
+from pydantic import BaseModel
+
 from fiken_py.errors import UnsupportedMethodException
 from fiken_py.fiken_types import Attachment
 
@@ -24,6 +26,7 @@ class RequestMethod(Enum):
     POST = "POST",
     PUT = "PUT",
     DELETE = "DELETE",
+    PATCH = "PATCH",
 
 
 class FikenObject:
@@ -44,10 +47,11 @@ class FikenObject:
 
     Use {placeholder} for the object ID.
     """
-    _PATH_BASE = 'https://api.fiken.no/api/v2'
+    PATH_BASE: ClassVar[str] = 'https://api.fiken.no/api/v2'
     _AUTH_TOKEN = None
 
     _HEADERS = {}
+    _COMPANY_SLUG = None
 
     BASE_CLASS = None  # For FikenObjectRequest and save not to give AttributeError
 
@@ -60,6 +64,10 @@ class FikenObject:
             'User-Agent': 'FikenPy/%s (Python %s)' % (version('fiken_py'), platform.python_version()),
             'Content-Type': 'application/json'
         }
+
+    @classmethod
+    def set_company_slug(cls, company_slug):
+        cls._COMPANY_SLUG = company_slug
 
     @classmethod
     def get(cls, **kwargs: Any) -> T:
@@ -80,7 +88,7 @@ class FikenObject:
         if cls._GET_PATH_MULTIPLE.default is None:
             raise UnsupportedMethodException(f"Object {cls.__name__} does not support getting list")
 
-        url = f'{cls._PATH_BASE}{cls._GET_PATH_MULTIPLE.default}'
+        url = f'{cls.PATH_BASE}{cls._GET_PATH_MULTIPLE.default}'
         url, kwargs = cls._extract_placeholders(url, **kwargs)
 
         response = requests.get(url, headers=cls._HEADERS, params=kwargs)
@@ -123,7 +131,7 @@ class FikenObject:
         use_post = self.is_new if self.is_new is not None else True
         used_method = RequestMethod.POST if use_post else RequestMethod.PUT
 
-        response = self._execute_method(used_method, instance=self, **kwargs)
+        response = self._execute_method(used_method, dumped_object=self, **kwargs)
 
         response.raise_for_status()
 
@@ -150,7 +158,7 @@ class FikenObject:
 
     def delete(self, **kwargs: Any) -> bool:
 
-        response = self._execute_method(RequestMethod.DELETE, instance=self, **kwargs)
+        response = self._execute_method(RequestMethod.DELETE, dumped_object=self, **kwargs)
 
         response.raise_for_status()
 
@@ -166,8 +174,13 @@ class FikenObject:
     def _extract_placeholders(cls, path: str, **kwargs: Any) -> tuple[str, dict[str, Any]]:
         """
         Extract placeholders from the path and replace them with the values in kwargs.
+        Also fills out companySlug if not provided.
         :returns the formatted path, and the remaining kwargs
         """
+
+        if kwargs.get('companySlug') is None and cls._COMPANY_SLUG is not None:
+            kwargs['companySlug'] = cls._COMPANY_SLUG
+
         placeholders = cls._PLACEHOLDER_REGEX.findall(path)
 
         for placeholder in placeholders:
@@ -207,12 +220,11 @@ class FikenObject:
             attr_name = f"_{method.name}_PATH"
 
         if hasattr(cls, attr_name):
-            return f"{cls._PATH_BASE}{getattr(cls, attr_name).default}"
+            return f"{cls.PATH_BASE}{getattr(cls, attr_name).default}"
         return None
 
     @classmethod
-    def _execute_method(cls, method: RequestMethod, url: str = None, instance: FikenObject = None,
-                        dumped_object = None,
+    def _execute_method(cls, method: RequestMethod, url: str = None, dumped_object: FikenObject | dict = None,
                         **kwargs: Any) -> requests.Response:
         """Executes a method on the object
         :method: RequestMethod - the method to execute
@@ -220,9 +232,6 @@ class FikenObject:
         :instance: FikenObject - the instance to execute the method on. If None, will be ignored
         :kwargs: dict - the arguments to pass to the method
         """
-
-        if (dumped_object is not None) and (instance is not None):
-            raise ValueError("Can't have both dumped_object and instance")
 
         if cls._AUTH_TOKEN is None:
             raise ValueError("Auth token not set")
@@ -233,8 +242,8 @@ class FikenObject:
         if url is None:
             raise UnsupportedMethodException(f"Object {cls.__name__} does not support {method.name}")
 
-        if instance is not None:
-            url = instance._preprocess_placeholders(url)
+        if issubclass(dumped_object.__class__, FikenObject):
+            url = dumped_object._preprocess_placeholders(url)
 
         url, kwargs = cls._extract_placeholders(url, **kwargs)
 
@@ -243,11 +252,15 @@ class FikenObject:
             method_name = "GET"
 
         request_data = None
-        if method in [RequestMethod.POST, RequestMethod.PUT]:
-            if dumped_object is not None:
+        if method in [RequestMethod.POST, RequestMethod.PUT, RequestMethod.PATCH]:
+            if issubclass(dumped_object.__class__, BaseModel):
+                dumped_object: BaseModel
                 request_data = dumped_object.model_dump_json(by_alias=True)
             else:
-                request_data = instance.model_dump_json(by_alias=True)
+                request_data = dumped_object
+                # TODO - bruk en felles instance. Sjekk om er av type BaseModel
+                # Om ikke, send direkte om type dict. Elles send en feil.
+                # Kun preprocess placeholders om type FikenObject.
 
         logging.debug(f"""Executing {method_name} on {cls.__name__} at {url}
         params: {kwargs}

@@ -34,7 +34,7 @@ def test_get_method_base_url():
         _POST_PATH = '/companies/{companySlug}/tests/'
         _PUT_PATH = '/companies/{companySlug}/test/{testId}'
 
-    base_url = FikenObject._PATH_BASE
+    base_url = FikenObject.PATH_BASE
 
     assert TestObject._get_method_base_URL(RequestMethod.GET) == base_url + '/companies/{companySlug}/test/{testId}'
     assert TestObject._get_method_base_URL(RequestMethod.GET_MULTIPLE) == base_url + '/companies/{companySlug}/tests/'

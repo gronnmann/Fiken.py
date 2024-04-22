@@ -12,7 +12,7 @@ from sample_data_reader import get_sample_from_json
 
 from fiken_py.fiken_object import FikenObject
 from fiken_py.models import UserInfo, Account, BankAccount, Company, Contact, ContactPerson, Product, \
-    ProductSalesReport, ProductSalesReportRequest, Transaction, JournalEntry, InboxDocument, Sale, Project
+    ProductSalesReport, ProductSalesReportRequest, Transaction, JournalEntry, InboxDocument, Sale, Project, Invoice
 
 
 @pytest.fixture(autouse=True)
@@ -40,7 +40,8 @@ def m():
     Transaction,
     InboxDocument,
     Project,
-    Sale
+    Sale,
+    Invoice,
 ])
 def test_object_methods(object: FikenObject, m: requests_mock.Mocker):
     print(f"---- TESTING {object.__name__} ----")

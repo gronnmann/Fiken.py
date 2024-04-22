@@ -2,7 +2,7 @@ from datetime import date
 from enum import Enum
 from typing import Optional, Union
 
-from pydantic import BaseModel, field_validator
+from pydantic import BaseModel, field_validator, Field
 
 
 class CaseInsensitiveEnum(str, Enum):
@@ -137,7 +137,7 @@ class OrderLine(BaseModel):
     description: Optional[str] = None
     netPrice: Optional[int] = None
     vat: Optional[int] = None
-    account: Optional[Union[str,int]] = None  # TODO - update with account type
+    account: Optional[Union[str, int]] = None  # TODO - update with account type
     vatType: VatTypeProductSale
     netPriceInCurrency: Optional[int] = None
     vatInCurrency: Optional[int] = None
@@ -148,3 +148,47 @@ class Note(BaseModel):
     description: Optional[str] = None
     author: Optional[str] = None
     note: Optional[str] = None
+
+
+class InvoiceLineBase(BaseModel):
+    net: Optional[int] = None
+    vat: Optional[int] = None
+    vatType: Optional[VatTypeProduct] = None
+    gross: Optional[int] = None
+    vatInPercent: Optional[int] = None
+    unitPrice: Optional[int] = None
+    discount: Optional[int] = None
+    productId: Optional[int] = None
+    productName: Optional[str] = None
+    description: Optional[str] = Field(None, max_length=200)
+    comment: Optional[str] = Field(None, max_length=200)
+    incomeAccount: Optional[Union[str|int]] = None
+
+
+class InvoiceLineRequest(InvoiceLineBase):
+    # TODO - validate - either product line, OR text line WITH price AND vat
+    quantity: int
+    # TODO - only allow productName when productId not provided
+    # TODO - if no product id, force incomeAccount
+
+
+class InvoiceLine(InvoiceLineBase):
+    netInNok: Optional[int] = None
+    vatInNok: Optional[int] = None
+    grossInNok: Optional[int] = None
+    quantity: Optional[int] = None
+
+
+class SendInvoiceMethod(str, Enum):
+    SMS = "sms"
+    EMAIL = "email"
+    EHF = "ehf"
+    EFAKTURA = "efaktura"
+    LETTER = "letter"
+    AUTO = "auto"
+
+
+class SendInvoiceEmailOption(str, Enum):
+    DOCUMENT_LINK = "document_link"
+    ATTACHMENT = "attachment"
+    AUTO = "auto"

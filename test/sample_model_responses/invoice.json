@@ -30,7 +30,7 @@
     {
       "net": 4500,
       "vat": 500,
-      "vatType": "string",
+      "vatType": "HIGH",
       "gross": 5000,
       "netInNok": 4500,
       "vatInNok": 500,
@@ -46,7 +46,7 @@
       "incomeAccount": "3000"
     }
   ],
-  "currency": "string",
+  "currency": "NOK",
   "bankAccountNumber": "11112233334",
   "sentManually": false,
   "invoicePdf": {
@@ -147,7 +147,7 @@
         "netPrice": 4500,
         "vat": 500,
         "account": 1500,
-        "vatType": "string",
+        "vatType": "HIGH",
         "netPriceInCurrency": 4500,
         "vatInCurrency": 500
       }

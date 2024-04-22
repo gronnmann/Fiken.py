@@ -10,8 +10,10 @@ from urllib3.connection import HTTPConnection
 from fiken_py.fiken_object import FikenObject
 from fiken_py.models import UserInfo, Company, BankAccount, BankAccountCreateRequest, Contact, ContactPerson, \
     ProductSalesReportRequest, Product, Transaction, JournalEntry, Account, JournalEntryRequest, InboxDocumentRequest, \
-    ProjectRequest, SaleRequest
-from fiken_py.fiken_types import BankAccountType, JournalEntryLine, VatTypeProduct, SaleKind, OrderLine
+    ProjectRequest, SaleRequest, InvoiceRequest
+from fiken_py.fiken_types import BankAccountType, JournalEntryLine, VatTypeProduct, SaleKind, OrderLine, \
+    InvoiceLineRequest, SendInvoiceMethod, SendInvoiceEmailOption
+from fiken_py.models.invoice import SendInvoiceRequest, Invoice
 
 dotenv.load_dotenv(".env")
 
@@ -288,6 +290,65 @@ def find_journal_entry_and_add_attachment():
         print(a)
 
 
+def create_and_invoice_user():
+    customer = Contact.getAll(companySlug='fiken-demo-drage-og-elefant-as', name="FikenPy Bruker")
+    if len(customer) == 0:
+        customer = Contact(name="FikenPy Bruker")
+    else:
+        customer = customer[0]
+    customer.customer = True
+    customer.email = "barti.mruk@gmail.com"
+    customer.save(companySlug='fiken-demo-drage-og-elefant-as')
+
+    bankAccount = BankAccount.getAll(companySlug='fiken-demo-drage-og-elefant-as')[0]
+    print(bankAccount)
+
+    product = Product.getAll(companySlug='fiken-demo-drage-og-elefant-as', name="Et produkt")
+    if len(product) == 0:
+        product = Product(name="Et produkt", vatType=VatTypeProduct.NONE, incomeAccount="3000",
+                          unitPrice=1000)
+        product.save(companySlug='fiken-demo-drage-og-elefant-as')
+    else:
+        product = product[0]
+
+    print(product)
+
+    invoice_line = InvoiceLineRequest(
+        vatType=VatTypeProduct.NONE,
+        quantity=5,
+        productId=product.productId,
+    )
+
+    invoices = Invoice.getAll(companySlug='fiken-demo-drage-og-elefant-as', customerId=customer.contactId)
+
+    if len(invoices) > 0:
+        invoice = invoices[0]
+    else:
+        invoice = InvoiceRequest(
+            issueDate=datetime.date.today(),
+            dueDate="2024-04-24",
+            lines=[invoice_line],
+            bankAccountCode=bankAccount.accountCode,
+            customerId=customer.contactId,
+            cash=False
+        )
+
+        invoice = invoice.save(companySlug='fiken-demo-drage-og-elefant-as')
+    print(invoice)
+
+    send_req = SendInvoiceRequest(
+        invoiceId=invoice.invoiceId,
+        method=[SendInvoiceMethod.EMAIL],
+        includeDocumentAttachments=False,
+        recipientName=customer.name,
+        message="Dette er en test av send_invoice",
+        emailSendOption=SendInvoiceEmailOption.AUTO
+    )
+
+    Invoice.send_to_customer(send_req, companySlug='fiken-demo-drage-og-elefant-as', invoice=invoice)
+
+
+
 if __name__ == "__main__":
     # get_bank_accounts()
     # create_and_edit_contact()
@@ -301,7 +362,7 @@ if __name__ == "__main__":
     requests_log.setLevel(logging.DEBUG)
     requests_log.propagate = True
 
-    HTTPConnection.debuglevel = 0
+    HTTPConnection.debuglevel = 1
 
     # get_transactions()
     # test_creating_journal_entry()
@@ -310,4 +371,5 @@ if __name__ == "__main__":
     # create_project()
     # create_sale()
     # create_contact_and_add_attachment()
-    find_journal_entry_and_add_attachment()
+    # find_journal_entry_and_add_attachment()
+    create_and_invoice_user()

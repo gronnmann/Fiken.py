@@ -212,6 +212,7 @@ class FikenObject:
 
     @classmethod
     def _execute_method(cls, method: RequestMethod, url: str = None, instance: FikenObject = None,
+                        dumped_object = None,
                         **kwargs: Any) -> requests.Response:
         """Executes a method on the object
         :method: RequestMethod - the method to execute
@@ -219,6 +220,9 @@ class FikenObject:
         :instance: FikenObject - the instance to execute the method on. If None, will be ignored
         :kwargs: dict - the arguments to pass to the method
         """
+
+        if (dumped_object is not None) and (instance is not None):
+            raise ValueError("Can't have both dumped_object and instance")
 
         if cls._AUTH_TOKEN is None:
             raise ValueError("Auth token not set")
@@ -240,7 +244,10 @@ class FikenObject:
 
         request_data = None
         if method in [RequestMethod.POST, RequestMethod.PUT]:
-            request_data = instance.model_dump_json(by_alias=True)
+            if dumped_object is not None:
+                request_data = dumped_object.model_dump_json(by_alias=True)
+            else:
+                request_data = instance.model_dump_json(by_alias=True)
 
         logging.debug(f"""Executing {method_name} on {cls.__name__} at {url}
         params: {kwargs}

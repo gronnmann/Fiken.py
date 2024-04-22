@@ -1,16 +1,19 @@
 import datetime
-from typing import Optional, ClassVar, Any
+from typing import Optional, ClassVar, Any, TypeVar
 
 import requests
 from pydantic import BaseModel, Field
 
+from fiken_py.errors import UnsupportedMethodException
 from fiken_py.fiken_object import FikenObject, FikenObjectRequest, RequestMethod, T
 from fiken_py.fiken_types import VatTypeProduct, Address, Attachment, InvoiceLineRequest, InvoiceLine, \
     SendInvoiceMethod, SendInvoiceEmailOption
 from fiken_py.models import Contact, Project, Sale
 
+Inv = TypeVar('Inv', bound='Invoice')
 
-class SendInvoiceRequest(BaseModel):
+
+class InvoiceSendRequest(BaseModel):
     method: list[SendInvoiceMethod]
     invoiceId: int
     includeDocumentAttachments: bool
@@ -22,6 +25,11 @@ class SendInvoiceRequest(BaseModel):
     mergeInvoiceAndAttachments: Optional[bool] = None
     organizationNumber: Optional[str] = None
     mobileNumber: Optional[str] = None
+
+
+class InvoiceUpdateRequest(BaseModel):
+    newDueDate: Optional[datetime.date] = None
+    sentManually: Optional[bool] = None
 
 
 class Invoice(FikenObject, BaseModel):
@@ -63,14 +71,26 @@ class Invoice(FikenObject, BaseModel):
     sale: Optional[Sale] = None,
     project: Optional[Project] = None
 
+    def save(self, **kwargs: Any) -> Invoice | None:
+        if self._get_method_base_URL(RequestMethod.PATCH) is None:
+            raise UnsupportedMethodException(f"Object {self.__class__.__name__} does not support PATCH")
+
+        payload = InvoiceUpdateRequest(**self.dict(exclude_unset=True))
+        response = self._execute_method(RequestMethod.PATCH, instance=self,
+                                        dumped_object=payload, **kwargs)
+
+        response.raise_for_status()
+
+        return self._follow_location_and_update_class(response)
+
     @classmethod
-    def send_to_customer(cls, invoice_request: SendInvoiceRequest, invoice=None, invoiceId=None, companySlug=None):
+    def send_to_customer(cls, invoice_request: InvoiceSendRequest, invoice=None, invoiceId=None, companySlug=None):
         url = cls._get_method_base_URL(RequestMethod.GET_MULTIPLE) + "/send"
 
         if invoice:
             invoiceId = invoice.invoiceId
 
-        response = cls._execute_method(RequestMethod.POST, url, dumped_object=invoice_request, companySlug=companySlug,
+        response = cls._execute_method(RequestMethod.POST, url, instance=invoice_request, companySlug=companySlug,
                                        invoiceId=invoiceId)
 
         if response.status_code != 200:
@@ -84,14 +104,13 @@ class Invoice(FikenObject, BaseModel):
 
         return response.json()['value']
 
-
     @classmethod
     def set_initial_counter(cls, counter: int) -> bool:
         """Set the default invoice counter to the given value
         :param counter: The value to set the counter to
         :return: True if the counter was set successfully, False otherwise"""
         url = cls.PATH_BASE + cls.COUNTER_PATH
-        response = cls._execute_method(RequestMethod.POST, url, dumped_object=dict({"value": counter}))
+        response = cls._execute_method(RequestMethod.POST, url, instance=dict({"value": counter}))
 
         if response.status_code != 201:
             return False

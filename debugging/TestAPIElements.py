@@ -10,10 +10,10 @@ from urllib3.connection import HTTPConnection
 from fiken_py.fiken_object import FikenObject
 from fiken_py.models import UserInfo, Company, BankAccount, BankAccountCreateRequest, Contact, ContactPerson, \
     ProductSalesReportRequest, Product, Transaction, JournalEntry, Account, JournalEntryRequest, InboxDocumentRequest, \
-    ProjectRequest, SaleRequest, InvoiceRequest
+    ProjectRequest, SaleRequest, InvoiceRequest, Project
 from fiken_py.fiken_types import BankAccountType, JournalEntryLine, VatTypeProduct, SaleKind, OrderLine, \
     InvoiceLineRequest, SendInvoiceMethod, SendInvoiceEmailOption
-from fiken_py.models.invoice import SendInvoiceRequest, Invoice
+from fiken_py.models.invoice import InvoiceSendRequest, Invoice
 
 dotenv.load_dotenv(".env")
 
@@ -337,7 +337,7 @@ def create_and_invoice_user():
     print(invoice)
     invoice.update_object(due_date="2024-04-29", companySlug='fiken-demo-drage-og-elefant-as')
 
-    send_req = SendInvoiceRequest(
+    send_req = InvoiceSendRequest(
         invoiceId=invoice.invoiceId,
         method=[SendInvoiceMethod.EMAIL],
         includeDocumentAttachments=False,
@@ -348,6 +348,21 @@ def create_and_invoice_user():
 
     Invoice.send_to_customer(send_req, companySlug='fiken-demo-drage-og-elefant-as', invoice=invoice)
 
+
+def get_and_edit_project():
+
+
+    # project = ProjectRequest(name="Et prosjekt",
+    #                          number="1",
+    #                          description="Dette er et prosjekt", startDate=datetime.date.today())
+    # project = project.save(companySlug='fiken-demo-drage-og-elefant-as')
+    # print(project)
+
+    project = Project.get(companySlug='fiken-demo-drage-og-elefant-as', projectId=5904217115)
+
+    project.name = "Endret prosjektnavn"
+    project.save(companySlug='fiken-demo-drage-og-elefant-as')
+    print(project)
 
 
 if __name__ == "__main__":
@@ -373,7 +388,8 @@ if __name__ == "__main__":
     # create_sale()
     # create_contact_and_add_attachment()
     # find_journal_entry_and_add_attachment()
-    create_and_invoice_user()
+    # create_and_invoice_user()
 
     # FikenObject.set_company_slug("fiken-demo-drage-og-elefant-as")
-    counter = Invoice.get_counter()
+    # counter = Invoice.get_counter()
+    get_and_edit_project()

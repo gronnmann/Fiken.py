@@ -11,4 +11,4 @@ from .journal_entry import JournalEntry
 from .inbox_document import InboxDocument, InboxDocumentRequest
 from .project import Project, ProjectRequest
 from .sale import Sale, SaleRequest
-from .invoice import Invoice, InvoiceRequest, InvoiceLineRequest
+from .invoice import Invoice, InvoiceRequest, InvoiceSendRequest

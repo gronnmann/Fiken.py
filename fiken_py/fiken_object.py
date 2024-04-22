@@ -131,7 +131,7 @@ class FikenObject:
         use_post = self.is_new if self.is_new is not None else True
         used_method = RequestMethod.POST if use_post else RequestMethod.PUT
 
-        response = self._execute_method(used_method, dumped_object=self, **kwargs)
+        response = self._execute_method(used_method, instance=self, **kwargs)
 
         response.raise_for_status()
 
@@ -158,7 +158,7 @@ class FikenObject:
 
     def delete(self, **kwargs: Any) -> bool:
 
-        response = self._execute_method(RequestMethod.DELETE, dumped_object=self, **kwargs)
+        response = self._execute_method(RequestMethod.DELETE, instance=self, **kwargs)
 
         response.raise_for_status()
 
@@ -224,12 +224,14 @@ class FikenObject:
         return None
 
     @classmethod
-    def _execute_method(cls, method: RequestMethod, url: str = None, dumped_object: FikenObject | dict = None,
+    def _execute_method(cls, method: RequestMethod, url: str = None, instance: FikenObject = None,
+                        dumped_object: BaseModel | dict = None,
                         **kwargs: Any) -> requests.Response:
         """Executes a method on the object
         :method: RequestMethod - the method to execute
         :url: str - the URL to execute the method on. If None, will be generated from the method
-        :instance: FikenObject - the instance to execute the method on. If None, will be ignored
+        :instance: - the FikenObject instance to populate url kwargs with and send (if dumped_object is not provided). If None, will be ignored
+        :dumped_object - the object to send as JSON. If None, instance will first be used, then field will be ignored
         :kwargs: dict - the arguments to pass to the method
         """
 
@@ -242,8 +244,8 @@ class FikenObject:
         if url is None:
             raise UnsupportedMethodException(f"Object {cls.__name__} does not support {method.name}")
 
-        if issubclass(dumped_object.__class__, FikenObject):
-            url = dumped_object._preprocess_placeholders(url)
+        if issubclass(instance.__class__, FikenObject):
+            url = instance._preprocess_placeholders(url)
 
         url, kwargs = cls._extract_placeholders(url, **kwargs)
 
@@ -253,14 +255,18 @@ class FikenObject:
 
         request_data = None
         if method in [RequestMethod.POST, RequestMethod.PUT, RequestMethod.PATCH]:
-            if issubclass(dumped_object.__class__, BaseModel):
-                dumped_object: BaseModel
-                request_data = dumped_object.model_dump_json(by_alias=True)
-            else:
-                request_data = dumped_object
-                # TODO - bruk en felles instance. Sjekk om er av type BaseModel
-                # Om ikke, send direkte om type dict. Elles send en feil.
-                # Kun preprocess placeholders om type FikenObject.
+            if dumped_object is not None:
+                if issubclass(dumped_object.__class__, BaseModel):
+                    dumped_object: BaseModel
+                    request_data = dumped_object.model_dump_json(by_alias=True)
+                else:
+                    request_data = dumped_object
+            elif instance is not None:
+                if issubclass(instance.__class__, BaseModel):
+                    instance: BaseModel
+                    request_data = instance.model_dump_json(by_alias=True)
+                else:
+                    raise ValueError("instance must be a BaseModel object or dumped_object must be provided")
 
         logging.debug(f"""Executing {method_name} on {cls.__name__} at {url}
         params: {kwargs}

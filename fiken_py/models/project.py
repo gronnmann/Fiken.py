@@ -45,8 +45,7 @@ class Project(FikenObject, ProjectBase):
             raise UnsupportedMethodException(f"Object {self.__class__.__name__} does not support PATCH")
 
         payload = ProjectUpdateRequest(**self.dict(exclude_unset=True))
-        response = self._execute_method(RequestMethod.PATCH, instance=self,
-                                        dumped_object=payload, **kwargs)
+        response = self._execute_method(RequestMethod.PATCH, dumped_object=payload, projectId=self.projectId, **kwargs)
 
         response.raise_for_status()
 

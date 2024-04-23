@@ -335,7 +335,8 @@ def create_and_invoice_user():
 
         invoice = invoice.save(companySlug='fiken-demo-drage-og-elefant-as')
     print(invoice)
-    invoice.update_object(due_date="2024-04-29", companySlug='fiken-demo-drage-og-elefant-as')
+    invoice.dueDate = "2024-04-29"
+    invoice.save(companySlug='fiken-demo-drage-og-elefant-as')
 
     send_req = InvoiceSendRequest(
         invoiceId=invoice.invoiceId,
@@ -389,7 +390,5 @@ if __name__ == "__main__":
     # create_contact_and_add_attachment()
     # find_journal_entry_and_add_attachment()
     # create_and_invoice_user()
-
-    # FikenObject.set_company_slug("fiken-demo-drage-og-elefant-as")
     # counter = Invoice.get_counter()
-    get_and_edit_project()
+    # get_and_edit_project()

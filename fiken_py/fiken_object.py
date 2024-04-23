@@ -124,7 +124,7 @@ class FikenObject:
         use_post = self.is_new if self.is_new is not None else True
         used_method = RequestMethod.POST if use_post else RequestMethod.PUT
 
-        response = self._execute_method(used_method, instance=self, **kwargs)
+        response = self._execute_method(used_method, dumped_object=self, **kwargs)
 
         response.raise_for_status()
 
@@ -151,7 +151,7 @@ class FikenObject:
 
     def delete(self, **kwargs: Any) -> bool:
 
-        response = self._execute_method(RequestMethod.DELETE, instance=self, **kwargs)
+        response = self._execute_method(RequestMethod.DELETE, dumped_object=self, **kwargs)
 
         response.raise_for_status()
 
@@ -164,7 +164,7 @@ class FikenObject:
     _PLACEHOLDER_REGEX = re.compile(r'{(\w+)}')
 
     @classmethod
-    def _extract_placeholders(cls, path: str, **kwargs: Any) -> tuple[str, dict[str, Any]]:
+    def _extract_placeholders_kwargs(cls, path: str, **kwargs: Any) -> tuple[str, dict[str, Any]]:
         """
         Extract placeholders from the path and replace them with the values in kwargs.
         Also fills out companySlug if not provided.
@@ -183,20 +183,22 @@ class FikenObject:
         path = path.format(**{placeholder: kwargs.pop(placeholder) for placeholder in placeholders})
         return path, kwargs
 
-    def _preprocess_placeholders(self, path):
-        """
-        Preprocess placeholders in the path.
-        Replace them with the values from the object.
+    @classmethod
+    def _extract_placeholders_basemodel(cls, path: str, base_model: BaseModel) -> str:
+        """Preprocesses placeholders in the path
+        Replaces them with values from the BaseModel
+
         :param path: URL
         :return: the formatted path
         """
-        placeholders = self._PLACEHOLDER_REGEX.findall(path)
+
+        placeholders = cls._PLACEHOLDER_REGEX.findall(path)
 
         for placeholder in placeholders:
-            if not hasattr(self, placeholder):
+            if not hasattr(base_model, placeholder):
                 continue
             else:
-                path = path.replace(f"{{{placeholder}}}", str(getattr(self, placeholder)))
+                path = path.replace(f"{{{placeholder}}}", str(getattr(base_model, placeholder)))
 
         return path
 
@@ -217,19 +219,24 @@ class FikenObject:
         return None
 
     @classmethod
-    def _execute_method(cls, method: RequestMethod, url: str = None, instance: FikenObject = None,
-                        dumped_object: BaseModel | dict = None,
+    def _execute_method(cls, method: RequestMethod, url: str = None, dumped_object: FikenObject | dict | BaseModel = None,
+                        file_data: dict[str, tuple[Any | None, Any]] = None,
                         **kwargs: Any) -> requests.Response:
         """Executes a method on the object
         :method: RequestMethod - the method to execute
         :url: str - the URL to execute the method on. If None, will be generated from the method
-        :instance: - the FikenObject instance to populate url kwargs with and send (if dumped_object is not provided). If None, will be ignored
-        :dumped_object - the object to send as JSON. If None, instance will first be used, then field will be ignored
+        :dumped_object: - the object to send/dump and extract placeholders from. If None, will be ignored
         :kwargs: dict - the arguments to pass to the method
         """
 
         if cls._AUTH_TOKEN is None:
             raise ValueError("Auth token not set")
+
+        if file_data is not None and method != RequestMethod.POST:
+            raise ValueError("Only POST requests can have file data")
+
+        if file_data is not None and dumped_object is not None:
+            raise ValueError("Only one of file data and instance can be provided")
 
         if url is None:
             url = cls._get_method_base_URL(method)
@@ -237,10 +244,10 @@ class FikenObject:
         if url is None:
             raise UnsupportedMethodException(f"Object {cls.__name__} does not support {method.name}")
 
-        if issubclass(instance.__class__, FikenObject):
-            url = instance._preprocess_placeholders(url)
+        if issubclass(dumped_object.__class__, BaseModel):
+            url = cls._extract_placeholders_basemodel(url, dumped_object)
 
-        url, kwargs = cls._extract_placeholders(url, **kwargs)
+        url, kwargs = cls._extract_placeholders_kwargs(url, **kwargs)
 
         method_name = method.name
         if method == RequestMethod.GET_MULTIPLE:
@@ -252,49 +259,23 @@ class FikenObject:
                 if issubclass(dumped_object.__class__, BaseModel):
                     dumped_object: BaseModel
                     request_data = dumped_object.model_dump_json(by_alias=True)
-                else:
+                elif isinstance(dumped_object.__class__, dict):
                     request_data = dumped_object
-            elif instance is not None:
-                if issubclass(instance.__class__, BaseModel):
-                    instance: BaseModel
-                    request_data = instance.model_dump_json(by_alias=True)
                 else:
-                    raise ValueError("instance must be a BaseModel object or dumped_object must be provided")
+                    raise ValueError("instance must be a BaseModel object or dict")
+
+        headers = cls._HEADERS.copy()
+        if file_data is not None:
+            headers.pop("Content-Type")
+        headers["X-Request-ID"] = str(uuid.uuid4())
 
         logging.debug(f"""Executing {method_name} on {cls.__name__} at {url}
         params: {kwargs}
         headers: {cls._HEADERS}
         data: {request_data}""")
 
-        response = requests.request(method_name, url, headers=cls._HEADERS, params=kwargs, data=request_data)
-
-        response.raise_for_status()
-
-        return response
-
-    @classmethod
-    def _execute_file_upload_request(cls, file_data: dict[str, tuple[Any | None, Any]],
-                                     url: str = None, instance: FikenObject = None,
-                                     **kwargs: Any) -> requests.Response:
-        if cls._AUTH_TOKEN is None:
-            raise ValueError("Auth token not set")
-
-        if url is None:
-            url = cls._get_method_base_URL(RequestMethod.POST)
-
-        if url is None:
-            raise UnsupportedMethodException(f"Object {cls.__name__} does not support POST")
-
-        # using multipart/form-data
-
-        if instance is not None:
-            url = instance._preprocess_placeholders(url)
-        url, kwargs = cls._extract_placeholders(url, **kwargs)
-
-        headers = cls._HEADERS.copy()
-        headers.pop("Content-Type")
-
-        response = requests.post(url, headers=headers, files=file_data)
+        response = requests.request(method_name, url, headers=headers, params=kwargs, data=request_data,
+                                    files=file_data)
 
         response.raise_for_status()
 
@@ -371,7 +352,9 @@ class FikenObjectAttachable(FikenObject):
             'comment': (None, comment),
         }
 
-        response = cls._execute_file_upload_request(sent_data, instance=instance, url=cls._attachment_url(), **kwargs)
+        response = cls._execute_method(RequestMethod.POST,
+                                       url=cls._attachment_url(), dumped_object=instance,
+                                       file_data=sent_data, **kwargs)
 
         response.raise_for_status()
 

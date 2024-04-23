@@ -76,22 +76,18 @@ class Invoice(FikenObject, BaseModel):
             raise UnsupportedMethodException(f"Object {self.__class__.__name__} does not support PATCH")
 
         payload = InvoiceUpdateRequest(**self.dict(exclude_unset=True))
-        response = self._execute_method(RequestMethod.PATCH, instance=self,
-                                        dumped_object=payload, **kwargs)
+        response = self._execute_method(RequestMethod.PATCH, dumped_object=payload,
+                                        invoiceId=self.invoiceId, **kwargs)
 
         response.raise_for_status()
 
         return self._follow_location_and_update_class(response)
 
     @classmethod
-    def send_to_customer(cls, invoice_request: InvoiceSendRequest, invoice=None, invoiceId=None, companySlug=None):
+    def send_to_customer(cls, invoice_request: InvoiceSendRequest, companySlug=None):
         url = cls._get_method_base_URL(RequestMethod.GET_MULTIPLE) + "/send"
 
-        if invoice:
-            invoiceId = invoice.invoiceId
-
-        response = cls._execute_method(RequestMethod.POST, url, instance=invoice_request, companySlug=companySlug,
-                                       invoiceId=invoiceId)
+        response = cls._execute_method(RequestMethod.POST, url, dumped_object=invoice_request, companySlug=companySlug,)
 
         if response.status_code != 200:
             return False
@@ -110,7 +106,7 @@ class Invoice(FikenObject, BaseModel):
         :param counter: The value to set the counter to
         :return: True if the counter was set successfully, False otherwise"""
         url = cls.PATH_BASE + cls.COUNTER_PATH
-        response = cls._execute_method(RequestMethod.POST, url, instance=dict({"value": counter}))
+        response = cls._execute_method(RequestMethod.POST, url, dumped_object=dict({"value": counter}))
 
         if response.status_code != 201:
             return False

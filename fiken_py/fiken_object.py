@@ -3,6 +3,7 @@ from __future__ import annotations
 import logging
 import os.path
 import re
+import uuid
 from enum import Enum
 from typing import Any, TypeVar, ClassVar
 
@@ -82,16 +83,8 @@ class FikenObject:
 
     @classmethod
     def getAll(cls, **kwargs: Any) -> list[T]:
-        if cls._AUTH_TOKEN is None:
-            raise ValueError("Auth token not set")
 
-        if cls._GET_PATH_MULTIPLE.default is None:
-            raise UnsupportedMethodException(f"Object {cls.__name__} does not support getting list")
-
-        url = f'{cls.PATH_BASE}{cls._GET_PATH_MULTIPLE.default}'
-        url, kwargs = cls._extract_placeholders(url, **kwargs)
-
-        response = requests.get(url, headers=cls._HEADERS, params=kwargs)
+        response = cls._execute_method(RequestMethod.GET_MULTIPLE, **kwargs)
 
         logger.debug(f"GETting many objects for {cls.__name__}")
 
@@ -102,7 +95,7 @@ class FikenObject:
 
     @classmethod
     def _getFromURL(cls, url: str) -> T | list[T]:
-        response = requests.get(url, headers=cls._HEADERS)
+        response = cls._execute_method(RequestMethod.GET, url=url)
 
         logger.debug(f"GETting single object from URL {url}")
 

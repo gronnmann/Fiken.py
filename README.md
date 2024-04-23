@@ -105,3 +105,15 @@ journal_entry = request.save(companySlug='fiken-demo-drage-og-elefant-as')
 
 print(type(journal_entry)) # <class 'fiken_py.models.transaction.Transaction'>
 ```
+
+## Tests
+Tests are done using pytest. There's two directories with tests:
+- `tests` - Tests that run locally and do not require a Fiken account
+- `tests_online` - Tests that interact with the Fiken API. These require a Fiken account and a private token.
+These should only be used with a test account, as they will create and delete objects in Fiken.
+
+To use the `test_online`, you need to set the following environment variables (in `test_online/.env`):
+```dotenv
+FIKEN_PRIVATE_TOKEN={your_private_token}
+FIKEN_COMPANY_SLUG={your_test_company_slug}
+```

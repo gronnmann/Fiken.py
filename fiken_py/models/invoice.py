@@ -71,7 +71,7 @@ class Invoice(FikenObject, BaseModel):
     sale: Optional[Sale] = None,
     project: Optional[Project] = None
 
-    def save(self, **kwargs: Any) -> Invoice | None:
+    def save(self, **kwargs: Any) -> Inv | None:
         if self._get_method_base_URL(RequestMethod.PATCH) is None:
             raise UnsupportedMethodException(f"Object {self.__class__.__name__} does not support PATCH")
 

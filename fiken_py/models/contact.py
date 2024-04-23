@@ -3,7 +3,7 @@ from typing import Optional, List
 
 from pydantic import BaseModel
 
-from fiken_py.errors import UnsupportedMethodException
+from fiken_py.errors import RequestWrongMediaTypeException
 from fiken_py.fiken_object import FikenObjectAttachable
 from fiken_py.fiken_types import Address, Attachment, Note
 from fiken_py.models import ContactPerson
@@ -48,4 +48,4 @@ class Contact(BaseModel, FikenObjectAttachable):
     # Contact is for some reason only object with no get_attachments method
     @classmethod
     def get_attachments_cls(cls, instance: FikenObjectAttachable = None, **kwargs) -> list[Attachment]:
-        raise UnsupportedMethodException("Contact does not support listing attachments.")
+        raise RequestWrongMediaTypeException("Contact does not support listing attachments.")

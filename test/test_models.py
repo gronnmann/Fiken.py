@@ -1,3 +1,4 @@
+import logging
 from datetime import date
 from random import random
 
@@ -19,6 +20,10 @@ from fiken_py.models import UserInfo, Account, BankAccount, Company, Contact, Co
 def set_auth_token():
     FikenObject.set_auth_token("SAMPLE_TOKEN")
 
+
+@pytest.fixture(autouse=True)
+def set_logger_level():
+    logging.basicConfig(level=logging.DEBUG)
 
 @pytest.fixture
 def m():

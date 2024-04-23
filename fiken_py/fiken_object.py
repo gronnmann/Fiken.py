@@ -3,6 +3,7 @@ from __future__ import annotations
 import logging
 import os.path
 import re
+import time
 import uuid
 from enum import Enum
 from typing import Any, TypeVar, ClassVar
@@ -13,7 +14,7 @@ from importlib.metadata import version
 
 from pydantic import BaseModel
 
-from fiken_py.errors import UnsupportedMethodException
+from fiken_py.errors import RequestWrongMediaTypeException
 from fiken_py.fiken_types import Attachment
 
 T = TypeVar('T', bound='FikenObject')
@@ -56,6 +57,11 @@ class FikenObject:
 
     BASE_CLASS = None  # For FikenObjectRequest and save not to give AttributeError
 
+    _RATE_LIMIT_ENABLED = True
+    _MAX_REQUESTS_PER_SECOND = 4
+    _REQUESTS_COUNTER = 0
+    _LAST_REQUEST_TIME = 0
+
     @classmethod
     def set_auth_token(cls, token):
         cls._AUTH_TOKEN = token
@@ -69,6 +75,10 @@ class FikenObject:
     @classmethod
     def set_company_slug(cls, company_slug):
         cls._COMPANY_SLUG = company_slug
+
+    @classmethod
+    def set_rate_limit(cls, enabled: bool):
+        cls.RATE_LIMIT_ENABLED = enabled
 
     @classmethod
     def get(cls, **kwargs: Any) -> T:
@@ -219,7 +229,8 @@ class FikenObject:
         return None
 
     @classmethod
-    def _execute_method(cls, method: RequestMethod, url: str = None, dumped_object: FikenObject | dict | BaseModel = None,
+    def _execute_method(cls, method: RequestMethod, url: str = None,
+                        dumped_object: FikenObject | dict | BaseModel = None,
                         file_data: dict[str, tuple[Any | None, Any]] = None,
                         **kwargs: Any) -> requests.Response:
         """Executes a method on the object
@@ -242,7 +253,7 @@ class FikenObject:
             url = cls._get_method_base_URL(method)
 
         if url is None:
-            raise UnsupportedMethodException(f"Object {cls.__name__} does not support {method.name}")
+            raise RequestWrongMediaTypeException(f"Object {cls.__name__} does not support {method.name}")
 
         if issubclass(dumped_object.__class__, BaseModel):
             url = cls._extract_placeholders_basemodel(url, dumped_object)
@@ -268,6 +279,19 @@ class FikenObject:
         if file_data is not None:
             headers.pop("Content-Type")
         headers["X-Request-ID"] = str(uuid.uuid4())
+
+        # TODO - tests for this
+        timestamp_ms = time.time_ns() // 1000000
+        if cls._RATE_LIMIT_ENABLED:
+            if cls._REQUESTS_COUNTER >= cls._MAX_REQUESTS_PER_SECOND:
+                time_diff = timestamp_ms - cls._LAST_REQUEST_TIME
+                if time_diff < 1000:
+                    sleep_time = (1000 - time_diff)
+                    logging.debug(f"Sending requests too fast. Sleeping for {sleep_time} ms")
+                    time.sleep(sleep_time / 1000)
+                    cls._REQUESTS_COUNTER = 0
+            cls._REQUESTS_COUNTER += 1
+            cls._LAST_REQUEST_TIME = timestamp_ms
 
         logging.debug(f"""Executing {method_name} on {cls.__name__} at {url}
         params: {kwargs}
@@ -301,11 +325,11 @@ class FikenObjectRequest(FikenObject):
 
     @classmethod
     def get(**kwargs):
-        raise UnsupportedMethodException("Request objects can not be fetched")
+        raise RequestWrongMediaTypeException("Request objects can not be fetched")
 
     @classmethod
     def getAll(**kwargs):
-        raise UnsupportedMethodException("Request objects can not be fetched")
+        raise RequestWrongMediaTypeException("Request objects can not be fetched")
 
     def save(self, **kwargs: Any) -> T | None:
         if self.__class__.BASE_CLASS is None:

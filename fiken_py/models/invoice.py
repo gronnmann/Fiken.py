@@ -4,7 +4,7 @@ from typing import Optional, ClassVar, Any, TypeVar
 import requests
 from pydantic import BaseModel, Field
 
-from fiken_py.errors import UnsupportedMethodException
+from fiken_py.errors import RequestWrongMediaTypeException
 from fiken_py.fiken_object import FikenObject, FikenObjectRequest, RequestMethod, T
 from fiken_py.fiken_types import VatTypeProduct, Address, Attachment, InvoiceLineRequest, InvoiceLine, \
     SendInvoiceMethod, SendInvoiceEmailOption
@@ -73,7 +73,7 @@ class Invoice(FikenObject, BaseModel):
 
     def save(self, **kwargs: Any) -> Inv | None:
         if self._get_method_base_URL(RequestMethod.PATCH) is None:
-            raise UnsupportedMethodException(f"Object {self.__class__.__name__} does not support PATCH")
+            raise RequestWrongMediaTypeException(f"Object {self.__class__.__name__} does not support PATCH")
 
         payload = InvoiceUpdateRequest(**self.dict(exclude_unset=True))
         response = self._execute_method(RequestMethod.PATCH, dumped_object=payload,

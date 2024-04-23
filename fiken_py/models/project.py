@@ -5,7 +5,7 @@ from typing import Optional, ClassVar, Any, TypeVar
 
 from pydantic import BaseModel
 
-from fiken_py.errors import UnsupportedMethodException
+from fiken_py.errors import RequestWrongMediaTypeException
 from fiken_py.fiken_object import FikenObject, FikenObjectRequest, T, RequestMethod
 from fiken_py.models import Contact
 
@@ -42,7 +42,7 @@ class Project(FikenObject, ProjectBase):
 
     def save(self, **kwargs: Any) -> Proj | None:
         if self._get_method_base_URL(RequestMethod.PATCH) is None:
-            raise UnsupportedMethodException(f"Object {self.__class__.__name__} does not support PATCH")
+            raise RequestWrongMediaTypeException(f"Object {self.__class__.__name__} does not support PATCH")
 
         payload = ProjectUpdateRequest(**self.dict(exclude_unset=True))
         response = self._execute_method(RequestMethod.PATCH, dumped_object=payload, projectId=self.projectId, **kwargs)

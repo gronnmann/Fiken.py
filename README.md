@@ -37,7 +37,7 @@ Generally, all objects have the following methods:
 - `delete` - Deletes the object from Fiken
 
 Not all methods are available for all objects, please check the Fiken API documentation for more information.
-Errors will give a `UnsupportedMethodException`.
+Errors will give a `RequestWrongMediaTypeException`.
 
 
 ### Placeholders and kwargs
@@ -105,6 +105,18 @@ journal_entry = request.save(companySlug='fiken-demo-drage-og-elefant-as')
 
 print(type(journal_entry)) # <class 'fiken_py.models.transaction.Transaction'>
 ```
+
+## Rate limiting
+From the [Fiken API documentation](https://api.fiken.no/api/v2/docs/):
+> API calls may be slowed if you execute more than 4 requests per second.
+
+The library by default tries to respect this by sleeping as to not exceed the rate limit.
+This behavior can be overriden by setting:
+
+```python
+FikenObject.set_rate_limit(False)
+```
+
 
 ## Tests
 Tests are done using pytest. There's two directories with tests:

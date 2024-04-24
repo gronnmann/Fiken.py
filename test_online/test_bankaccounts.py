@@ -24,11 +24,14 @@ def test_get_accounts():
 
 
 def test_get_account(unique_id):
+    acc_name = f"Test account ({unique_id})"
+    print(f"Searching for account with name {acc_name}")
+
     bank_accounts = BankAccount.getAll()
 
     found = False
     for account in bank_accounts:
-        if account.name == f"Test account ({unique_id})":
+        if account.name == acc_name:
             found = True
             break
 
@@ -37,3 +40,17 @@ def test_get_account(unique_id):
     acc_id = account.bankAccountId
 
     bank_account = BankAccount.get(bankAccountId=acc_id)
+
+
+def test_random_account_not_found():
+    random_id = 21112233334
+
+    while True:
+        print(f"Trying to find with {random_id}")
+        acc = BankAccount.get(bankAccountId=str(random_id))
+        if acc is None:
+            break
+        random_id += 1
+
+    get_single_acc = BankAccount.get(bankAccountId=str(random_id))
+    assert get_single_acc is None

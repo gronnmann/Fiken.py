@@ -10,7 +10,7 @@ from urllib3.connection import HTTPConnection
 from fiken_py.fiken_object import FikenObject
 from fiken_py.models import UserInfo, Company, BankAccount, BankAccountCreateRequest, Contact, ContactPerson, \
     ProductSalesReportRequest, Product, Transaction, JournalEntry, Account, JournalEntryRequest, InboxDocumentRequest, \
-    ProjectRequest, SaleRequest, InvoiceRequest, Project
+    ProjectCreateRequest, SaleRequest, InvoiceRequest, Project
 from fiken_py.fiken_types import BankAccountType, JournalEntryLine, VatTypeProduct, SaleKind, OrderLine, \
     InvoiceLineRequest, SendInvoiceMethod, SendInvoiceEmailOption
 from fiken_py.models.invoice import InvoiceSendRequest, Invoice
@@ -208,9 +208,9 @@ def create_project():
     else:
         contact = customers[0]
 
-    proj = ProjectRequest(name="Et prosjekt",
-                          number=1,
-                          description="Dette er et prosjekt", startDate=datetime.date.today())
+    proj = ProjectCreateRequest(name="Et prosjekt",
+                                number=1,
+                                description="Dette er et prosjekt", startDate=datetime.date.today())
 
     proj = proj.save(companySlug='fiken-demo-drage-og-elefant-as')
     print(proj)

@@ -13,7 +13,8 @@ from sample_data_reader import get_sample_from_json
 
 from fiken_py.fiken_object import FikenObject
 from fiken_py.models import UserInfo, Account, BankAccount, Company, Contact, ContactPerson, Product, \
-    ProductSalesReport, ProductSalesReportRequest, Transaction, JournalEntry, InboxDocument, Sale, Project, Invoice
+    ProductSalesReport, ProductSalesReportRequest, Transaction, JournalEntry, InboxDocument, Sale, Project, Invoice, \
+    InvoiceDraft
 
 
 @pytest.fixture(autouse=True)
@@ -24,6 +25,7 @@ def set_auth_token():
 @pytest.fixture(autouse=True)
 def set_logger_level():
     logging.basicConfig(level=logging.DEBUG)
+
 
 @pytest.fixture
 def m():
@@ -47,6 +49,7 @@ def m():
     Project,
     Sale,
     Invoice,
+    InvoiceDraft,
 ])
 def test_object_methods(object: FikenObject, m: requests_mock.Mocker):
     print(f"---- TESTING {object.__name__} ----")
@@ -153,7 +156,7 @@ def _compare_object_to_sample_data(obj, sample_data):
             assert val.isoformat() == sample_data.get(attr)
 
         elif isinstance(val, CaseInsensitiveEnum):
-            assert val == sample_data.get(attr).upper() # CaseInsensitiveEnum matches on upper
+            assert val == sample_data.get(attr).upper()  # CaseInsensitiveEnum matches on upper
 
         elif isinstance(val, list) and all(isinstance(i, BaseModel) for i in val):
             for i, item in enumerate(val):

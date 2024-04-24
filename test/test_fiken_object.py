@@ -7,6 +7,12 @@ from pydantic import BaseModel
 from fiken_py.fiken_object import FikenObject, RequestMethod
 
 
+@pytest.fixture
+def m():
+    with requests_mock.Mocker() as m:
+        yield m
+
+
 def test_auth_token_not_set():
     with pytest.raises(ValueError) as e:
         FikenObject.get()
@@ -85,3 +91,62 @@ def test_PUT_and_POST():
 
         assert obj.testId == 1
         assert obj.testName == 'Test'
+
+
+def test_get_all_pagination(m: requests_mock.Mocker):
+    class TestObject(BaseModel, FikenObject):
+        _GET_PATH_MULTIPLE = '/companies/tests/'
+        testId: Optional[int] = None
+
+    url = TestObject._get_method_base_URL(RequestMethod.GET_MULTIPLE)
+
+    m.get(url, json=[
+        {'testId': 1},
+        {'testId': 2},
+        {'testId': 3},
+    ], headers={'Fiken-Api-Page-Count': '3'})
+
+    m.get(url + "?page=1", json=[
+        {'testId': 4},
+        {'testId': 5},
+    ])
+
+    m.get(url + "?page=2", json=[
+        {'testId': 6},
+        {'testId': 7},
+    ])
+
+    m.get(url + "?page=3", json=
+    [
+        {'testId': 8},
+        {'testId': 9},
+        {'testId': 10},
+    ])  # This shouldnt be included as Fiken-Api-Page-Count is 3
+
+    objects = TestObject.getAll()
+    assert len(objects) == 7
+    assert objects[0].testId == 1
+    assert objects[1].testId == 2
+    assert objects[2].testId == 3
+    assert objects[3].testId == 4
+    assert objects[4].testId == 5
+    assert objects[5].testId == 6
+    assert objects[6].testId == 7
+
+    objects_non_paged = TestObject.getAll(follow_pages=False)
+    assert len(objects_non_paged) == 3
+    assert objects_non_paged[0].testId == 1
+    assert objects_non_paged[1].testId == 2
+    assert objects_non_paged[2].testId == 3
+
+    # removed page header
+    m.get(url, json=[
+        {'testId': 1},
+        {'testId': 2},
+        {'testId': 3},
+    ])
+    objects = TestObject.getAll()
+    assert len(objects_non_paged) == 3
+    assert objects[0].testId == 1
+    assert objects[1].testId == 2
+    assert objects[2].testId == 3

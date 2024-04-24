@@ -17,7 +17,7 @@
       "productId": 0,
       "description": "Goatskin, with extra-long suede cuffs",
       "unitPrice": 4550,
-      "vatType": "string",
+      "vatType": "HIGH",
       "quantity": 5,
       "discount": 25,
       "comment": "One size fits all",

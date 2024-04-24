@@ -162,7 +162,7 @@ class InvoiceLineBase(BaseModel):
     productName: Optional[str] = None
     description: Optional[str] = Field(None, max_length=200)
     comment: Optional[str] = Field(None, max_length=200)
-    incomeAccount: Optional[Union[str|int]] = None
+    incomeAccount: Optional[Union[str | int]] = None
 
 
 class InvoiceLineRequest(InvoiceLineBase):
@@ -192,3 +192,25 @@ class SendInvoiceEmailOption(str, Enum):
     DOCUMENT_LINK = "document_link"
     ATTACHMENT = "attachment"
     AUTO = "auto"
+
+
+class DraftType(str, Enum):
+    INVOICE = "invoice"
+    CASH_INVOICE = "cash_invoice"
+    OFFER = "offer"
+    CREDIT_NOTE = "credit_note"
+    REPEATING_INVOICE = "repeating_invoice"
+
+
+class DraftLine(BaseModel):
+    quantity: int
+
+    invoiceishDraftLineId: Optional[int] = None
+    lastModifiedDate: Optional[date] = None
+    productId: Optional[int] = None
+    description: Optional[str] = None
+    unitPrice: Optional[int] = None
+    vatType: Optional[VatTypeProductSale] = None
+    discount: Optional[int] = None
+    comment: Optional[str] = None
+    incomeAccount: Optional[str] = None

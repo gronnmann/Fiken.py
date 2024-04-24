@@ -4,7 +4,7 @@ from typing import Optional, ClassVar, Any, TypeVar
 import requests
 from pydantic import BaseModel, Field
 
-from fiken_py.errors import RequestWrongMediaTypeException
+from fiken_py.errors import RequestWrongMediaTypeException, RequestErrorException
 from fiken_py.fiken_object import FikenObject, FikenObjectRequest, RequestMethod, T
 from fiken_py.fiken_types import VatTypeProduct, Address, Attachment, InvoiceLineRequest, InvoiceLine, \
     SendInvoiceMethod, SendInvoiceEmailOption
@@ -75,11 +75,13 @@ class Invoice(FikenObject, BaseModel):
         if self._get_method_base_URL(RequestMethod.PATCH) is None:
             raise RequestWrongMediaTypeException(f"Object {self.__class__.__name__} does not support PATCH")
 
-        payload = InvoiceUpdateRequest(**self.dict(exclude_unset=True))
-        response = self._execute_method(RequestMethod.PATCH, dumped_object=payload,
-                                        invoiceId=self.invoiceId, **kwargs)
+        payload = InvoiceUpdateRequest(**self.model_dump(exclude_unset=True))
 
-        response.raise_for_status()
+        try:
+            response = self._execute_method(RequestMethod.PATCH, dumped_object=payload,
+                                            invoiceId=self.invoiceId, **kwargs)
+        except RequestErrorException:
+            raise
 
         return self._follow_location_and_update_class(response)
 
@@ -87,7 +89,10 @@ class Invoice(FikenObject, BaseModel):
     def send_to_customer(cls, invoice_request: InvoiceSendRequest, companySlug=None):
         url = cls._get_method_base_URL(RequestMethod.GET_MULTIPLE) + "/send"
 
-        response = cls._execute_method(RequestMethod.POST, url, dumped_object=invoice_request, companySlug=companySlug,)
+        try:
+            response = cls._execute_method(RequestMethod.POST, url, dumped_object=invoice_request, companySlug=companySlug,)
+        except RequestErrorException:
+            raise
 
         if response.status_code != 200:
             return False
@@ -96,7 +101,11 @@ class Invoice(FikenObject, BaseModel):
     @classmethod
     def get_counter(cls) -> int:
         url = cls.PATH_BASE + cls.COUNTER_PATH
-        response = cls._execute_method(RequestMethod.GET, url)
+
+        try:
+            response = cls._execute_method(RequestMethod.GET, url)
+        except RequestErrorException:
+            raise
 
         return response.json()['value']
 
@@ -106,7 +115,11 @@ class Invoice(FikenObject, BaseModel):
         :param counter: The value to set the counter to
         :return: True if the counter was set successfully, False otherwise"""
         url = cls.PATH_BASE + cls.COUNTER_PATH
-        response = cls._execute_method(RequestMethod.POST, url, dumped_object=dict({"value": counter}))
+
+        try:
+            response = cls._execute_method(RequestMethod.POST, url, dumped_object=dict({"value": counter}))
+        except RequestErrorException:
+            raise
 
         if response.status_code != 201:
             return False
@@ -124,7 +137,7 @@ class InvoiceRequest(FikenObjectRequest, BaseModel):
     bankAccountCode: str
 
     uuid: Optional[str] = None
-    lines: list[InvoiceLineRequest]
+    lines: list[InvoiceLineRequest] = Field([], min_length=1)
     ourReference: Optional[str] = None
     yourReference: Optional[str] = None
     orderReference: Optional[str] = None

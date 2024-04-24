@@ -5,6 +5,11 @@ class RequestErrorException(Exception):
     pass
 
 
+class RequestConnectionException(RequestErrorException):
+    """Raised when the connection to the API fails."""
+    pass
+
+
 class RequestBadRequestException(RequestErrorException):
     """Raised when the response is 400 Bad Request."""
     pass
@@ -25,8 +30,8 @@ class RequestContentNotFoundException(RequestErrorException):
     pass
 
 
-class RequestMethodNotAllowedException(RequestErrorException):
-    """Raised when the response is 405 Method Not Allowed or method is not allowed."""
+class RequestUnsupportedMethodException(RequestErrorException):
+    """Raised when the response is 405 Method Not Allowed or method fails pre-check."""
     pass
 
 

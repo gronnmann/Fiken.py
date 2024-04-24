@@ -14,7 +14,10 @@ from importlib.metadata import version
 
 from pydantic import BaseModel
 
-from fiken_py.errors import RequestWrongMediaTypeException
+from fiken_py.errors import RequestWrongMediaTypeException, RequestConnectionException, RequestBadRequestException, \
+    RequestUserUnauthenticatedException, RequestForbiddenException, RequestContentNotFoundException, \
+    RequestUnsupportedMethodException, \
+    RequestWrongMediaTypeException, RequestErrorException
 from fiken_py.fiken_types import Attachment
 
 T = TypeVar('T', bound='FikenObject')
@@ -81,35 +84,58 @@ class FikenObject:
         cls.RATE_LIMIT_ENABLED = enabled
 
     @classmethod
-    def get(cls, **kwargs: Any) -> T:
+    def get(cls, **kwargs: Any) -> T | None:
 
-        response = cls._execute_method(RequestMethod.GET, **kwargs)
+        try:
+            response = cls._execute_method(RequestMethod.GET, **kwargs)
+        except RequestContentNotFoundException as e:
+            return None
+        except Exception as e:
+            raise e
 
         logger.debug(f"GETting single object for {cls.__name__}")
 
-        response.raise_for_status()  # raise exception if the request failed
         data = response.json()
         return cls(**data)
 
     @classmethod
-    def getAll(cls, **kwargs: Any) -> list[T]:
-
-        response = cls._execute_method(RequestMethod.GET_MULTIPLE, **kwargs)
+    def getAll(cls, follow_pages: bool = True, **kwargs: Any) -> list[T]:
 
         logger.debug(f"GETting many objects for {cls.__name__}")
+        try:
+            response = cls._execute_method(RequestMethod.GET_MULTIPLE, **kwargs)
+        except RequestErrorException as e:
+            raise
 
-        response.raise_for_status()  # raise exception if the request failed
-        data = response.json()
+        pages = [response.json()]
+        if follow_pages:
+            page_count = response.headers.get("Fiken-Api-Page-Count")
+            if page_count is not None:
+                page_count = int(page_count)
+            if page_count is not None and page_count > 1:
+                logger.debug(f"Multiple pages found. Fetching {page_count} pages")
+                for i in range(1, page_count):
+                    try:
+                        response = cls._execute_method(RequestMethod.GET_MULTIPLE, page=i, **kwargs)
+                    except RequestErrorException as e:
+                        raise
 
-        return [cls(**item) for item in data]
+                    pages.append(response.json())
+
+        objects = []
+        for page in pages:
+            for item in page:
+                objects.append(cls(**item))
+        return objects
 
     @classmethod
     def _getFromURL(cls, url: str) -> T | list[T]:
-        response = cls._execute_method(RequestMethod.GET, url=url)
+        try:
+            response = cls._execute_method(RequestMethod.GET, url=url)
+        except RequestErrorException:
+            raise
 
         logger.debug(f"GETting single object from URL {url}")
-
-        response.raise_for_status()
 
         data = response.json()
 
@@ -134,9 +160,10 @@ class FikenObject:
         use_post = self.is_new if self.is_new is not None else True
         used_method = RequestMethod.POST if use_post else RequestMethod.PUT
 
-        response = self._execute_method(used_method, dumped_object=self, **kwargs)
-
-        response.raise_for_status()
+        try:
+            response = self._execute_method(used_method, dumped_object=self, **kwargs)
+        except RequestErrorException:
+            raise
 
         return self._follow_location_and_update_class(response)
 
@@ -161,9 +188,10 @@ class FikenObject:
 
     def delete(self, **kwargs: Any) -> bool:
 
-        response = self._execute_method(RequestMethod.DELETE, dumped_object=self, **kwargs)
-
-        response.raise_for_status()
+        try:
+            response = self._execute_method(RequestMethod.DELETE, dumped_object=self, **kwargs)
+        except RequestErrorException:
+            raise
 
         for attr in self.__dict__:
             setattr(self, attr, None)
@@ -213,7 +241,7 @@ class FikenObject:
         return path
 
     @classmethod
-    def _get_method_base_URL(cls, method: RequestMethod) -> None | str:
+    def _get_method_base_URL(cls, method: RequestMethod | str) -> None | str:
         """Gets the base URL corresponding to the method.
         If the method is unsupported, returns None"""
 
@@ -222,7 +250,10 @@ class FikenObject:
         elif method == RequestMethod.GET_MULTIPLE:
             attr_name = f"_GET_PATH_MULTIPLE"
         else:
-            attr_name = f"_{method.name}_PATH"
+            if type(method) == str:
+                attr_name = f"_{method}_PATH"
+            else:
+                attr_name = f"_{method.name}_PATH"
 
         if hasattr(cls, attr_name):
             return f"{cls.PATH_BASE}{getattr(cls, attr_name).default}"
@@ -287,21 +318,42 @@ class FikenObject:
                 time_diff = timestamp_ms - cls._LAST_REQUEST_TIME
                 if time_diff < 1000:
                     sleep_time = (1000 - time_diff)
-                    logging.debug(f"Sending requests too fast. Sleeping for {sleep_time} ms")
+                    logger.debug(f"Sending requests too fast. Sleeping for {sleep_time} ms")
                     time.sleep(sleep_time / 1000)
                     cls._REQUESTS_COUNTER = 0
             cls._REQUESTS_COUNTER += 1
             cls._LAST_REQUEST_TIME = timestamp_ms
 
-        logging.debug(f"""Executing {method_name} on {cls.__name__} at {url}
+        logger.debug(f"""Executing {method_name} on {cls.__name__} at {url}
         params: {kwargs}
         headers: {cls._HEADERS}
         data: {request_data}""")
 
-        response = requests.request(method_name, url, headers=headers, params=kwargs, data=request_data,
-                                    files=file_data)
+        try:
+            response = requests.request(method_name, url, headers=headers, params=kwargs, data=request_data,
+                                        files=file_data)
+        except requests.exceptions.RequestException as e:
+            logging.error(f"Request connection failed: {e}")
+            raise RequestConnectionException(e)
 
-        response.raise_for_status()
+        try:
+            response.raise_for_status()
+        except requests.exceptions.HTTPError as e:
+            logging.error(f"Request HTTP failed: {e}")
+            if e.response.status_code == 400:
+                raise RequestBadRequestException(e)
+            elif e.response.status_code == 401:
+                raise RequestUserUnauthenticatedException(e)
+            elif e.response.status_code == 403:
+                raise RequestForbiddenException(e)
+            elif e.response.status_code == 404:
+                raise RequestContentNotFoundException(e)
+            elif e.response.status_code == 405:
+                raise RequestUnsupportedMethodException(e)
+            elif e.response.status_code == 415:
+                raise RequestWrongMediaTypeException(e)
+            else:
+                raise RequestErrorException(e)
 
         return response
 
@@ -348,7 +400,10 @@ class FikenObjectAttachable(FikenObject):
     def get_attachments_cls(cls, instance: FikenObjectAttachable = None, **kwargs) -> list[Attachment]:
         url = cls._attachment_url()
 
-        response = cls._execute_method(RequestMethod.GET, url, instance, **kwargs)
+        try:
+            response = cls._execute_method(RequestMethod.GET, url, instance, **kwargs)
+        except RequestErrorException:
+            raise
 
         data = response.json()
 
@@ -376,11 +431,12 @@ class FikenObjectAttachable(FikenObject):
             'comment': (None, comment),
         }
 
-        response = cls._execute_method(RequestMethod.POST,
-                                       url=cls._attachment_url(), dumped_object=instance,
-                                       file_data=sent_data, **kwargs)
-
-        response.raise_for_status()
+        try:
+            response = cls._execute_method(RequestMethod.POST,
+                                           url=cls._attachment_url(), dumped_object=instance,
+                                           file_data=sent_data, **kwargs)
+        except RequestErrorException:
+            raise
 
         if response.status_code != 201:
             return False

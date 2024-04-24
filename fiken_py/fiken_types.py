@@ -2,7 +2,7 @@ from datetime import date
 from enum import Enum
 from typing import Optional, Union
 
-from pydantic import BaseModel, field_validator, Field
+from pydantic import BaseModel, field_validator, Field, model_validator
 
 
 class CaseInsensitiveEnum(str, Enum):
@@ -170,6 +170,17 @@ class InvoiceLineRequest(InvoiceLineBase):
     quantity: int
     # TODO - only allow productName when productId not provided
     # TODO - if no product id, force incomeAccount
+
+    @model_validator(mode="after")
+    @classmethod
+    def provided_prod_or_line_data(cls, value):
+        product_provided = value.productId is not None
+        line_provided = ((value.unitPrice is not None) and (value.vatType is not None) and
+                         (value.description is not None) and (value.incomeAccount is not None))
+
+        assert product_provided or line_provided, "Either productId or unitPRice, description, vatType and incomeAccount must be provided"
+
+        return value
 
 
 class InvoiceLine(InvoiceLineBase):

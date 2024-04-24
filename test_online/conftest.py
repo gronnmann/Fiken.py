@@ -13,7 +13,6 @@ from fiken_py.models import Product, Contact, BankAccount, BankAccountCreateRequ
 
 @pytest.fixture(autouse=True, scope="session")
 def set_auth_token():
-    print("setting token")
     dotenv.load_dotenv("test_online/.env")
 
     FikenObject.set_auth_token(os.getenv("FIKEN_API_TOKEN"))

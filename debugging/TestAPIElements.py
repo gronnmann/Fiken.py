@@ -381,6 +381,12 @@ if __name__ == "__main__":
 
     HTTPConnection.debuglevel = 1
 
+    invoice_line = InvoiceLineRequest(
+        vatType=VatTypeProduct.NONE,
+        quantity=5,
+
+    )
+
     # get_transactions()
     # test_creating_journal_entry()
     # test_create_get_edit_get_and_delete_product()

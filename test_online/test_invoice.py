@@ -40,6 +40,7 @@ def test_create_invoice_product_freetext(unique_id: str,
         description="En banankasse fra Bendit (testprodukt fritekst)",
         unitPrice=10000,
         vatType=VatTypeProduct.NONE,
+        incomeAccount="3000",
     )
 
     invoice: InvoiceRequest = InvoiceRequest(

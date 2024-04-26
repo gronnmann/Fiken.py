@@ -2,7 +2,7 @@ import pytest
 from pydantic import ValidationError, BaseModel
 
 from fiken_py.fiken_types import InvoiceLineRequest, BankAccountType, AccountingAccount, AccountingAccountAssets, \
-    AccountingAccountCosts, AccountingAccountIncome, AccountingAccountEquityAndLiabilities
+    AccountingAccountCosts, AccountingAccountIncome, AccountingAccountEquityAndLiabilities, DraftLine
 from fiken_py.models import BankAccount, BankAccountCreateRequest
 
 
@@ -28,6 +28,29 @@ def test_validate_invoice_line():
         incomeAccount="3000",
     )
     assert invoice_line is not None
+
+def test_validate_draft_line():
+    draft_line = DraftLine(
+        productId=1,
+        quantity=1,
+    )
+
+    assert draft_line.productId is not None
+
+    with pytest.raises(ValidationError):
+        draft_line = DraftLine(
+            quantity=1,
+            description="En banankasse fra Bendit (testprodukt fritekst)",
+        )
+
+    draft_line = DraftLine(
+        quantity=1,
+        description="En banankasse fra Bendit (testprodukt fritekst)",
+        unitPrice=10000,
+        vatType="NONE",
+        incomeAccount="3000",
+    )
+    assert draft_line is not None
 
 
 def test_bankaccount_request_foreignservice():

@@ -1,3 +1,4 @@
+import re
 from datetime import date
 from enum import Enum
 from typing import Optional, Union, Annotated
@@ -11,6 +12,8 @@ AccountingAccountEquityAndLiabilities = Annotated[str, Field(pattern=r"^2\d{3}(:
 
 AccountingAccountIncome = Annotated[str, Field(pattern=r"^[3|8]\d{3}$")]  # Kontoklasse 3
 AccountingAccountCosts = Annotated[str, Field(pattern=r"^[4-8]\d{3}$")]  # Kontoklasse 4-7
+
+BankAccountNumber = Annotated[str, Field(pattern=r"^\d{11}$")]
 
 
 class CaseInsensitiveEnum(str, Enum):
@@ -163,7 +166,7 @@ class InvoiceLineBase(BaseModel):
     vat: Optional[int] = None
     vatType: Optional[VatTypeProduct] = None
     gross: Optional[int] = None
-    vatInPercent: Optional[int] = None
+    vatInPercent: Optional[float] = None
     unitPrice: Optional[int] = None
     discount: Optional[int] = None
     productId: Optional[int] = None
@@ -233,4 +236,26 @@ class DraftLine(BaseModel):
     vatType: Optional[VatTypeProductSale] = None
     discount: Optional[int] = None
     comment: Optional[str] = None
-    incomeAccount: Optional[str] = None
+    incomeAccount: Optional[AccountingAccount] = None # TODO - accounting account type?
+
+    @model_validator(mode="after")
+    @classmethod
+    def provided_prod_or_line_data(cls, value):
+        product_provided = value.productId is not None
+        line_provided = ((value.unitPrice is not None) and (value.vatType is not None) and
+                         (value.description is not None) and (value.incomeAccount is not None))
+
+        assert product_provided or line_provided, "Either productId or unitPRice, description, vatType and incomeAccount must be provided"
+
+        return value
+
+    @model_validator(mode="after")
+    def validate_vat(cls, value):
+        vat: VatTypeProductSale = value.vatType
+        incomeAccount: AccountingAccount = value.incomeAccount
+
+        if incomeAccount is not None:
+            if re.match(r"^30", incomeAccount):
+                assert vat not in [VatTypeProductSale.NONE, VatTypeProductSale.EXEMPT], "Vat must be set for income accounts starting with 30"
+
+        return value # TODO - own validation class

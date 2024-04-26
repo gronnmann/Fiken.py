@@ -4,12 +4,12 @@ from typing import Optional, ClassVar
 from pydantic import BaseModel, model_validator, Field
 
 from fiken_py.fiken_object import FikenObject, T, FikenObjectRequest
-from fiken_py.fiken_types import BankAccountType, AccountingAccount, AccountingAccountAssets
+from fiken_py.fiken_types import BankAccountType, AccountingAccount, AccountingAccountAssets, BankAccountNumber
 
 
 class BankAccountBase(BaseModel):
     name: str
-    bankAccountNumber: str
+    bankAccountNumber: BankAccountNumber
     bic: Optional[str] = None
     iban: Optional[str] = None
     foreignService: Optional[str] = None
@@ -22,7 +22,7 @@ class BankAccount(BankAccountBase, FikenObject):
     _GET_PATH_MULTIPLE = '/companies/{companySlug}/bankAccounts/'
 
     name: Optional[str] = None
-    bankAccountNumber: Optional[str] = None
+    bankAccountNumber: Optional[BankAccountNumber] = None
     type: Optional[BankAccountType] = None
     bankAccountId: Optional[int] = None
     accountCode: Optional[AccountingAccountAssets] = None

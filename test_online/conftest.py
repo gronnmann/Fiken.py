@@ -38,7 +38,7 @@ def generic_product(set_auth_token) -> Product:
     if len(found_products) > 0:
         return found_products[0]
     else:
-        product = Product(name=name, vatType=VatTypeProduct.NONE, incomeAccount="3000", unitPrice=1000)
+        product = Product(name=name, vatType=VatTypeProduct.HIGH, incomeAccount="3000", unitPrice=1000)
         product.save()
         return product
 

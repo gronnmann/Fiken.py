@@ -5,7 +5,7 @@ from pydantic import BaseModel, Field
 
 from fiken_py.errors import RequestErrorException
 from fiken_py.fiken_object import FikenObjectRequest, FikenObject, T, RequestMethod, FikenObjectAttachable
-from fiken_py.fiken_types import DraftType, DraftLine, Attachment
+from fiken_py.fiken_types import DraftType, DraftLine, Attachment, AccountingAccount, BankAccountNumber
 from fiken_py.models import Contact, Invoice
 
 
@@ -22,10 +22,10 @@ class DraftBase(BaseModel):
     lines: Optional[list[DraftLine]] = []
     net: Optional[int] = None
     gross: Optional[int] = None
-    bankAccountNumber: Optional[str] = None
+    bankAccountNumber: Optional[BankAccountNumber] = None
     iban: Optional[str] = None
     bic: Optional[str] = None
-    paymentAccount: Optional[str] = None
+    paymentAccount: Optional[AccountingAccount] = None
 
 
 class Draft(FikenObjectAttachable, DraftBase):
@@ -68,7 +68,7 @@ class Draft(FikenObjectAttachable, DraftBase):
 
         return DraftCreateRequest(**dumped)
 
-    def create_object(self):
+    def submit_object(self):
         if self.CREATED_OBJECT_CLASS is None:
             raise NotImplementedError(f"Object {self.__class__.__name__} does not have a TARGET_CLASS specified")
 
@@ -81,7 +81,11 @@ class Draft(FikenObjectAttachable, DraftBase):
         except RequestErrorException:
             raise
 
-        return self._follow_location_and_update_class(response)
+        loc = response.headers.get('Location')
+        if loc is None:
+            raise RequestErrorException("No Location header in response")
+
+        return self.CREATED_OBJECT_CLASS._getFromURL(loc)
 
 
 class DraftCreateRequest(FikenObjectRequest, DraftBase):
@@ -92,12 +96,14 @@ class DraftCreateRequest(FikenObjectRequest, DraftBase):
     customerId: int
 
     contactPersonId: Optional[int] = None
+    bankAccountNumber: BankAccountNumber # TODO - maybe optional if set for user?
 
 
 class InvoiceDraft(Draft):
     _GET_PATH_SINGLE = '/companies/{companySlug}/invoices/drafts/{draftId}'
     _GET_PATH_MULTIPLE = '/companies/{companySlug}/invoices/drafts'
     _DELETE_PATH = '/companies/{companySlug}/invoices/drafts/{draftId}'
+    _PUT_PATH = '/companies/{companySlug}/invoices/drafts/{draftId}'
 
     _CREATE_OBJECT_PATH = '/companies/{companySlug}/invoices/drafts/{draftId}/createInvoice'
     CREATED_OBJECT_CLASS: ClassVar[FikenObject] = Invoice

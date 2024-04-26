@@ -6,3 +6,4 @@
 - when checking POST classes, check if is_new is @attribute. Maybe just try accessing it without calling?
 - add patch method
 - tests - lag random navn til hver create/post for en test (litt som bankid kodeord)
+- VAT validation

@@ -1,8 +1,10 @@
 from datetime import date
 from enum import Enum
-from typing import Optional, Union
+from typing import Optional, Union, Annotated
 
 from pydantic import BaseModel, field_validator, Field, model_validator
+
+AccountCode = Annotated[str, Field(pattern=r"^\d{4}(:\d{5})?$")]
 
 
 class CaseInsensitiveEnum(str, Enum):
@@ -106,7 +108,7 @@ class ProductSalesLine(BaseModel):
 
 class JournalEntryLine(BaseModel):
     amount: int
-    account: Optional[str] = None  # TODO - update with account type
+    account: Optional[AccountCode] = None
     vatCode: Optional[str] = None
     debitAccount: Optional[str] = None  # TODO - update with account type
     debitVatCode: Optional[int] = None  # TODO - code the vat codes?
@@ -168,6 +170,7 @@ class InvoiceLineBase(BaseModel):
 class InvoiceLineRequest(InvoiceLineBase):
     # TODO - validate - either product line, OR text line WITH price AND vat
     quantity: int
+
     # TODO - only allow productName when productId not provided
     # TODO - if no product id, force incomeAccount
 

@@ -4,7 +4,7 @@ from typing import Optional, ClassVar
 from pydantic import BaseModel, model_validator, Field
 
 from fiken_py.fiken_object import FikenObject, T, FikenObjectRequest
-from fiken_py.fiken_types import BankAccountType
+from fiken_py.fiken_types import BankAccountType, AccountCode
 
 
 class BankAccountBase(BaseModel):
@@ -25,7 +25,7 @@ class BankAccount(BankAccountBase, FikenObject):
     bankAccountNumber: Optional[str] = None
     type: Optional[BankAccountType] = None
     bankAccountId: Optional[int] = None
-    accountCode: Optional[str] = Field(None, pattern=r"^\d{4}(:\d{5})?$")
+    accountCode: Optional[AccountCode] = None
     reconciledBalance: Optional[int] = None
     reconciledDate: Optional[date] = None  # TODO - new date type
 

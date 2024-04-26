@@ -1,7 +1,7 @@
 import pytest
-from pydantic import ValidationError
+from pydantic import ValidationError, BaseModel
 
-from fiken_py.fiken_types import InvoiceLineRequest, BankAccountType
+from fiken_py.fiken_types import InvoiceLineRequest, BankAccountType, AccountCode
 from fiken_py.models import BankAccount, BankAccountCreateRequest
 
 
@@ -73,14 +73,17 @@ def test_bankaccount_request_foreignservice():
     ("12345:", False),
     ("150010001", False)
 ])
-def test_bankaccount_accountcode(test_input, valid):
+def test_account_code(test_input, valid):
+    class AccountCodeTest(BaseModel):
+        accountCode: AccountCode
+
     if not valid:
         with pytest.raises(ValidationError):
-            acc = BankAccount(
+            acc = AccountCodeTest(
                 accountCode=test_input
             )
     else:
-        acc = BankAccount(
+        acc = AccountCodeTest(
             accountCode=test_input
         )
         assert acc is not None

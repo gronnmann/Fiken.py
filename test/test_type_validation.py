@@ -1,7 +1,8 @@
 import pytest
 from pydantic import ValidationError, BaseModel
 
-from fiken_py.fiken_types import InvoiceLineRequest, BankAccountType, AccountCode
+from fiken_py.fiken_types import InvoiceLineRequest, BankAccountType, AccountingAccount, AccountingAccountAssets, \
+    AccountingAccountCosts, AccountingAccountIncome, AccountingAccountEquityAndLiabilities
 from fiken_py.models import BankAccount, BankAccountCreateRequest
 
 
@@ -71,11 +72,12 @@ def test_bankaccount_request_foreignservice():
     ("1", False),
     ("1234", True),
     ("12345:", False),
-    ("150010001", False)
+    ("150010001", False),
+    ("9000", False),
 ])
-def test_account_code(test_input, valid):
+def test_accounting_account(test_input, valid):
     class AccountCodeTest(BaseModel):
-        accountCode: AccountCode
+        accountCode: AccountingAccount
 
     if not valid:
         with pytest.raises(ValidationError):
@@ -88,3 +90,77 @@ def test_account_code(test_input, valid):
         )
         assert acc is not None
         assert acc.accountCode == test_input
+
+
+@pytest.mark.parametrize("test_input,valid_assets,valid_equity_and_liabilities,valid_income,valid_costs",
+                         [
+                             ("1500", True, False, False, False),
+                             ("1500:10001", True, False, False, False),
+                             ("2000", False, True, False, False),
+                             ("3000", False, False, True, False),
+                             ("3200", False, False, True, False),
+                             ("4000", False, False, False, True),
+                             ("1", False, False, False, False),
+                             ("1234", True, False, False, False),
+                             ("12345:", False, False, False, False),
+                             ("150010001", False, False, False, False),
+                             ("8123", False, False, True, True),
+                         ])
+def test_account_account_classes(
+        test_input, valid_assets, valid_equity_and_liabilities, valid_income, valid_costs):
+    class AssetsAccount(BaseModel):
+        accountCode: AccountingAccountAssets
+
+    if not valid_assets:
+        with pytest.raises(ValidationError):
+            acc = AssetsAccount(
+                accountCode=test_input
+            )
+    else:
+        acc = AssetsAccount(
+            accountCode=test_input
+        )
+        assert acc is not None
+        assert acc.accountCode == test_input
+
+
+    class EquityAndLiabilitiesAccount(BaseModel):
+        accountCode: AccountingAccountEquityAndLiabilities
+
+    if not valid_equity_and_liabilities:
+        with pytest.raises(ValidationError):
+            acc = EquityAndLiabilitiesAccount(
+                accountCode=test_input
+            )
+
+    else:
+        acc = EquityAndLiabilitiesAccount(
+            accountCode=test_input
+        )
+        assert acc is not None
+        assert acc.accountCode == test_input
+
+    class IncomeAccount(BaseModel):
+        accountCode: AccountingAccountIncome
+
+    if not valid_income:
+        with pytest.raises(ValidationError):
+            acc = IncomeAccount(
+                accountCode=test_input
+            )
+
+    else:
+        acc = IncomeAccount(
+            accountCode=test_input
+        )
+        assert acc is not None
+        assert acc.accountCode == test_input
+
+    class CostsAccount(BaseModel):
+        accountCode: AccountingAccountCosts
+
+    if not valid_costs:
+        with pytest.raises(ValidationError):
+            acc = CostsAccount(
+                accountCode=test_input
+            )

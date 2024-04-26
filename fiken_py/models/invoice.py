@@ -75,7 +75,10 @@ class Invoice(FikenObject, BaseModel):
         if self._get_method_base_URL(RequestMethod.PATCH) is None:
             raise RequestWrongMediaTypeException(f"Object {self.__class__.__name__} does not support PATCH")
 
-        payload = InvoiceUpdateRequest(**self.model_dump(exclude_unset=True))
+        payload = InvoiceUpdateRequest(
+            newDueDate=self.dueDate,
+            sentManually=self.sentManually
+        )
 
         try:
             response = self._execute_method(RequestMethod.PATCH, dumped_object=payload,

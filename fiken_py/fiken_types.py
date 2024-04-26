@@ -4,7 +4,13 @@ from typing import Optional, Union, Annotated
 
 from pydantic import BaseModel, field_validator, Field, model_validator
 
-AccountCode = Annotated[str, Field(pattern=r"^\d{4}(:\d{5})?$")]
+AccountingAccount = Annotated[str, Field(pattern=r"^[1-8]\d{3}(:\d{5})?$")]  # All kontoklasser
+
+AccountingAccountAssets = Annotated[str, Field(pattern=r"^1\d{3}(:\d{5})?$")]  # Kontoklasse 1
+AccountingAccountEquityAndLiabilities = Annotated[str, Field(pattern=r"^2\d{3}(:\d{5})?$")]  # Kontoklasse 2
+
+AccountingAccountIncome = Annotated[str, Field(pattern=r"^[3|8]\d{3}$")]  # Kontoklasse 3
+AccountingAccountCosts = Annotated[str, Field(pattern=r"^[4-8]\d{3}$")]  # Kontoklasse 4-7
 
 
 class CaseInsensitiveEnum(str, Enum):
@@ -108,7 +114,7 @@ class ProductSalesLine(BaseModel):
 
 class JournalEntryLine(BaseModel):
     amount: int
-    account: Optional[AccountCode] = None
+    account: Optional[AccountingAccount] = None
     vatCode: Optional[str] = None
     debitAccount: Optional[str] = None  # TODO - update with account type
     debitVatCode: Optional[int] = None  # TODO - code the vat codes?
@@ -139,7 +145,7 @@ class OrderLine(BaseModel):
     description: Optional[str] = None
     netPrice: Optional[int] = None
     vat: Optional[int] = None
-    account: Optional[Union[str, int]] = None  # TODO - update with account type
+    account: Optional[AccountingAccountIncome] = None
     vatType: VatTypeProductSale
     netPriceInCurrency: Optional[int] = None
     vatInCurrency: Optional[int] = None
@@ -164,7 +170,7 @@ class InvoiceLineBase(BaseModel):
     productName: Optional[str] = None
     description: Optional[str] = Field(None, max_length=200)
     comment: Optional[str] = Field(None, max_length=200)
-    incomeAccount: Optional[Union[str | int]] = None
+    incomeAccount: Optional[AccountingAccountIncome] = None
 
 
 class InvoiceLineRequest(InvoiceLineBase):

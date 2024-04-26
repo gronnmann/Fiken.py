@@ -4,7 +4,7 @@ from typing import Optional
 from pydantic import BaseModel
 
 from fiken_py.fiken_object import FikenObject
-from fiken_py.fiken_types import VatTypeProduct
+from fiken_py.fiken_types import VatTypeProduct, AccountingAccountIncome
 
 
 class Product(BaseModel, FikenObject):
@@ -19,7 +19,7 @@ class Product(BaseModel, FikenObject):
     createdDate: Optional[date] = None
     lastModifiedDate: Optional[date] = None
     unitPrice: Optional[int] = None
-    incomeAccount: Optional[str] = None  # TODO - update with account type
+    incomeAccount: Optional[AccountingAccountIncome] = None
     vatType: VatTypeProduct
     active: bool = True
     productNumber: Optional[str] = None

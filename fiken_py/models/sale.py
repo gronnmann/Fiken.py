@@ -5,7 +5,7 @@ from pydantic import BaseModel, Field
 
 from fiken_py.fiken_object import FikenObject, FikenObjectRequest, RequestMethod
 
-from fiken_py.fiken_types import SaleKind, OrderLine, Payment, Attachment, Note
+from fiken_py.fiken_types import SaleKind, OrderLine, Payment, Attachment, Note, AccountingAccountAssets
 from fiken_py.models import Contact, Project
 
 
@@ -15,7 +15,7 @@ class SaleBase(BaseModel):
     totalPaidInCurrency: Optional[int] = None
     dueDate: Optional[datetime.date] = None
     kid: Optional[str] = Field(None, min_length=2, max_length=25)
-    paymentAccount: Optional[str] = None  # TODO - update with account type
+    paymentAccount: Optional[AccountingAccountAssets] = None
     paymentDate: Optional[datetime.date] = None
 
 

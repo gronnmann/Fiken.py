@@ -4,8 +4,8 @@ from fiken_py.fiken_types import InvoiceLineRequest, VatTypeProduct
 from fiken_py.models import Product, Contact, InvoiceRequest, Invoice
 
 
-def test_create_invoice_product(unique_id: str, generic_product: Product,
-                        generic_customer: Contact, generic_bank_account):
+def test_create_get_patch_invoice_product(unique_id: str, generic_product: Product,
+                                          generic_customer: Contact, generic_bank_account):
     invoice_line: InvoiceLineRequest = InvoiceLineRequest(
         productId=generic_product.productId,
         quantity=1,
@@ -28,13 +28,23 @@ def test_create_invoice_product(unique_id: str, generic_product: Product,
     assert invoice.invoiceId is not None
     assert invoice.issueDate == datetime.date.today()
 
-    get_invoice = Invoice.get(invoiceId=invoice.invoiceId)
+    get_invoice: Invoice = Invoice.get(invoiceId=invoice.invoiceId)
     assert get_invoice is not None
     assert get_invoice.invoiceId == invoice.invoiceId
 
+    new_due = get_invoice.dueDate + datetime.timedelta(days=7)
+    get_invoice.dueDate = new_due
+    get_invoice.save()
+    assert get_invoice.dueDate == new_due
 
-def test_create_invoice_product_freetext(unique_id: str,
-                        generic_customer: Contact, generic_bank_account):
+    sent_manually = get_invoice.sentManually
+    get_invoice.sentManually = not sent_manually
+    get_invoice.save()
+    assert get_invoice.sentManually != sent_manually
+
+
+def test_create_invoice_product_freetext_and_invoice_counter(unique_id: str,
+                                                             generic_customer: Contact, generic_bank_account):
     invoice_line: InvoiceLineRequest = InvoiceLineRequest(
         quantity=1,
         description="En banankasse fra Bendit (testprodukt fritekst)",
@@ -54,7 +64,11 @@ def test_create_invoice_product_freetext(unique_id: str,
         invoiceText="This is a test invoice sent by FikenPy",
     )
 
+    counter: int = Invoice.get_counter()
+
     invoice: Invoice = invoice.save()
+
+    assert Invoice.get_counter() == counter + 1
 
     assert invoice is not None
     assert invoice.invoiceId is not None

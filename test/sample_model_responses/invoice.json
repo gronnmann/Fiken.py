@@ -146,7 +146,7 @@
         "description": "string",
         "netPrice": 4500,
         "vat": 500,
-        "account": 1500,
+        "account": "3000",
         "vatType": "HIGH",
         "netPriceInCurrency": 4500,
         "vatInCurrency": 500

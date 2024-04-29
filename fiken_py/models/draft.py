@@ -1,12 +1,57 @@
 import datetime
+from enum import Enum
 from typing import Optional, ClassVar, Any
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, model_validator
 
 from fiken_py.errors import RequestErrorException
 from fiken_py.fiken_object import FikenObjectRequest, FikenObject, T, RequestMethod, FikenObjectAttachable
-from fiken_py.fiken_types import DraftType, DraftLine, Attachment, AccountingAccount, BankAccountNumber
+from fiken_py.fiken_types import Attachment, AccountingAccount, BankAccountNumber, VatTypeProductSale
 from fiken_py.models import Contact, Invoice
+from fiken_py.vat_validation import VATValidator
+
+
+class DraftType(str, Enum):
+    INVOICE = "invoice"
+    CASH_INVOICE = "cash_invoice"
+    OFFER = "offer"
+    CREDIT_NOTE = "credit_note"
+    REPEATING_INVOICE = "repeating_invoice"
+
+
+class DraftLine(BaseModel):
+    quantity: int
+
+    invoiceishDraftLineId: Optional[int] = None
+    lastModifiedDate: Optional[datetime.date] = None
+    productId: Optional[int] = None
+    description: Optional[str] = None
+    unitPrice: Optional[int] = None
+    vatType: Optional[VatTypeProductSale] = None
+    discount: Optional[int] = None
+    comment: Optional[str] = None
+    incomeAccount: Optional[AccountingAccount] = None  # TODO - accounting account type?
+
+    @model_validator(mode="after")
+    @classmethod
+    def provided_prod_or_line_data(cls, value):
+        product_provided = value.productId is not None
+        line_provided = ((value.unitPrice is not None) and (value.vatType is not None) and
+                         (value.description is not None) and (value.incomeAccount is not None))
+
+        assert product_provided or line_provided, "Either productId or unitPRice, description, vatType and incomeAccount must be provided"
+
+        return value
+
+    @model_validator(mode="after")
+    def validate_vat(cls, value):
+        vat: VatTypeProductSale = value.vatType
+        incomeAccount: AccountingAccount = value.incomeAccount
+
+        if incomeAccount is not None:
+            assert VATValidator.validate_vat_type_sale(vat, incomeAccount), "Vat type is not valid for income account"
+
+        return value  # TODO - own validation class
 
 
 class DraftBase(BaseModel):
@@ -96,7 +141,7 @@ class DraftCreateRequest(FikenObjectRequest, DraftBase):
     customerId: int
 
     contactPersonId: Optional[int] = None
-    bankAccountNumber: BankAccountNumber # TODO - maybe optional if set for user?
+    bankAccountNumber: BankAccountNumber  # TODO - maybe optional if set for user?
 
 
 class InvoiceDraft(Draft):

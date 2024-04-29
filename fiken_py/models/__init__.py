@@ -12,4 +12,4 @@ from .inbox_document import InboxDocument, InboxDocumentRequest
 from .project import Project, ProjectCreateRequest
 from .sale import Sale, SaleRequest
 from .invoice import Invoice, InvoiceRequest, InvoiceSendRequest
-from .draft import InvoiceDraft, InvoiceDraftCreateRequest
+from .draft import InvoiceDraft, InvoiceDraftCreateRequest, DraftLine

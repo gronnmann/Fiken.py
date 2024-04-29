@@ -1,7 +1,7 @@
 import datetime
 
-from fiken_py.fiken_types import DraftLine, VatTypeProduct, VatTypeProductSale
-from fiken_py.models import BankAccount, Contact, Product, InvoiceDraftCreateRequest, InvoiceDraft, Invoice
+from fiken_py.fiken_types import VatTypeProduct, VatTypeProductSale
+from fiken_py.models import BankAccount, Contact, Product, InvoiceDraftCreateRequest, InvoiceDraft, Invoice, DraftLine
 
 
 def test_all_invoice_draft(unique_id: str, generic_product: Product, generic_customer: Contact, generic_bank_account: BankAccount):
@@ -16,7 +16,7 @@ def test_all_invoice_draft(unique_id: str, generic_product: Product, generic_cus
         description="En banankasse fra Bendit (testprodukt fritekst)",
         unitPrice=10000,
         vatType=VatTypeProductSale.HIGH,
-        incomeAccount="3200",
+        incomeAccount="3000",
         quantity=2,
     )
 

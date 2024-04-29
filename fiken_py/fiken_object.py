@@ -324,9 +324,11 @@ class FikenObject:
             cls._REQUESTS_COUNTER += 1
             cls._LAST_REQUEST_TIME = timestamp_ms
 
+        headers_debug = headers.copy()
+        headers_debug['Authorization'] = "Bearer [REDACTED]"
         logger.debug(f"""Executing {method_name} on {cls.__name__} at {url}
         params: {kwargs}
-        headers: {cls._HEADERS}
+        headers: {headers_debug}
         data: {request_data}""")
 
         try:

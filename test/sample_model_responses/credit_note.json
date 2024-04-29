@@ -81,7 +81,7 @@
     {
       "net": 4500,
       "vat": 500,
-      "vatType": "string",
+      "vatType": "HIGH",
       "gross": 5000,
       "netInNok": 4500,
       "vatInNok": 500,
@@ -196,8 +196,8 @@
         "description": "string",
         "netPrice": 4500,
         "vat": 500,
-        "account": 1500,
-        "vatType": "string",
+        "account": "3000",
+        "vatType": "HIGH",
         "netPriceInCurrency": 4500,
         "vatInCurrency": 500
       }

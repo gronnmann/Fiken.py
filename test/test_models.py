@@ -9,6 +9,7 @@ import random
 from pydantic import BaseModel
 
 from fiken_py.fiken_types import CaseInsensitiveEnum
+from fiken_py.models.credit_note import CreditNote
 from sample_data_reader import get_sample_from_json
 
 from fiken_py.fiken_object import FikenObject
@@ -50,6 +51,7 @@ def m():
     Sale,
     Invoice,
     InvoiceDraft,
+    CreditNote,
 ])
 def test_object_methods(object: FikenObject, m: requests_mock.Mocker):
     print(f"---- TESTING {object.__name__} ----")

@@ -2,10 +2,12 @@ import datetime
 
 from fiken_py.fiken_types import VatTypeProduct, VatTypeProductSale
 from fiken_py.models import BankAccount, Contact, Product, InvoiceDraftCreateRequest, InvoiceDraft, Invoice, DraftLine
+from fiken_py.models.credit_note import CreditNote
+from fiken_py.models.draft import CreditNoteDraftCreateRequest, CreditNoteDraft
 
 
-def test_all_invoice_draft(unique_id: str, generic_product: Product, generic_customer: Contact, generic_bank_account: BankAccount):
-
+def test_all_invoice_draft(unique_id: str, generic_product: Product, generic_customer: Contact,
+                           generic_bank_account: BankAccount):
     draft_line = DraftLine(
         productId=generic_product.productId,
         quantity=1,
@@ -70,5 +72,48 @@ def test_all_invoice_draft(unique_id: str, generic_product: Product, generic_cus
     assert InvoiceDraft.get(draftId=id) is None
 
 
+def test_all_credit_note(unique_id: str, generic_product: Product, generic_customer: Contact,
+                         generic_bank_account: BankAccount):
+    draft_line = DraftLine(
+        productId=generic_product.productId,
+        quantity=1,
+        vatType=VatTypeProductSale.HIGH,
+    )
 
+    draft: CreditNoteDraftCreateRequest = CreditNoteDraftCreateRequest(
+        issueDate=datetime.date.today(),
+        daysUntilDueDate=7,
+        customerId=generic_customer.contactId,
+        lines=[draft_line],
+        ourReference=f"Test credit note ({unique_id}#product)",
+        invoiceText="This is a test credit note sent by FikenPy",
+        bankAccountNumber=generic_bank_account.bankAccountNumber,
+    )
+
+    request_copy = draft.model_copy()
+
+    # Step 1 - test GET and POST
+    credit_note_draft: CreditNoteDraft = draft.save()
+    assert credit_note_draft.draftId is not None
+    draft_id = credit_note_draft.draftId
+
+    # Step 2 - test PUT
+
+    credit_note_draft.ourReference = "endret referanse"
+    credit_note_draft.save()
+
+    credit_note_draft = CreditNoteDraft.get(draftId=draft_id)
+    assert credit_note_draft.ourReference == "endret referanse"
+
+    # Step 3 - test delete
+    credit_note_draft.delete()
+    assert CreditNoteDraft.get(draftId=draft_id) is None
+
+    # Step 4 - recreate draft, test delete
+    new_draft: CreditNoteDraft = request_copy.save()
+    assert CreditNoteDraft.get(draftId=new_draft.draftId) is not None
+
+    credit_note: CreditNote = new_draft.submit_object()
+    assert credit_note is not None
+    assert credit_note.creditNoteId is not None
 

@@ -8,6 +8,7 @@ from fiken_py.errors import RequestErrorException
 from fiken_py.fiken_object import FikenObjectRequest, FikenObject, T, RequestMethod, FikenObjectAttachable
 from fiken_py.fiken_types import Attachment, AccountingAccount, BankAccountNumber, VatTypeProductSale
 from fiken_py.models import Contact, Invoice
+from fiken_py.models.credit_note import CreditNote
 from fiken_py.vat_validation import VATValidator
 
 
@@ -161,3 +162,23 @@ class InvoiceDraftCreateRequest(DraftCreateRequest):
     _POST_PATH = '/companies/{companySlug}/invoices/drafts'
 
     type: DraftType = DraftType.INVOICE
+
+
+class CreditNoteDraft(Draft):
+    CREATED_OBJECT_CLASS: ClassVar[FikenObject] = CreditNote
+
+    _GET_PATH_SINGLE = '/companies/{companySlug}/creditNotes/drafts/{draftId}'
+    _GET_PATH_MULTIPLE = '/companies/{companySlug}/creditNotes/drafts'
+    _DELETE_PATH = '/companies/{companySlug}/creditNotes/drafts/{draftId}'
+    _PUT_PATH = '/companies/{companySlug}/creditNotes/drafts/{draftId}'
+
+    _CREATE_OBJECT_PATH = '/companies/{companySlug}/creditNotes/drafts/{draftId}/createCreditNote'
+
+    type: DraftType = DraftType.CREDIT_NOTE
+
+
+class CreditNoteDraftCreateRequest(DraftCreateRequest):
+    BASE_CLASS: ClassVar[FikenObject] = CreditNoteDraft
+    _POST_PATH = '/companies/{companySlug}/creditNotes/drafts'
+
+    type: DraftType = DraftType.CREDIT_NOTE

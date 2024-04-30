@@ -467,3 +467,34 @@ class FikenObjectAttachable(FikenObject):
 
     def add_attachment_bytes(self, filename: str, data: bytes, comment: str = None, **kwargs):
         return self.add_attachment_bytes_cls(filename, data, comment, instance=self, **kwargs)
+
+
+
+class FikenObjectCounterable(FikenObject):
+
+    @classmethod
+    def get_counter(cls) -> int:
+        url = cls._get_method_base_URL("COUNTER")
+
+        try:
+            response = cls._execute_method(RequestMethod.GET, url)
+        except RequestErrorException:
+            raise
+
+        return response.json()['value']
+
+    @classmethod
+    def set_initial_counter(cls, counter: int) -> bool:
+        """Set the default invoice counter to the given value
+        :param counter: The value to set the counter to
+        :return: True if the counter was set successfully, False otherwise"""
+        url = cls.PATH_BASE + cls.COUNTER_PATH
+
+        try:
+            response = cls._execute_method(RequestMethod.POST, url, dumped_object=dict({"value": counter}))
+        except RequestErrorException:
+            raise
+
+        if response.status_code != 201:
+            return False
+        return True

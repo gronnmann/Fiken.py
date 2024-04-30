@@ -6,7 +6,7 @@ from typing import Optional, TypeVar
 from pydantic import BaseModel, Field
 
 from fiken_py.errors import RequestContentNotFoundException, RequestErrorException
-from fiken_py.fiken_object import FikenObjectAttachable, RequestMethod
+from fiken_py.fiken_object import FikenObjectAttachable, RequestMethod, FikenObjectCounterable
 from fiken_py.shared_types import Address, InvoiceLine, Attachment
 from fiken_py.models import Contact, Project, Sale, Invoice
 
@@ -38,12 +38,14 @@ class PartialCreditNoteRequest(BaseModel):
     lines: list[InvoiceLine]
 
 
-class CreditNote(FikenObjectAttachable, BaseModel):
+class CreditNote(FikenObjectCounterable, FikenObjectAttachable, BaseModel):
     _GET_PATH_SINGLE = '/companies/{companySlug}/creditNotes/{creditNoteId}'
     _GET_PATH_MULTIPLE = '/companies/{companySlug}/creditNotes/'
 
     _POST_FULL_PATH = '/companies/{companySlug}/creditNotes/full'
     _POST_PARTIAL_PATH = '/companies/{companySlug}/creditNotes/partial'
+
+    _COUNTER_PATH = '/companies/{companySlug}/invoices/counter'
 
     creditNoteId: int
     creditNoteNumber: int

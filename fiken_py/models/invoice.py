@@ -5,7 +5,8 @@ import requests
 from pydantic import BaseModel, Field
 
 from fiken_py.errors import RequestWrongMediaTypeException, RequestErrorException
-from fiken_py.fiken_object import FikenObject, FikenObjectRequest, RequestMethod, T
+from fiken_py.fiken_object import FikenObject, FikenObjectRequest, RequestMethod, T, FikenObjectCounterable, \
+    FikenObjectAttachable
 from fiken_py.shared_types import VatTypeProduct, Address, Attachment, InvoiceLineRequest, InvoiceLine
 from fiken_py.shared_enums import SendMethod, SendEmailOption
 from fiken_py.models import Contact, Project, Sale
@@ -32,12 +33,12 @@ class InvoiceUpdateRequest(BaseModel):
     sentManually: Optional[bool] = None
 
 
-class Invoice(FikenObject, BaseModel):
+class Invoice(FikenObjectCounterable, FikenObjectAttachable, BaseModel):
     _GET_PATH_SINGLE = '/companies/{companySlug}/invoices/{invoiceId}'
     _GET_PATH_MULTIPLE = '/companies/{companySlug}/invoices'
     _PATCH_PATH = '/companies/{companySlug}/invoices/{invoiceId}'
 
-    COUNTER_PATH: ClassVar[str] = '/companies/{companySlug}/invoices/counter'
+    _COUNTER_PATH = '/companies/{companySlug}/invoices/counter'
 
     invoiceId: Optional[int] = None
     createdDate: Optional[datetime.date] = None
@@ -98,33 +99,6 @@ class Invoice(FikenObject, BaseModel):
             raise
 
         if response.status_code != 200:
-            return False
-        return True
-
-    @classmethod
-    def get_counter(cls) -> int:
-        url = cls.PATH_BASE + cls.COUNTER_PATH
-
-        try:
-            response = cls._execute_method(RequestMethod.GET, url)
-        except RequestErrorException:
-            raise
-
-        return response.json()['value']
-
-    @classmethod
-    def set_initial_counter(cls, counter: int) -> bool:
-        """Set the default invoice counter to the given value
-        :param counter: The value to set the counter to
-        :return: True if the counter was set successfully, False otherwise"""
-        url = cls.PATH_BASE + cls.COUNTER_PATH
-
-        try:
-            response = cls._execute_method(RequestMethod.POST, url, dumped_object=dict({"value": counter}))
-        except RequestErrorException:
-            raise
-
-        if response.status_code != 201:
             return False
         return True
 

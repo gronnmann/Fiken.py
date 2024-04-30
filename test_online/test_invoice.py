@@ -77,3 +77,10 @@ def test_create_invoice_product_freetext_and_invoice_counter(unique_id: str,
     get_invoice = Invoice.get(invoiceId=invoice.invoiceId)
     assert get_invoice is not None
     assert get_invoice.invoiceId == invoice.invoiceId
+
+
+def test_counter():
+    counter: int = Invoice.get_counter()
+    assert counter is not None
+    assert counter >= 0
+    assert isinstance(counter, int)

@@ -9,8 +9,7 @@ from fiken_py.models.credit_note import CreditNote
 
 
 def test_create_credit_note_full(unique_id: str, generic_product: Product,
-                                          generic_customer: Contact, generic_bank_account):
-
+                                 generic_customer: Contact, generic_bank_account):
     invoice_line: InvoiceLineRequest = InvoiceLineRequest(
         productId=generic_product.productId,
         quantity=1,
@@ -38,3 +37,10 @@ def test_create_credit_note_full(unique_id: str, generic_product: Product,
 
     with pytest.raises(RequestContentNotFoundException):
         CreditNote.create_from_invoice_full(invoiceId=99999)
+
+
+def test_counter():
+    counter: int = CreditNote.get_counter()
+    assert counter is not None
+    assert counter >= 0
+    assert isinstance(counter, int)

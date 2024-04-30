@@ -1,9 +1,9 @@
 import pytest
 from pydantic import ValidationError, BaseModel
 
-from fiken_py.fiken_types import InvoiceLineRequest, BankAccountType, AccountingAccount, AccountingAccountAssets, \
+from fiken_py.shared_types import InvoiceLineRequest, AccountingAccount, AccountingAccountAssets, \
     AccountingAccountCosts, AccountingAccountIncome, AccountingAccountEquityAndLiabilities
-from fiken_py.models import BankAccount, BankAccountCreateRequest, DraftLine
+from fiken_py.models import BankAccount, BankAccountCreateRequest, DraftLine, BankAccountType
 
 
 def test_validate_invoice_line():

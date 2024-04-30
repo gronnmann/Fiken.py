@@ -6,22 +6,22 @@ from pydantic import BaseModel, Field
 
 from fiken_py.errors import RequestWrongMediaTypeException, RequestErrorException
 from fiken_py.fiken_object import FikenObject, FikenObjectRequest, RequestMethod, T
-from fiken_py.fiken_types import VatTypeProduct, Address, Attachment, InvoiceLineRequest, InvoiceLine, \
-    SendInvoiceMethod, SendInvoiceEmailOption
+from fiken_py.shared_types import VatTypeProduct, Address, Attachment, InvoiceLineRequest, InvoiceLine
+from fiken_py.shared_enums import SendMethod, SendEmailOption
 from fiken_py.models import Contact, Project, Sale
 
 Inv = TypeVar('Inv', bound='Invoice')
 
 
 class InvoiceSendRequest(BaseModel):
-    method: list[SendInvoiceMethod]
+    method: list[SendMethod]
     invoiceId: int
     includeDocumentAttachments: bool
 
     recipientName: Optional[str] = None
     recipientEmail: Optional[str] = None
     message: Optional[str] = None
-    emailSendOption: Optional[SendInvoiceEmailOption] = None  # TODO - requuire this when method is email
+    emailSendOption: Optional[SendEmailOption] = None  # TODO - requuire this when method is email
     mergeInvoiceAndAttachments: Optional[bool] = None
     organizationNumber: Optional[str] = None
     mobileNumber: Optional[str] = None

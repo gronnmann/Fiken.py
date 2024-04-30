@@ -7,7 +7,7 @@ from pydantic import BaseModel, Field
 
 from fiken_py.errors import RequestContentNotFoundException, RequestErrorException
 from fiken_py.fiken_object import FikenObjectAttachable, RequestMethod
-from fiken_py.fiken_types import Address, InvoiceLine, Attachment
+from fiken_py.shared_types import Address, InvoiceLine, Attachment
 from fiken_py.models import Contact, Project, Sale, Invoice
 
 CN = TypeVar('CN', bound='CreditNote')

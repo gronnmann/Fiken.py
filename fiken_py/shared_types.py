@@ -1,9 +1,10 @@
-import re
 from datetime import date
 from enum import Enum
-from typing import Optional, Union, Annotated
+from typing import Optional, Annotated
 
-from pydantic import BaseModel, field_validator, Field, model_validator
+from pydantic import BaseModel, Field, model_validator
+
+from fiken_py.shared_enums import AttachmentType
 
 AccountingAccount = Annotated[str, Field(pattern=r"^[1-8]\d{3}(:\d{5})?$")]  # All kontoklasser
 
@@ -76,27 +77,12 @@ class VatTypeProductPurcase(CaseInsensitiveEnum):
     HIGH_PURCASE_OF_EMISSIONSTRADING_OR_GOLD_NONDEDUCTIBLE = 'HIGH_PURCASE_OF_EMISSIONSTRADING_OR_GOLD_NONDEDUCTIBLE'
 
 
-class BankAccountType(str, Enum):
-    NORMAL = 'normal'
-    TAX_DEDUCTION = 'tax_deduction'
-    FOREIGN = 'foreign'
-    CREDIT_CARD = 'credit_card'
-
-
 class Address(BaseModel):
     streetAddress: Optional[str] = None
     streetAddressLine2: Optional[str] = None
     city: Optional[str] = None
     postCode: Optional[str] = None
     country: str
-
-
-class AttachmentType(str, Enum):
-    INVOICE = 'invoice'
-    REMINDER = 'reminder'
-    UNSPECIFIED = 'unspecified'
-    OCR = 'ocr'
-    BANK_STATEMENT = 'bank_statement'
 
 
 class Attachment(BaseModel):
@@ -136,12 +122,6 @@ class Payment(BaseModel):
     amountInNok: Optional[int] = None
     currency: Optional[str] = None
     fee: Optional[int] = None
-
-
-class SaleKind(str, Enum):
-    CASH_SALE = 'cash_sale'
-    INVOICE = 'invoice'
-    EXTERNAL_INVOICE = 'external_invoice'
 
 
 class OrderLine(BaseModel):
@@ -202,16 +182,3 @@ class InvoiceLine(InvoiceLineBase):
     quantity: Optional[int] = None
 
 
-class SendInvoiceMethod(str, Enum):
-    SMS = "sms"
-    EMAIL = "email"
-    EHF = "ehf"
-    EFAKTURA = "efaktura"
-    LETTER = "letter"
-    AUTO = "auto"
-
-
-class SendInvoiceEmailOption(str, Enum):
-    DOCUMENT_LINK = "document_link"
-    ATTACHMENT = "attachment"
-    AUTO = "auto"

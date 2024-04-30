@@ -1,10 +1,18 @@
 from datetime import date
+from enum import Enum
 from typing import Optional, ClassVar
 
 from pydantic import BaseModel, model_validator, Field
 
 from fiken_py.fiken_object import FikenObject, T, FikenObjectRequest
-from fiken_py.fiken_types import BankAccountType, AccountingAccount, AccountingAccountAssets, BankAccountNumber
+from fiken_py.shared_types import AccountingAccount, AccountingAccountAssets, BankAccountNumber
+
+
+class BankAccountType(str, Enum):
+    NORMAL = 'normal'
+    TAX_DEDUCTION = 'tax_deduction'
+    FOREIGN = 'foreign'
+    CREDIT_CARD = 'credit_card'
 
 
 class BankAccountBase(BaseModel):

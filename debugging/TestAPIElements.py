@@ -10,9 +10,10 @@ from urllib3.connection import HTTPConnection
 from fiken_py.fiken_object import FikenObject
 from fiken_py.models import UserInfo, Company, BankAccount, BankAccountCreateRequest, Contact, ContactPerson, \
     ProductSalesReportRequest, Product, Transaction, JournalEntry, Account, JournalEntryRequest, InboxDocumentRequest, \
-    ProjectCreateRequest, SaleRequest, InvoiceRequest, Project
-from fiken_py.fiken_types import BankAccountType, JournalEntryLine, VatTypeProduct, SaleKind, OrderLine, \
-    InvoiceLineRequest, SendInvoiceMethod, SendInvoiceEmailOption
+    ProjectCreateRequest, SaleRequest, InvoiceRequest, Project, BankAccountType
+from fiken_py.shared_types import JournalEntryLine, VatTypeProduct, OrderLine, \
+    InvoiceLineRequest
+from fiken_py.shared_enums import SaleKind, SendMethod, SendEmailOption
 from fiken_py.models.invoice import InvoiceSendRequest, Invoice
 
 dotenv.load_dotenv(".env")
@@ -340,11 +341,11 @@ def create_and_invoice_user():
 
     send_req = InvoiceSendRequest(
         invoiceId=invoice.invoiceId,
-        method=[SendInvoiceMethod.EMAIL],
+        method=[SendMethod.EMAIL],
         includeDocumentAttachments=False,
         recipientName=customer.name,
         message="Dette er en test av send_invoice",
-        emailSendOption=SendInvoiceEmailOption.AUTO
+        emailSendOption=SendEmailOption.AUTO
     )
 
     Invoice.send_to_customer(send_req, companySlug='fiken-demo-drage-og-elefant-as', invoice=invoice)

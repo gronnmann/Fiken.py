@@ -8,7 +8,7 @@ import random
 
 from pydantic import BaseModel
 
-from fiken_py.fiken_types import CaseInsensitiveEnum
+from fiken_py.shared_types import CaseInsensitiveEnum
 from fiken_py.models.credit_note import CreditNote
 from sample_data_reader import get_sample_from_json
 

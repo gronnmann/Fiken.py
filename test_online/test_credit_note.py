@@ -3,7 +3,7 @@ import datetime
 import pytest
 
 from fiken_py.errors import RequestContentNotFoundException
-from fiken_py.fiken_types import InvoiceLineRequest
+from fiken_py.shared_types import InvoiceLineRequest
 from fiken_py.models import Product, Contact, InvoiceRequest, Invoice
 from fiken_py.models.credit_note import CreditNote
 

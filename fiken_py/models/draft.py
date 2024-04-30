@@ -6,7 +6,7 @@ from pydantic import BaseModel, Field, model_validator
 
 from fiken_py.errors import RequestErrorException
 from fiken_py.fiken_object import FikenObjectRequest, FikenObject, T, RequestMethod, FikenObjectAttachable
-from fiken_py.fiken_types import Attachment, AccountingAccount, BankAccountNumber, VatTypeProductSale
+from fiken_py.shared_types import Attachment, AccountingAccount, BankAccountNumber, VatTypeProductSale
 from fiken_py.models import Contact, Invoice
 from fiken_py.models.credit_note import CreditNote
 from fiken_py.vat_validation import VATValidator

@@ -1,6 +1,6 @@
 import pytest
 
-from fiken_py.fiken_types import VatTypeProductSale
+from fiken_py.shared_types import VatTypeProductSale
 from fiken_py.vat_validation import VATValidator
 
 

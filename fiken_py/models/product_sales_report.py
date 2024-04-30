@@ -4,7 +4,7 @@ from typing import ClassVar, Optional, List, Any
 from pydantic import BaseModel, Field
 
 from fiken_py.fiken_object import FikenObject, FikenObjectRequest, T
-from fiken_py.fiken_types import ProductSalesLine
+from fiken_py.shared_types import ProductSalesLine
 from fiken_py.models import Product
 
 

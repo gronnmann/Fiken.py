@@ -4,7 +4,7 @@ from typing import Optional
 from pydantic import BaseModel
 
 from fiken_py.fiken_object import FikenObject
-from fiken_py.fiken_types import VatTypeProduct, AccountingAccountIncome
+from fiken_py.shared_types import VatTypeProduct, AccountingAccountIncome
 
 
 class Product(BaseModel, FikenObject):

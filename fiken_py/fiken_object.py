@@ -18,7 +18,7 @@ from fiken_py.errors import RequestWrongMediaTypeException, RequestConnectionExc
     RequestUserUnauthenticatedException, RequestForbiddenException, RequestContentNotFoundException, \
     RequestUnsupportedMethodException, \
     RequestWrongMediaTypeException, RequestErrorException
-from fiken_py.fiken_types import Attachment
+from fiken_py.shared_types import Attachment
 
 T = TypeVar('T', bound='FikenObject')
 

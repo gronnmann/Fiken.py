@@ -1,6 +1,6 @@
 import datetime
 
-from fiken_py.fiken_types import InvoiceLineRequest, VatTypeProduct
+from fiken_py.shared_types import InvoiceLineRequest, VatTypeProduct
 from fiken_py.models import Product, Contact, InvoiceRequest, Invoice
 
 

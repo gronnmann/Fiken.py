@@ -7,8 +7,8 @@ import dotenv
 import pytest
 
 from fiken_py.fiken_object import FikenObject
-from fiken_py.fiken_types import VatTypeProduct, BankAccountType
-from fiken_py.models import Product, Contact, BankAccount, BankAccountCreateRequest
+from fiken_py.shared_types import VatTypeProduct
+from fiken_py.models import Product, Contact, BankAccount, BankAccountCreateRequest, BankAccountType
 
 
 @pytest.fixture(autouse=True, scope="session")

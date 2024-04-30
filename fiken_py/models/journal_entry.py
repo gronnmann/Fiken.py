@@ -3,7 +3,7 @@ from typing import Optional, ClassVar
 from pydantic import BaseModel
 
 from fiken_py.fiken_object import FikenObjectAttachable
-from fiken_py.fiken_types import Attachment, JournalEntryLine
+from fiken_py.shared_types import Attachment, JournalEntryLine
 from datetime import date
 
 

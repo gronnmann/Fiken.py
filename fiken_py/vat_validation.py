@@ -1,7 +1,7 @@
 import logging
 import re
 
-from fiken_py.fiken_types import VatTypeProductSale, AccountingAccountIncome
+from fiken_py.shared_types import VatTypeProductSale, AccountingAccountIncome
 
 logger = logging.getLogger("fiken_py")
 

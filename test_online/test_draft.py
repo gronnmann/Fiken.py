@@ -1,6 +1,6 @@
 import datetime
 
-from fiken_py.fiken_types import VatTypeProduct, VatTypeProductSale
+from fiken_py.shared_types import VatTypeProduct, VatTypeProductSale
 from fiken_py.models import BankAccount, Contact, Product, InvoiceDraftCreateRequest, InvoiceDraft, Invoice, DraftLine
 from fiken_py.models.credit_note import CreditNote
 from fiken_py.models.draft import CreditNoteDraftCreateRequest, CreditNoteDraft

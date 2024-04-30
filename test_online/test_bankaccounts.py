@@ -1,5 +1,4 @@
-from fiken_py.fiken_types import BankAccountType
-from fiken_py.models import BankAccount, BankAccountCreateRequest
+from fiken_py.models import BankAccount, BankAccountCreateRequest, BankAccountType
 
 
 def test_create_bankaccount(unique_id):

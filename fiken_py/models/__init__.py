@@ -1,7 +1,7 @@
 from .user_info import UserInfo
 from .company import Company
 from .account import Account
-from .bank_account import BankAccount, BankAccountCreateRequest
+from .bank_account import BankAccount, BankAccountCreateRequest, BankAccountType
 from .contact_person import ContactPerson
 from .contact import Contact
 from .product import Product

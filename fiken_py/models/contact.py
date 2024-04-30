@@ -5,7 +5,7 @@ from pydantic import BaseModel
 
 from fiken_py.errors import RequestWrongMediaTypeException
 from fiken_py.fiken_object import FikenObjectAttachable
-from fiken_py.fiken_types import Address, Attachment, Note
+from fiken_py.shared_types import Address, Attachment, Note
 from fiken_py.models import ContactPerson
 
 

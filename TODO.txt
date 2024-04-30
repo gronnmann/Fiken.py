@@ -1,9 +1,8 @@
 - /companies/{company_slug}/groups
 - accessing methods object oritented way
 - init method for all classes that can be submitted
-- make 404 make object None, else raise exception
 - maybe remove _getFromURL and use the other method?
 - when checking POST classes, check if is_new is @attribute. Maybe just try accessing it without calling?
-- add patch method
 - tests - lag random navn til hver create/post for en test (litt som bankid kodeord)
 - VAT validation
+- maybe rename _GET_PATH to GET_PATH etc for pydantic not messing with it (regex _(?<path>\w*_PATH(_\w*)?))

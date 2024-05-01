@@ -12,13 +12,13 @@ import requests
 import platform
 from importlib.metadata import version
 
-from pydantic import BaseModel
+from pydantic import BaseModel, ValidationError
 
 from fiken_py.errors import RequestWrongMediaTypeException, RequestConnectionException, RequestBadRequestException, \
     RequestUserUnauthenticatedException, RequestForbiddenException, RequestContentNotFoundException, \
     RequestUnsupportedMethodException, \
     RequestWrongMediaTypeException, RequestErrorException
-from fiken_py.shared_types import Attachment
+from fiken_py.shared_types import Attachment, Counter
 
 T = TypeVar('T', bound='FikenObject')
 
@@ -301,7 +301,7 @@ class FikenObject:
                 if issubclass(dumped_object.__class__, BaseModel):
                     dumped_object: BaseModel
                     request_data = dumped_object.model_dump_json(by_alias=True)
-                elif isinstance(dumped_object.__class__, dict):
+                elif isinstance(dumped_object, dict):
                     request_data = dumped_object
                 else:
                     raise ValueError("instance must be a BaseModel object or dict")
@@ -469,7 +469,6 @@ class FikenObjectAttachable(FikenObject):
         return self.add_attachment_bytes_cls(filename, data, comment, instance=self, **kwargs)
 
 
-
 class FikenObjectCounterable(FikenObject):
 
     @classmethod
@@ -481,17 +480,22 @@ class FikenObjectCounterable(FikenObject):
         except RequestErrorException:
             raise
 
-        return response.json()['value']
+        try:
+            return Counter(**response.json()).value
+        except ValidationError:
+            raise
 
     @classmethod
     def set_initial_counter(cls, counter: int) -> bool:
         """Set the default invoice counter to the given value
         :param counter: The value to set the counter to
         :return: True if the counter was set successfully, False otherwise"""
-        url = cls.PATH_BASE + cls.COUNTER_PATH
+        url = cls._get_method_base_URL("COUNTER")
+
+        counter = Counter(value=counter)
 
         try:
-            response = cls._execute_method(RequestMethod.POST, url, dumped_object=dict({"value": counter}))
+            response = cls._execute_method(RequestMethod.POST, url, dumped_object=counter)
         except RequestErrorException:
             raise
 

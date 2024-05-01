@@ -7,10 +7,8 @@ from pydantic import BaseModel, Field, model_validator
 from fiken_py.errors import RequestErrorException
 from fiken_py.fiken_object import FikenObjectRequest, FikenObject, T, RequestMethod, FikenObjectAttachable
 from fiken_py.shared_types import Attachment, AccountingAccount, BankAccountNumber, DraftLine
-from fiken_py.shared_enums import VatTypeProductSale
-from fiken_py.models import Contact, Invoice
+from fiken_py.models import Contact, Invoice, Offer
 from fiken_py.models.credit_note import CreditNote
-from fiken_py.vat_validation import VATValidator
 
 
 class DraftType(str, Enum):
@@ -148,3 +146,23 @@ class CreditNoteDraftCreateRequest(DraftCreateRequest):
     _POST_PATH = '/companies/{companySlug}/creditNotes/drafts'
 
     type: DraftType = DraftType.CREDIT_NOTE
+
+
+class OfferDraft(Draft):
+    CREATED_OBJECT_CLASS: ClassVar[FikenObject] = Offer
+
+    _GET_PATH_SINGLE = '/companies/{companySlug}/offers/drafts/{draftId}'
+    _GET_PATH_MULTIPLE = '/companies/{companySlug}/offers/drafts'
+    _DELETE_PATH = '/companies/{companySlug}/offers/drafts/{draftId}'
+    _PUT_PATH = '/companies/{companySlug}/offers/drafts/{draftId}'
+
+    _CREATE_OBJECT_PATH = '/companies/{companySlug}/offers/drafts/{draftId}/createOffer'
+
+    type: DraftType = DraftType.OFFER
+
+
+class OfferDraftCreateRequest(DraftCreateRequest):
+    BASE_CLASS: ClassVar[FikenObject] = OfferDraft
+    _POST_PATH = '/companies/{companySlug}/offers/drafts'
+
+    type: DraftType = DraftType.OFFER

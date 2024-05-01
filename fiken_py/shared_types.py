@@ -82,7 +82,7 @@ class OrderLine(BaseModel):
 
 
 class InvoiceIshLineBase(BaseModel):
-    cls_is_request: ClassVar[bool] = False
+    validate_product_or_line: ClassVar[bool] = False
 
     incomeAccount: Optional[AccountingAccountIncome] = None
     vatType: Optional[VatTypeProductSale] = None
@@ -96,8 +96,8 @@ class InvoiceIshLineBase(BaseModel):
     @model_validator(mode="after")
     @classmethod
     def provided_prod_or_line_data(cls, value):
-        if not value.cls_is_request:
-            return value # Only validate requests
+        if not value.validate_product_or_line:
+            return value  # Only validate requests
 
         product_provided = value.productId is not None
         line_provided = ((value.unitPrice is not None) and (value.vatType is not None) and
@@ -119,15 +119,16 @@ class InvoiceIshLineBase(BaseModel):
 
 
 class CreditNotePartialRequestLine(InvoiceIshLineBase):
-    cls_is_request: ClassVar[bool] = True
+    validate_product_or_line: ClassVar[bool] = True
 
     quantity: int
 
 
 class DraftLine(InvoiceIshLineBase):
+    validate_product_or_line: ClassVar[bool] = True
+
     invoiceishDraftLineId: Optional[int] = None
     lastModifiedDate: Optional[date] = None
-    # TODO - should incomeAccount be validated here?
 
 
 class InvoiceLineBase(InvoiceIshLineBase):
@@ -140,7 +141,7 @@ class InvoiceLineBase(InvoiceIshLineBase):
 
 
 class InvoiceLineRequest(InvoiceLineBase):
-    cls_is_request: ClassVar[bool] = True
+    validate_product_or_line: ClassVar[bool] = True
 
     quantity: int
 
@@ -150,3 +151,7 @@ class InvoiceLine(InvoiceLineBase):
     vatInNok: Optional[int] = None
     grossInNok: Optional[int] = None
     quantity: Optional[int] = None
+
+
+class Counter(BaseModel):
+    value: int

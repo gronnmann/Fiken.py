@@ -22,7 +22,7 @@
     {
       "net": 4500,
       "vat": 500,
-      "vatType": "string",
+      "vatType": "HIGH",
       "gross": 5000,
       "netInNok": 4500,
       "vatInNok": 500,
@@ -38,7 +38,7 @@
       "incomeAccount": "3000"
     }
   ],
-  "currency": "string",
+  "currency": "NOK",
   "contactId": 9688154,
   "contactPersonId": 9688154,
   "projectId": 2815556,

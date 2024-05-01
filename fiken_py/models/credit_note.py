@@ -41,7 +41,7 @@ class CreditNote(FikenObjectCounterable, FikenObjectAttachable, BaseModel):
     _POST_FULL_PATH = '/companies/{companySlug}/creditNotes/full'
     _POST_PARTIAL_PATH = '/companies/{companySlug}/creditNotes/partial'
 
-    _COUNTER_PATH = '/companies/{companySlug}/invoices/counter'
+    _COUNTER_PATH = '/companies/{companySlug}/creditNotes/counter'
 
     creditNoteId: int
     creditNoteNumber: int

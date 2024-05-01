@@ -10,7 +10,8 @@ from urllib3.connection import HTTPConnection
 from fiken_py.fiken_object import FikenObject
 from fiken_py.models import UserInfo, Company, BankAccount, BankAccountCreateRequest, Contact, ContactPerson, \
     ProductSalesReportRequest, Product, Transaction, JournalEntry, Account, JournalEntryRequest, InboxDocumentRequest, \
-    ProjectCreateRequest, SaleRequest, InvoiceRequest, Project, BankAccountType, DraftLine
+    ProjectCreateRequest, SaleRequest, InvoiceRequest, Project, BankAccountType, DraftLine, CreditNote, Offer
+from fiken_py.models.draft import Draft
 from fiken_py.shared_types import JournalEntryLine, OrderLine, \
     InvoiceLineRequest, InvoiceLine, CreditNotePartialRequestLine
 from fiken_py.shared_enums import SaleKind, SendMethod, SendEmailOption, VatTypeProduct
@@ -376,21 +377,34 @@ if __name__ == "__main__":
     HTTPConnection.debuglevel = 1
 
     # Find common fields for InvoiceLine, CreditNoteLine, OrderLine
-    inv_line = set(InvoiceLine.model_fields.keys())
-    credit_line = set(CreditNotePartialRequestLine.model_fields.keys())
-    order_line = set(OrderLine.model_fields.keys())
-    draft_line = set(DraftLine.model_fields.keys())
+    inv_line = set(Invoice.model_fields.keys())
+    credit_line = set(CreditNote.model_fields.keys())
+    order_line = set(Offer.model_fields.keys())
+    invoice_ish = set(Draft.model_fields.keys())
+    # draft_line = set(DraftLine.model_fields.keys())
 
-    common = inv_line.intersection(credit_line).intersection(draft_line)
+    common = inv_line.intersection(credit_line).intersection(order_line).intersection(invoice_ish)
 
     only_inv = inv_line.difference(common)
     only_credit = credit_line.difference(common)
     only_order = order_line.difference(common)
-    only_draft = draft_line.difference(common)
+    only_ish = invoice_ish.difference(common)
 
     print("Common fields: ", common)
 
-    print("Only in InvoiceLine: ", only_inv)
-    print("Only in CreditNoteLine: ", only_credit)
-    print("Only in DraftLine: ", only_draft)
+    print("Only in Invoice: ", only_inv)
+    print("Only in CreditNote: ", only_credit)
+    print("Only in Offer: ", only_order)
+    print("Only in Draft: ", only_ish)
+
+    print(f"Now analyzing invoice<->draft")
+
+    inv_draft = inv_line.intersection(invoice_ish)
+    only_inv_draft = inv_line.difference(inv_draft)
+    only_draft_inv = invoice_ish.difference(inv_draft)
+
+    print("Common fields: ", inv_draft)
+    print("Only in Invoice: ", only_inv_draft)
+    print("Only in Draft: ", only_draft_inv)
+
     # print("Only in OrderLine: ", only_order)

@@ -97,6 +97,11 @@ This is a list of known quirks you might encounter:
 The `JournalEntryRequest` object maps, when saved, returns the 
 `Transaction` object in Fiken (and not `JournalEntry`).
 
+### CreditNotePartialRequestLine and CreditNoteLine
+When accessing credit notes, the lines are of type `InvoiceLine` as in the API.
+However, in the API, when sending a partial credit note request, the lines are of type `creditNoteLineResult`, which
+I found confusing. That type is therefore called `CreditNotePartialRequestLine` in the library.
+
 ```python
 journal_entry: JournalEntryRequest
 

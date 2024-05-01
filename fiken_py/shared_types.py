@@ -1,10 +1,10 @@
 from datetime import date
-from enum import Enum
-from typing import Optional, Annotated
+from typing import Optional, Annotated, ClassVar
 
 from pydantic import BaseModel, Field, model_validator
 
-from fiken_py.shared_enums import AttachmentType
+from fiken_py.shared_enums import AttachmentType, VatTypeProductSale
+from fiken_py.vat_validation import VATValidator
 
 AccountingAccount = Annotated[str, Field(pattern=r"^[1-8]\d{3}(:\d{5})?$")]  # All kontoklasser
 
@@ -15,66 +15,6 @@ AccountingAccountIncome = Annotated[str, Field(pattern=r"^[3|8]\d{3}$")]  # Kont
 AccountingAccountCosts = Annotated[str, Field(pattern=r"^[4-8]\d{3}$")]  # Kontoklasse 4-7
 
 BankAccountNumber = Annotated[str, Field(pattern=r"^\d{11}$")]
-
-
-class CaseInsensitiveEnum(str, Enum):
-    """Enum that matches values case-insensitively.
-    Used in places API returns values non-consistently."""
-
-    @classmethod
-    def _missing_(cls, value: str):
-        for member in cls:
-            if member.upper() == value.upper():
-                return member
-        return None
-
-
-class CompanyVatType(str, Enum):
-    NO = 'no'
-    YEARLY = 'yearly'
-    MONTHLY = 'monthly'
-    BI_MONTHLY = 'bi-monthly'
-
-
-class VatTypeProduct(CaseInsensitiveEnum):
-    NONE = 'NONE'
-    LOW = 'LOW'
-    MEDIUM = 'MEDIUM'
-    HIGH = 'HIGH'
-    RAW_FISH = 'RAW_FISH'
-
-
-class VatTypeProductSale(CaseInsensitiveEnum):
-    NONE = 'NONE'
-    LOW = 'LOW'
-    MEDIUM = 'MEDIUM'
-    HIGH = 'HIGH'
-    RAW_FISH = 'RAW_FISH'
-
-    EXEMPT_IMPORT_EXPORT = 'EXEMPT_IMPORT_EXPORT'
-    EXEMPT = 'EXEMPT'
-    OUTSIDE = 'OUTSIDE'
-    EXEMPT_REVERSE = 'EXEMPT_REVERSE'
-
-
-class VatTypeProductPurcase(CaseInsensitiveEnum):
-    NONE = 'NONE'
-    LOW = 'LOW'
-    MEDIUM = 'MEDIUM'
-    HIGH = 'HIGH'
-    RAW_FISH = 'RAW_FISH'
-
-    HIGH_DIRECT = 'HIGH_DIRECT'
-    HIGH_BASIS = 'HIGH_BASIS'
-    MEDIUM_DIRECT = 'MEDIUM_DIRECT'
-    MEDIUM_BASIS = 'MEDIUM_BASIS'
-    NONE_IMPORT_BASIS = 'NONE_IMPORT_BASIS'
-    HIGH_FOREIGN_SERVICE_DEDUCTIBLE = 'HIGH_FOREIGN_SERVICE_DEDUCTIBLE'
-    HIGH_FOREIGN_SERVICE_NONDEDUCTIBLE = 'HIGH_FOREIGN_SERVICE_NONDEDUCTIBLE'
-    LOW_FOREIGN_SERVICE_DEDUCTIBLE = 'LOW_FOREIGN_SERVICE_DEDUCTIBLE'
-    LOW_FOREIGN_SERVICE_NONDEDUCTIBLE = 'LOW_FOREIGN_SERVICE_NONDEDUCTIBLE'
-    HIGH_PURCASE_OF_EMISSIONSTRADING_OR_GOLD_DEDUCTIBLE = 'HIGH_PURCASE_OF_EMISSIONSTRADING_OR_GOLD_DEDUCTIBLE'
-    HIGH_PURCASE_OF_EMISSIONSTRADING_OR_GOLD_NONDEDUCTIBLE = 'HIGH_PURCASE_OF_EMISSIONSTRADING_OR_GOLD_NONDEDUCTIBLE'
 
 
 class Address(BaseModel):
@@ -124,6 +64,12 @@ class Payment(BaseModel):
     fee: Optional[int] = None
 
 
+class Note(BaseModel):
+    description: Optional[str] = None
+    author: Optional[str] = None
+    note: Optional[str] = None
+
+
 class OrderLine(BaseModel):
     description: Optional[str] = None
     netPrice: Optional[int] = None
@@ -135,37 +81,24 @@ class OrderLine(BaseModel):
     projectId: Optional[int] = None
 
 
-class Note(BaseModel):
-    description: Optional[str] = None
-    author: Optional[str] = None
-    note: Optional[str] = None
+class InvoiceIshLineBase(BaseModel):
+    cls_is_request: ClassVar[bool] = False
 
-
-class InvoiceLineBase(BaseModel):
-    net: Optional[int] = None
-    vat: Optional[int] = None
-    vatType: Optional[VatTypeProduct] = None
-    gross: Optional[int] = None
-    vatInPercent: Optional[float] = None
+    incomeAccount: Optional[AccountingAccountIncome] = None
+    vatType: Optional[VatTypeProductSale] = None
     unitPrice: Optional[int] = None
+    quantity: Optional[int] = None
     discount: Optional[int] = None
     productId: Optional[int] = None
-    productName: Optional[str] = None
     description: Optional[str] = Field(None, max_length=200)
     comment: Optional[str] = Field(None, max_length=200)
-    incomeAccount: Optional[AccountingAccountIncome] = None
-
-
-class InvoiceLineRequest(InvoiceLineBase):
-    # TODO - validate - either product line, OR text line WITH price AND vat
-    quantity: int
-
-    # TODO - only allow productName when productId not provided
-    # TODO - if no product id, force incomeAccount
 
     @model_validator(mode="after")
     @classmethod
     def provided_prod_or_line_data(cls, value):
+        if not value.cls_is_request:
+            return value # Only validate requests
+
         product_provided = value.productId is not None
         line_provided = ((value.unitPrice is not None) and (value.vatType is not None) and
                          (value.description is not None) and (value.incomeAccount is not None))
@@ -174,11 +107,46 @@ class InvoiceLineRequest(InvoiceLineBase):
 
         return value
 
+    @model_validator(mode="after")
+    def validate_vat(cls, value):
+        vat: VatTypeProductSale = value.vatType
+        incomeAccount: AccountingAccount = value.incomeAccount
+
+        if incomeAccount is not None:
+            assert VATValidator.validate_vat_type_sale(vat, incomeAccount), "Vat type is not valid for income account"
+
+        return value  # TODO - own validation class
+
+
+class CreditNotePartialRequestLine(InvoiceIshLineBase):
+    cls_is_request: ClassVar[bool] = True
+
+    quantity: int
+
+
+class DraftLine(InvoiceIshLineBase):
+    invoiceishDraftLineId: Optional[int] = None
+    lastModifiedDate: Optional[date] = None
+    # TODO - should incomeAccount be validated here?
+
+
+class InvoiceLineBase(InvoiceIshLineBase):
+    net: Optional[int] = None
+    vat: Optional[int] = None
+    gross: Optional[int] = None
+    vatInPercent: Optional[float] = None
+    unitPrice: Optional[int] = None
+    productName: Optional[str] = None
+
+
+class InvoiceLineRequest(InvoiceLineBase):
+    cls_is_request: ClassVar[bool] = True
+
+    quantity: int
+
 
 class InvoiceLine(InvoiceLineBase):
     netInNok: Optional[int] = None
     vatInNok: Optional[int] = None
     grossInNok: Optional[int] = None
     quantity: Optional[int] = None
-
-

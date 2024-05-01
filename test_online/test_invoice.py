@@ -1,6 +1,7 @@
 import datetime
 
-from fiken_py.shared_types import InvoiceLineRequest, VatTypeProduct
+from fiken_py.shared_types import InvoiceLineRequest
+from fiken_py.shared_enums import VatTypeProduct, VatTypeProductSale
 from fiken_py.models import Product, Contact, InvoiceRequest, Invoice
 
 
@@ -49,8 +50,8 @@ def test_create_invoice_product_freetext_and_invoice_counter(unique_id: str,
         quantity=1,
         description="En banankasse fra Bendit (testprodukt fritekst)",
         unitPrice=10000,
-        vatType=VatTypeProduct.NONE,
-        incomeAccount="3000",
+        vatType=VatTypeProductSale.EXEMPT,
+        incomeAccount="3100",
     )
 
     invoice: InvoiceRequest = InvoiceRequest(

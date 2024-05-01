@@ -7,8 +7,8 @@ from pydantic import BaseModel, Field
 from fiken_py.errors import RequestWrongMediaTypeException, RequestErrorException
 from fiken_py.fiken_object import FikenObject, FikenObjectRequest, RequestMethod, T, FikenObjectCounterable, \
     FikenObjectAttachable
-from fiken_py.shared_types import VatTypeProduct, Address, Attachment, InvoiceLineRequest, InvoiceLine
-from fiken_py.shared_enums import SendMethod, SendEmailOption
+from fiken_py.shared_types import Address, Attachment, InvoiceLineRequest, InvoiceLine
+from fiken_py.shared_enums import SendMethod, SendEmailOption, VatTypeProduct
 from fiken_py.models import Contact, Project, Sale
 
 Inv = TypeVar('Inv', bound='Invoice')

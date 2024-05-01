@@ -24,8 +24,8 @@ def test_validate_invoice_line():
         quantity=1,
         description="En banankasse fra Bendit (testprodukt fritekst)",
         unitPrice=10000,
-        vatType="NONE",
-        incomeAccount="3000",
+        vatType="EXEMPT",
+        incomeAccount="3100",
     )
     assert invoice_line is not None
 

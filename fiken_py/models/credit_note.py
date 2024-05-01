@@ -7,14 +7,10 @@ from pydantic import BaseModel, Field
 
 from fiken_py.errors import RequestContentNotFoundException, RequestErrorException
 from fiken_py.fiken_object import FikenObjectAttachable, RequestMethod, FikenObjectCounterable
-from fiken_py.shared_types import Address, InvoiceLine, Attachment
+from fiken_py.shared_types import Address, InvoiceLine, Attachment, CreditNotePartialRequestLine
 from fiken_py.models import Contact, Project, Sale, Invoice
 
 CN = TypeVar('CN', bound='CreditNote')
-
-
-class CreditNoteLine(BaseModel):
-    incomeAccount: Optional[int] = None
 
 
 class FullCreditNoteRequest(BaseModel):
@@ -35,7 +31,7 @@ class PartialCreditNoteRequest(BaseModel):
     contactId: Optional[int] = None
     contactPersonId: Optional[int] = None
     creditNoteText: Optional[str] = None
-    lines: list[InvoiceLine]
+    lines: list[CreditNotePartialRequestLine]
 
 
 class CreditNote(FikenObjectCounterable, FikenObjectAttachable, BaseModel):

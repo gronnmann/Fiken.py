@@ -10,10 +10,10 @@ from urllib3.connection import HTTPConnection
 from fiken_py.fiken_object import FikenObject
 from fiken_py.models import UserInfo, Company, BankAccount, BankAccountCreateRequest, Contact, ContactPerson, \
     ProductSalesReportRequest, Product, Transaction, JournalEntry, Account, JournalEntryRequest, InboxDocumentRequest, \
-    ProjectCreateRequest, SaleRequest, InvoiceRequest, Project, BankAccountType
-from fiken_py.shared_types import JournalEntryLine, VatTypeProduct, OrderLine, \
-    InvoiceLineRequest
-from fiken_py.shared_enums import SaleKind, SendMethod, SendEmailOption
+    ProjectCreateRequest, SaleRequest, InvoiceRequest, Project, BankAccountType, DraftLine
+from fiken_py.shared_types import JournalEntryLine, OrderLine, \
+    InvoiceLineRequest, InvoiceLine, CreditNotePartialRequestLine
+from fiken_py.shared_enums import SaleKind, SendMethod, SendEmailOption, VatTypeProduct
 from fiken_py.models.invoice import InvoiceSendRequest, Invoice
 
 dotenv.load_dotenv(".env")
@@ -368,13 +368,6 @@ def get_and_edit_project():
 
 
 if __name__ == "__main__":
-    # get_bank_accounts()
-    # create_and_edit_contact()
-    # create_bank_account()
-    # create_and_edit_contact_person()
-    # get_sales_report()
-    # get_products()
-
     logging.basicConfig(level=logging.DEBUG)
     requests_log = logging.getLogger("requests.packages.urllib3")
     requests_log.setLevel(logging.DEBUG)
@@ -382,20 +375,22 @@ if __name__ == "__main__":
 
     HTTPConnection.debuglevel = 1
 
-    invoice_line = InvoiceLineRequest(
-        vatType=VatTypeProduct.NONE,
-        quantity=5,
+    # Find common fields for InvoiceLine, CreditNoteLine, OrderLine
+    inv_line = set(InvoiceLine.model_fields.keys())
+    credit_line = set(CreditNotePartialRequestLine.model_fields.keys())
+    order_line = set(OrderLine.model_fields.keys())
+    draft_line = set(DraftLine.model_fields.keys())
 
-    )
+    common = inv_line.intersection(credit_line).intersection(draft_line)
 
-    # get_transactions()
-    # test_creating_journal_entry()
-    # test_create_get_edit_get_and_delete_product()
-    # upload_and_read_dummy_pdf()
-    # create_project()
-    # create_sale()
-    # create_contact_and_add_attachment()
-    # find_journal_entry_and_add_attachment()
-    # create_and_invoice_user()
-    # counter = Invoice.get_counter()
-    # get_and_edit_project()
+    only_inv = inv_line.difference(common)
+    only_credit = credit_line.difference(common)
+    only_order = order_line.difference(common)
+    only_draft = draft_line.difference(common)
+
+    print("Common fields: ", common)
+
+    print("Only in InvoiceLine: ", only_inv)
+    print("Only in CreditNoteLine: ", only_credit)
+    print("Only in DraftLine: ", only_draft)
+    # print("Only in OrderLine: ", only_order)

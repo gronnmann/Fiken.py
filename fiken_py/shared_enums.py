@@ -27,6 +27,11 @@ class SaleKind(str, Enum):
     EXTERNAL_INVOICE = 'external_invoice'
 
 
+class PurcaseKind(str, Enum):
+    CASH_PURCASE = 'cash_purcase'
+    SUPPLIER = 'supplier'
+
+
 class SendMethod(str, Enum):
     SMS = "sms"
     EMAIL = "email"

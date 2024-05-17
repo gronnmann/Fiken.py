@@ -74,7 +74,7 @@ class OrderLine(BaseModel):
     description: Optional[str] = None
     netPrice: Optional[int] = None
     vat: Optional[int] = None
-    account: Optional[AccountingAccountIncome] = None
+    account: Optional[AccountingAccount] = None
     vatType: VatTypeProductSale
     netPriceInCurrency: Optional[int] = None
     vatInCurrency: Optional[int] = None

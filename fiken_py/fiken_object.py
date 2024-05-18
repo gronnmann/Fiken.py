@@ -18,7 +18,7 @@ from fiken_py.errors import RequestWrongMediaTypeException, RequestConnectionExc
     RequestUserUnauthenticatedException, RequestForbiddenException, RequestContentNotFoundException, \
     RequestUnsupportedMethodException, \
     RequestWrongMediaTypeException, RequestErrorException
-from fiken_py.shared_types import Attachment, Counter
+from fiken_py.shared_types import Attachment, Counter, Payment
 
 T = TypeVar('T', bound='FikenObject')
 
@@ -342,20 +342,29 @@ class FikenObject:
             response.raise_for_status()
         except requests.exceptions.HTTPError as e:
             logging.error(f"Request HTTP failed: {e}")
+
+            err = None
+            try:
+                json = response.json()
+                if json.get("error_description"):
+                    err = json["error_description"]
+            except Exception:
+                pass
+
             if e.response.status_code == 400:
-                raise RequestBadRequestException(e)
+                raise RequestBadRequestException(e, err)
             elif e.response.status_code == 401:
-                raise RequestUserUnauthenticatedException(e)
+                raise RequestUserUnauthenticatedException(e, err)
             elif e.response.status_code == 403:
-                raise RequestForbiddenException(e)
+                raise RequestForbiddenException(e, err)
             elif e.response.status_code == 404:
-                raise RequestContentNotFoundException(e)
+                raise RequestContentNotFoundException(e, err)
             elif e.response.status_code == 405:
-                raise RequestUnsupportedMethodException(e)
+                raise RequestUnsupportedMethodException(e, err)
             elif e.response.status_code == 415:
-                raise RequestWrongMediaTypeException(e)
+                raise RequestWrongMediaTypeException(e, err)
             else:
-                raise RequestErrorException(e)
+                raise RequestErrorException(e, err)
 
         return response
 
@@ -502,3 +511,58 @@ class FikenObjectCounterable(FikenObject):
         if response.status_code != 201:
             return False
         return True
+
+
+class FikenObjectPaymentPaymentable(FikenObject):
+    """
+    Base class for objects that can have payments and can be deleted by setting a deleted flag.
+    """
+
+    def _refresh_object(self, **kwargs):
+        try:
+            fiken_object = self.get(**kwargs)
+        except RequestErrorException as e:
+            raise
+
+        self.__dict__.update(fiken_object.__dict__)
+
+    def delete(self, **kwargs):
+        """
+        Does not delete the object itself, but creates a counter-entry and sets the deleted flag to True.
+        :return:
+        """
+
+        try:
+            self._execute_method(RequestMethod.PATCH, path=self._get_method_base_URL(RequestMethod.PATCH),
+                                            **kwargs)
+            self._refresh_object(**kwargs)
+        except RequestErrorException as e:
+            raise
+
+    def get_payment(self, paymentId: int, **kwargs):
+        try:
+            response = self._execute_method(RequestMethod.GET, path=self._get_method_base_URL("PAYMENTS_SINGLE"),
+                                            paymentId=paymentId, **kwargs)
+        except RequestErrorException as e:
+            raise
+
+        return Payment(**response.json())
+
+    def get_payments(self, **kwargs):
+        try:
+            response = self._execute_method(RequestMethod.GET, path=self._get_method_base_URL("PAYMENTS"),
+                                            **kwargs)
+        except RequestErrorException as e:
+            raise
+
+        return [Payment(**payment) for payment in response.json()]
+
+    def create_payment(self, payment: Payment, **kwargs) -> Payment:
+        try:
+            response = self._execute_method(RequestMethod.POST, path=self._get_method_base_URL("PAYMENTS"),
+                                            dumped_object=payment)
+            self._refresh_object(**kwargs)
+        except RequestErrorException as e:
+            raise
+
+        return Payment(**response.json())

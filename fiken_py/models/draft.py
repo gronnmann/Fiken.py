@@ -6,48 +6,21 @@ from pydantic import BaseModel, Field, model_validator
 
 from fiken_py.errors import RequestErrorException
 from fiken_py.fiken_object import FikenObjectRequest, FikenObject, T, RequestMethod, FikenObjectAttachable
-from fiken_py.shared_types import Attachment, AccountingAccount, BankAccountNumber, DraftLine
-from fiken_py.models import Contact, Invoice, Offer
+from fiken_py.shared_enums import VatTypeProductPurchase, VatTypeProductSale
+from fiken_py.shared_types import Attachment, AccountingAccount, BankAccountNumber, DraftLineInvoiceIsh, Payment, \
+    DraftLineOrder
+from fiken_py.models import Contact, Invoice, Offer, Purchase, Project, Sale
 from fiken_py.models.credit_note import CreditNote
 
 
-class DraftType(str, Enum):
-    INVOICE = "invoice"
-    CASH_INVOICE = "cash_invoice"
-    OFFER = "offer"
-    CREDIT_NOTE = "credit_note"
-    REPEATING_INVOICE = "repeating_invoice"
+class DraftObject(FikenObjectAttachable):
+    """Generic draft object.
+    Supports attachments, saving, and submitting to create a real object.
 
+    In practice this class should not be used directly, but rather one of the subclasses.
+    """
 
-class DraftBase(BaseModel):
-    uuid: Optional[str] = None
-    projectId: Optional[int] = None
-    lastModifiedDate: Optional[datetime.date] = None
-    issueDate: Optional[datetime.date] = None
-    invoiceText: Optional[str] = None
-    currency: Optional[str] = Field(None, pattern='^[A-Z]{3}$')
-    yourReference: Optional[str] = None
-    ourReference: Optional[str] = None
-    orderReference: Optional[str] = None
-    lines: Optional[list[DraftLine]] = []
-    net: Optional[int] = None
-    gross: Optional[int] = None
-    bankAccountNumber: Optional[BankAccountNumber] = None
-    iban: Optional[str] = None
-    bic: Optional[str] = None
-    paymentAccount: Optional[AccountingAccount] = None
-
-
-class Draft(FikenObjectAttachable, DraftBase):
     CREATED_OBJECT_CLASS: ClassVar[FikenObject] = None  # Which class to use when making into a real object
-    # For example, InvoiceDraft -> Invoice
-
-    draftId: Optional[int] = None
-    type: Optional[DraftType] = None
-    daysUntilDueDate: Optional[int] = None
-    customers: Optional[list[Contact]] = []
-    attachments: Optional[list[Attachment]] = []
-    createdFromInvoiceId: Optional[int] = None
 
     def save(self, **kwargs: Any) -> T | None:
 
@@ -76,7 +49,7 @@ class Draft(FikenObjectAttachable, DraftBase):
         dumped['customerId'] = self.customers[0].contactId
         # TODO - is this really the best way to do this?
 
-        return DraftCreateRequest(**dumped)
+        return DraftInvoiceIshCreateRequest(**dumped)
 
     def submit_object(self):
         if self.CREATED_OBJECT_CLASS is None:
@@ -98,10 +71,48 @@ class Draft(FikenObjectAttachable, DraftBase):
         return self.CREATED_OBJECT_CLASS._getFromURL(loc)
 
 
-class DraftCreateRequest(FikenObjectRequest, DraftBase):
-    BASE_CLASS: ClassVar[FikenObject] = Draft
+class DraftTypeInvoiceIsh(str, Enum):
+    INVOICE = "invoice"
+    CASH_INVOICE = "cash_invoice"
+    OFFER = "offer"
+    CREDIT_NOTE = "credit_note"
+    REPEATING_INVOICE = "repeating_invoice"
 
-    type: DraftType
+
+class DraftInvoiceIshBase(BaseModel):
+    uuid: Optional[str] = None
+    projectId: Optional[int] = None
+    lastModifiedDate: Optional[datetime.date] = None
+    issueDate: Optional[datetime.date] = None
+    invoiceText: Optional[str] = None
+    currency: Optional[str] = Field(None, pattern='^[A-Z]{3}$')
+    yourReference: Optional[str] = None
+    ourReference: Optional[str] = None
+    orderReference: Optional[str] = None
+    lines: Optional[list[DraftLineInvoiceIsh]] = []
+    net: Optional[int] = None
+    gross: Optional[int] = None
+    bankAccountNumber: Optional[BankAccountNumber] = None
+    iban: Optional[str] = None
+    bic: Optional[str] = None
+    paymentAccount: Optional[AccountingAccount] = None
+
+
+class DraftInvoiceIsh(DraftObject, DraftInvoiceIshBase):
+    # For example, InvoiceDraft -> Invoice
+
+    draftId: Optional[int] = None
+    type: Optional[DraftTypeInvoiceIsh] = None
+    daysUntilDueDate: Optional[int] = None
+    customers: Optional[list[Contact]] = []
+    attachments: Optional[list[Attachment]] = []
+    createdFromInvoiceId: Optional[int] = None
+
+
+class DraftInvoiceIshCreateRequest(FikenObjectRequest, DraftInvoiceIshBase):
+    BASE_CLASS: ClassVar[FikenObject] = DraftInvoiceIsh
+
+    type: DraftTypeInvoiceIsh
     daysUntilDueDate: int
     customerId: int
 
@@ -109,7 +120,7 @@ class DraftCreateRequest(FikenObjectRequest, DraftBase):
     bankAccountNumber: BankAccountNumber  # TODO - maybe optional if set for user?
 
 
-class InvoiceDraft(Draft):
+class InvoiceDraft(DraftInvoiceIsh):
     _GET_PATH_SINGLE = '/companies/{companySlug}/invoices/drafts/{draftId}'
     _GET_PATH_MULTIPLE = '/companies/{companySlug}/invoices/drafts'
     _DELETE_PATH = '/companies/{companySlug}/invoices/drafts/{draftId}'
@@ -118,17 +129,17 @@ class InvoiceDraft(Draft):
     _CREATE_OBJECT_PATH = '/companies/{companySlug}/invoices/drafts/{draftId}/createInvoice'
     CREATED_OBJECT_CLASS: ClassVar[FikenObject] = Invoice
 
-    type: DraftType = DraftType.INVOICE
+    type: DraftTypeInvoiceIsh = DraftTypeInvoiceIsh.INVOICE
 
 
-class InvoiceDraftCreateRequest(DraftCreateRequest):
+class InvoiceDraftCreateRequest(DraftInvoiceIshCreateRequest):
     BASE_CLASS: ClassVar[FikenObject] = InvoiceDraft
     _POST_PATH = '/companies/{companySlug}/invoices/drafts'
 
-    type: DraftType = DraftType.INVOICE
+    type: DraftTypeInvoiceIsh = DraftTypeInvoiceIsh.INVOICE
 
 
-class CreditNoteDraft(Draft):
+class CreditNoteDraft(DraftInvoiceIsh):
     CREATED_OBJECT_CLASS: ClassVar[FikenObject] = CreditNote
 
     _GET_PATH_SINGLE = '/companies/{companySlug}/creditNotes/drafts/{draftId}'
@@ -138,17 +149,17 @@ class CreditNoteDraft(Draft):
 
     _CREATE_OBJECT_PATH = '/companies/{companySlug}/creditNotes/drafts/{draftId}/createCreditNote'
 
-    type: DraftType = DraftType.CREDIT_NOTE
+    type: DraftTypeInvoiceIsh = DraftTypeInvoiceIsh.CREDIT_NOTE
 
 
-class CreditNoteDraftCreateRequest(DraftCreateRequest):
+class CreditNoteDraftCreateRequest(DraftInvoiceIshCreateRequest):
     BASE_CLASS: ClassVar[FikenObject] = CreditNoteDraft
     _POST_PATH = '/companies/{companySlug}/creditNotes/drafts'
 
-    type: DraftType = DraftType.CREDIT_NOTE
+    type: DraftTypeInvoiceIsh = DraftTypeInvoiceIsh.CREDIT_NOTE
 
 
-class OfferDraft(Draft):
+class OfferDraft(DraftInvoiceIsh):
     CREATED_OBJECT_CLASS: ClassVar[FikenObject] = Offer
 
     _GET_PATH_SINGLE = '/companies/{companySlug}/offers/drafts/{draftId}'
@@ -158,11 +169,90 @@ class OfferDraft(Draft):
 
     _CREATE_OBJECT_PATH = '/companies/{companySlug}/offers/drafts/{draftId}/createOffer'
 
-    type: DraftType = DraftType.OFFER
+    type: DraftTypeInvoiceIsh = DraftTypeInvoiceIsh.OFFER
 
 
-class OfferDraftCreateRequest(DraftCreateRequest):
+class OfferDraftCreateRequest(DraftInvoiceIshCreateRequest):
     BASE_CLASS: ClassVar[FikenObject] = OfferDraft
     _POST_PATH = '/companies/{companySlug}/offers/drafts'
 
-    type: DraftType = DraftType.OFFER
+    type: DraftTypeInvoiceIsh = DraftTypeInvoiceIsh.OFFER
+
+
+class DraftOrderBase(BaseModel):
+    draftId: Optional[int] = None
+    uuid: Optional[str] = None
+    invoiceIssueDate: Optional[datetime.date] = None
+    dueDate: Optional[datetime.date] = None
+    invoiceNumber: Optional[str] = None
+    cash: Optional[bool] = None
+    currency: Optional[str] = Field(None, pattern=r"^[A-Z]{3}$")
+    kid: Optional[str] = None
+    paid: Optional[bool] = None
+    attachments: Optional[list[Attachment]] = []
+    payments: Optional[list[Payment]] = []
+    lines: Optional[list[DraftLineOrder]] = []
+
+
+class DraftOrder(DraftObject, DraftOrderBase):
+    contact: Optional[Contact] = None
+    project: Optional[Project] = None
+
+
+class DraftOrderCreateRequest(FikenObjectRequest, DraftOrderBase):
+    BASE_CLASS: ClassVar[FikenObject] = DraftOrder
+
+    cash: bool
+
+    contactId: Optional[int] = None
+    projectId: Optional[int] = None
+
+
+class PurchaseDraft(DraftOrder):
+    _GET_PATH_SINGLE = '/companies/{companySlug}/purchases/drafts/{draftId}'
+    _GET_PATH_MULTIPLE = '/companies/{companySlug}/purchases/drafts'
+    _DELETE_PATH = '/companies/{companySlug}/purchases/drafts/{draftId}'
+    _PUT_PATH = '/companies/{companySlug}/purchases/drafts/{draftId}'
+
+    _CREATE_OBJECT_PATH = '/companies/{companySlug}/purchases/drafts/{draftId}/createPurchase'
+    CREATED_OBJECT_CLASS: ClassVar[FikenObject] = Purchase
+
+
+class PurchaseDraftCreateRequest(DraftOrderCreateRequest):
+    BASE_CLASS: ClassVar[FikenObject] = PurchaseDraft
+    _POST_PATH = '/companies/{companySlug}/purchases/drafts'
+
+    @model_validator(mode="after")
+    @classmethod
+    def correct_vat_type(cls, value):
+        for line in value.lines:
+            try:
+                VatTypeProductPurchase(line.vatType)
+                return value
+            except ValueError:
+                raise ValueError("Only VatTypeProductPurchase is allowed for sale drafts")
+
+
+class SaleDraft(DraftOrder):
+    _GET_PATH_SINGLE = '/companies/{companySlug}/sales/drafts/{draftId}'
+    _GET_PATH_MULTIPLE = '/companies/{companySlug}/sales/drafts'
+    _DELETE_PATH = '/companies/{companySlug}/sales/drafts/{draftId}'
+    _PUT_PATH = '/companies/{companySlug}/sales/drafts/{draftId}'
+
+    _CREATE_OBJECT_PATH = '/companies/{companySlug}/sales/drafts/{draftId}/createSale'
+    CREATED_OBJECT_CLASS: ClassVar[FikenObject] = Sale
+
+
+class SaleDraftCreateRequest(DraftOrderCreateRequest):
+    BASE_CLASS: ClassVar[FikenObject] = SaleDraft
+    _POST_PATH = '/companies/{companySlug}/sales/drafts'
+
+    @model_validator(mode="after")
+    @classmethod
+    def correct_vat_type(cls, value):
+        for line in value.lines:
+            try:
+                VatTypeProductSale(line.vatType)
+                return value
+            except ValueError:
+                raise ValueError("Only VatTypeProductPurchase is allowed for sale drafts")

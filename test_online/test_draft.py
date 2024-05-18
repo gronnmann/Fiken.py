@@ -1,20 +1,20 @@
 import datetime
 
 from fiken_py.shared_enums import VatTypeProduct, VatTypeProductSale
-from fiken_py.models import BankAccount, Contact, Product, InvoiceDraftCreateRequest, InvoiceDraft, Invoice, DraftLine
+from fiken_py.models import BankAccount, Contact, Product, InvoiceDraftCreateRequest, InvoiceDraft, Invoice, DraftLineInvoiceIsh
 from fiken_py.models.credit_note import CreditNote
 from fiken_py.models.draft import CreditNoteDraftCreateRequest, CreditNoteDraft
 
 
 def test_all_invoice_draft(unique_id: str, generic_product: Product, generic_customer: Contact,
                            generic_bank_account: BankAccount):
-    draft_line = DraftLine(
+    draft_line = DraftLineInvoiceIsh(
         productId=generic_product.productId,
         quantity=1,
         vatType=VatTypeProductSale.HIGH,
     )
 
-    draft_line_non_product = DraftLine(
+    draft_line_non_product = DraftLineInvoiceIsh(
         description="En banankasse fra Bendit (testprodukt fritekst)",
         unitPrice=10000,
         vatType=VatTypeProductSale.HIGH,
@@ -74,7 +74,7 @@ def test_all_invoice_draft(unique_id: str, generic_product: Product, generic_cus
 
 def test_all_credit_note(unique_id: str, generic_product: Product, generic_customer: Contact,
                          generic_bank_account: BankAccount):
-    draft_line = DraftLine(
+    draft_line = DraftLineInvoiceIsh(
         productId=generic_product.productId,
         quantity=1,
         vatType=VatTypeProductSale.HIGH,

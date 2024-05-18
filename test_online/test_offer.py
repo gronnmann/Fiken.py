@@ -5,12 +5,12 @@ import pytest
 from fiken_py.errors import RequestContentNotFoundException
 from fiken_py.models import Product, Contact, Offer, OfferDraft, OfferDraftCreateRequest
 from fiken_py.shared_enums import VatTypeProductSale
-from fiken_py.shared_types import DraftLine
+from fiken_py.shared_types import DraftLineInvoiceIsh
 
 
 def test_create_offer_full(unique_id: str, generic_product: Product,
                            generic_customer: Contact, generic_bank_account):
-    draft_line = DraftLine(
+    draft_line = DraftLineInvoiceIsh(
         productId=generic_product.productId,
         quantity=1,
         vatType=VatTypeProductSale.HIGH,

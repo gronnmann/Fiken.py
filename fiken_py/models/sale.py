@@ -3,7 +3,8 @@ from typing import Optional, Literal, Annotated, ClassVar
 
 from pydantic import BaseModel, Field
 
-from fiken_py.fiken_object import FikenObject, FikenObjectRequest, RequestMethod
+from fiken_py.fiken_object import FikenObject, FikenObjectRequest, RequestMethod, FikenObjectPaymentPaymentable, \
+    FikenObjectAttachable
 
 from fiken_py.shared_types import OrderLine, Payment, Attachment, Note, AccountingAccountAssets
 from fiken_py.shared_enums import SaleKind
@@ -20,7 +21,7 @@ class SaleBase(BaseModel):
     paymentDate: Optional[datetime.date] = None
 
 
-class Sale(FikenObject, SaleBase):
+class Sale(FikenObjectAttachable, FikenObjectPaymentPaymentable, SaleBase):
     _GET_PATH_SINGLE = '/companies/{companySlug}/sales/{saleId}'
     _GET_PATH_MULTIPLE = '/companies/{companySlug}/sales'
 
@@ -44,6 +45,8 @@ class Sale(FikenObject, SaleBase):
     notes: Optional[list[Note]] = None
     deleted: Optional[bool] = None
 
+    def _refresh_object(self, **kwargs):
+        return self._refresh_object(saleId=self.saleId, **kwargs)
 
 class SaleRequest(FikenObjectRequest, SaleBase):
     BASE_CLASS: ClassVar[FikenObject] = Sale

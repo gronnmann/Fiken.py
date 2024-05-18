@@ -14,9 +14,9 @@ class ProductSalesReport(BaseModel, FikenObject):
     credited: Optional[ProductSalesLine] = None
     sum: Optional[ProductSalesLine] = None
 
-
     pass
     # TODO - handle weird getting of this class
+
 
 class ProductSalesReportRequest(BaseModel, FikenObjectRequest):
     BASE_CLASS: ClassVar[List[FikenObject]] = [ProductSalesReport]

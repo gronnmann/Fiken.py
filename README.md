@@ -97,11 +97,6 @@ This is a list of known quirks you might encounter:
 The `JournalEntryRequest` object maps, when saved, returns the 
 `Transaction` object in Fiken (and not `JournalEntry`).
 
-### CreditNotePartialRequestLine and CreditNoteLine
-When accessing credit notes, the lines are of type `InvoiceLine` as in the API.
-However, in the API, when sending a partial credit note request, the lines are of type `creditNoteLineResult`, which
-I found confusing. That type is therefore called `CreditNotePartialRequestLine` in the library.
-
 ```python
 journal_entry: JournalEntryRequest
 
@@ -110,6 +105,21 @@ journal_entry = request.save(companySlug='fiken-demo-drage-og-elefant-as')
 
 print(type(journal_entry)) # <class 'fiken_py.models.transaction.Transaction'>
 ```
+
+### CreditNotePartialRequestLine and CreditNoteLine
+When accessing credit notes, the lines are of type `InvoiceLine` as in the API.
+However, in the API, when sending a partial credit note request, the lines are of type `creditNoteLineResult`, which
+I found confusing. That type is therefore called `CreditNotePartialRequestLine` in the library.
+
+### Draft types
+The main draft type used by both Invoice, CreditNote, Offer and Order Confirmation is in the api called
+`invoiceIshDraftResult`. Here they all have their own draft type, eg `InvoiceDraft` etc, all
+inheriting from `InvoiceIshDraft`.
+
+The draft types for sales and purcases in the API are `draftResult`.
+Here they are split into `SalesDraft` and `PurchaseDraft`, inheriting
+from `DraftOrder`.
+
 
 ## Rate limiting
 From the [Fiken API documentation](https://api.fiken.no/api/v2/docs/):
@@ -127,7 +137,7 @@ FikenObject.set_rate_limit(False)
 Tests are done using pytest. There's two directories with tests:
 - `tests` - Tests that run locally and do not require a Fiken account
 - `tests_online` - Tests that interact with the Fiken API. These require a Fiken account and a private token.
-These should only be used with a test account, as they will create and delete objects in Fiken.
+These should only be used with a test company, as they will create and delete objects in Fiken.
 
 To use the `test_online`, you need to set the following environment variables (in `test_online/.env`):
 ```dotenv

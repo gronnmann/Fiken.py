@@ -1,9 +1,11 @@
 import pytest
 from pydantic import ValidationError, BaseModel
 
+from fiken_py.models.draft import PurchaseDraftCreateRequest, SaleDraftCreateRequest
+from fiken_py.shared_enums import VatTypeProductSale, VatTypeProductPurchase
 from fiken_py.shared_types import InvoiceLineRequest, AccountingAccount, AccountingAccountAssets, \
-    AccountingAccountCosts, AccountingAccountIncome, AccountingAccountEquityAndLiabilities
-from fiken_py.models import BankAccount, BankAccountCreateRequest, DraftLine, BankAccountType
+    AccountingAccountCosts, AccountingAccountIncome, AccountingAccountEquityAndLiabilities, DraftLineOrder, OrderLine
+from fiken_py.models import BankAccount, BankAccountCreateRequest, DraftLineInvoiceIsh, BankAccountType
 
 
 def test_validate_invoice_line():
@@ -31,7 +33,7 @@ def test_validate_invoice_line():
 
 
 def test_validate_draft_line():
-    draft_line = DraftLine(
+    draft_line = DraftLineInvoiceIsh(
         productId=1,
         quantity=1,
     )
@@ -39,12 +41,12 @@ def test_validate_draft_line():
     assert draft_line.productId is not None
 
     with pytest.raises(ValidationError):
-        draft_line = DraftLine(
+        draft_line = DraftLineInvoiceIsh(
             quantity=1,
             description="En banankasse fra Bendit (testprodukt fritekst)",
         )
 
-    draft_line = DraftLine(
+    draft_line = DraftLineInvoiceIsh(
         quantity=1,
         description="En banankasse fra Bendit (testprodukt fritekst)",
         unitPrice=10000,
@@ -54,7 +56,7 @@ def test_validate_draft_line():
     assert draft_line is not None
 
     with pytest.raises(ValidationError):
-        draft_line = DraftLine(
+        draft_line = DraftLineInvoiceIsh(
             quantity=1,
             description="En banankasse fra Bendit (testprodukt fritekst)",
             unitPrice=10000,
@@ -196,3 +198,69 @@ def test_account_account_classes(
             acc = CostsAccount(
                 accountCode=test_input
             )
+
+
+
+def test_sale_purcahse_draft_vat_types():
+    draft_line_purchase = DraftLineOrder(
+        vatType=VatTypeProductPurchase.HIGH_PURCHASE_OF_EMISSIONSTRADING_OR_GOLD_NONDEDUCTIBLE,
+    )
+
+    draft_line_sale = DraftLineOrder(
+        vatType=VatTypeProductSale.EXEMPT)
+
+    draft_line_both = DraftLineOrder(
+        vatType="HIGH"
+    )
+
+    correct = PurchaseDraftCreateRequest(
+        cash=True, lines=[draft_line_purchase]
+    )
+    assert correct is not None
+
+    with pytest.raises(ValidationError):
+        wrong = PurchaseDraftCreateRequest(
+            cash=True, lines=[draft_line_sale]
+        )
+
+    correct = PurchaseDraftCreateRequest(
+        cash=True, lines=[draft_line_both]
+    )
+    assert correct is not None
+
+    correct = SaleDraftCreateRequest(
+        cash=True, lines=[draft_line_sale]
+    )
+    assert correct is not None
+
+    with pytest.raises(ValidationError):
+        wrong = SaleDraftCreateRequest(
+            cash=True, lines=[draft_line_purchase]
+        )
+
+    correct = SaleDraftCreateRequest(
+        cash=True, lines=[draft_line_both]
+    )
+
+    assert correct is not None
+
+
+def test_order_line_netPrice_or_netPriceInCurrency():
+    with pytest.raises(ValidationError):
+        order_line = OrderLine(
+            description="Test",
+            vatType="HIGH",
+            account="3000",
+        )
+
+    order_line = OrderLine(
+        netPrice=100,
+        vatType="HIGH",
+    )
+    assert order_line is not None
+
+    order_line = OrderLine(
+        netPriceInCurrency=100,
+        vatType="HIGH",
+    )
+    assert order_line is not None

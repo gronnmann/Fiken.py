@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import datetime
 import logging
 import os.path
 import re
@@ -14,11 +15,13 @@ from importlib.metadata import version
 
 from pydantic import BaseModel, ValidationError
 
+from fiken_py.authorization import AccessToken, Authorization
 from fiken_py.errors import RequestWrongMediaTypeException, RequestConnectionException, RequestBadRequestException, \
     RequestUserUnauthenticatedException, RequestForbiddenException, RequestContentNotFoundException, \
     RequestUnsupportedMethodException, \
     RequestWrongMediaTypeException, RequestErrorException
 from fiken_py.shared_types import Attachment, Counter, Payment
+from fiken_py.util import handle_error
 
 T = TypeVar('T', bound='FikenObject')
 
@@ -53,7 +56,8 @@ class FikenObject:
     Use {placeholder} for the object ID.
     """
     PATH_BASE: ClassVar[str] = 'https://api.fiken.no/api/v2'
-    _AUTH_TOKEN = None
+    _AUTH_TOKEN: str | AccessToken = None
+    _APP_CREDENTIALS = None
 
     _HEADERS = {}
     _COMPANY_SLUG = None
@@ -66,14 +70,57 @@ class FikenObject:
     _LAST_REQUEST_TIME = 0
 
     @classmethod
-    def set_auth_token(cls, token):
+    def set_auth_token(cls, token: str | AccessToken, credentials: tuple[str, str] = None):
+        """
+        Sets the personal authentication token.
+        Can be either personal token (str) or OAuth2 token gotten from Authorization class.
+        :param token: token to set
+        :param credentials: tuple of (client id, client secret) for OAuth2 refreshing
+        :return: None
+        """
+
+        if cls._AUTH_TOKEN is not None:
+            raise ValueError("Some form of authentication token is already set (personal or OAuth2)."
+                             "Please clear session first (clear_auth_token()).")
+
+        actual_token = token if isinstance(token, str) else token.access_token
+
         cls._AUTH_TOKEN = token
 
+        if credentials is not None:
+            cls._APP_CREDENTIALS = credentials
+
         cls._HEADERS = {
-            'Authorization': f'Bearer {token}',
+            'Authorization': f'Bearer {actual_token}',
             'User-Agent': 'FikenPy/%s (Python %s)' % (version('fiken_py'), platform.python_version()),
             'Content-Type': 'application/json'
         }
+
+    @classmethod
+    def clear_auth_token(cls):
+        cls._AUTH_TOKEN = None
+        cls._HEADERS = {}
+
+    @classmethod
+    def _refresh_auth_token(cls) -> bool:
+        """
+        Tries refreshing the OAuth2 token.
+        :return: True on success
+        """
+        if cls._APP_CREDENTIALS is None:
+            return False
+
+        client_id, client_secret = cls._APP_CREDENTIALS
+
+        try:
+            token = Authorization.get_access_token_refresh(client_id, client_secret, cls._AUTH_TOKEN.refresh_token)
+        except RequestErrorException as e:
+            return False
+
+        cls._AUTH_TOKEN = token
+        cls._HEADERS['Authorization'] = f'Bearer {token.access_token}'
+
+        return True
 
     @classmethod
     def set_company_slug(cls, company_slug):
@@ -263,11 +310,14 @@ class FikenObject:
     def _execute_method(cls, method: RequestMethod, url: str = None,
                         dumped_object: FikenObject | dict | BaseModel = None,
                         file_data: dict[str, tuple[Any | None, Any]] = None,
+                        trial: int = 0,
                         **kwargs: Any) -> requests.Response:
         """Executes a method on the object
         :method: RequestMethod - the method to execute
         :url: str - the URL to execute the method on. If None, will be generated from the method
         :dumped_object: - the object to send/dump and extract placeholders from. If None, will be ignored
+        :file_data: dict - the file data to send. If None, will be ignored
+        :trial: int - the number of times the method has been tried
         :kwargs: dict - the arguments to pass to the method
         """
 
@@ -285,6 +335,14 @@ class FikenObject:
 
         if url is None:
             raise RequestWrongMediaTypeException(f"Object {cls.__name__} does not support {method.name}")
+
+        # Check if token is expired
+        if isinstance(cls._AUTH_TOKEN, AccessToken):
+            # get datetime as Z-time
+            now = datetime.datetime.now(datetime.timezone.utc) # Fiken uses GMT
+            if now > cls._AUTH_TOKEN.get_expiration_time() and trial == 0:
+                if cls._refresh_auth_token():
+                    return cls._execute_method(method, url, dumped_object, file_data, trial + 1, **kwargs)
 
         if issubclass(dumped_object.__class__, BaseModel):
             url = cls._extract_placeholders_basemodel(url, dumped_object)
@@ -341,30 +399,12 @@ class FikenObject:
         try:
             response.raise_for_status()
         except requests.exceptions.HTTPError as e:
-            logging.error(f"Request HTTP failed: {e}")
+            if e.response.status_code == 403 and trial == 0: # For 403 error - try refreshing token once
+                if cls._refresh_auth_token():
+                    return cls._execute_method(method, url, dumped_object, file_data, trial + 1, **kwargs)
 
-            err = None
-            try:
-                json = response.json()
-                if json.get("error_description"):
-                    err = json["error_description"]
-            except Exception:
-                pass
-
-            if e.response.status_code == 400:
-                raise RequestBadRequestException(e, err)
-            elif e.response.status_code == 401:
-                raise RequestUserUnauthenticatedException(e, err)
-            elif e.response.status_code == 403:
-                raise RequestForbiddenException(e, err)
-            elif e.response.status_code == 404:
-                raise RequestContentNotFoundException(e, err)
-            elif e.response.status_code == 405:
-                raise RequestUnsupportedMethodException(e, err)
-            elif e.response.status_code == 415:
-                raise RequestWrongMediaTypeException(e, err)
-            else:
-                raise RequestErrorException(e, err)
+            handle_error(e)
+            raise
 
         return response
 
@@ -534,7 +574,7 @@ class FikenObjectPaymentPaymentable(FikenObject):
 
         try:
             self._execute_method(RequestMethod.PATCH, path=self._get_method_base_URL(RequestMethod.PATCH),
-                                            **kwargs)
+                                 **kwargs)
             self._refresh_object(**kwargs)
         except RequestErrorException as e:
             raise

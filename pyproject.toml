@@ -8,6 +8,12 @@ dependencies = [
     "requests",
     "pydantic"
 ]
+[project-optional-dependencies]
+test = [
+    "python-dotenv",
+    "pytest",
+    "requests_mock",
+]
 authors = [
   { name="gronnmann", email="gronnmannthecoder@gmail.com" },
 ]

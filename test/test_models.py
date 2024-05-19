@@ -18,12 +18,13 @@ from fiken_py.models import UserInfo, Account, BankAccount, Company, Contact, Co
     InvoiceDraft, Offer, Purchase
 
 
-@pytest.fixture(autouse=True)
+@pytest.fixture(autouse=True, scope="session")
 def set_auth_token():
+    FikenObject.clear_auth_token()
     FikenObject.set_auth_token("SAMPLE_TOKEN")
 
 
-@pytest.fixture(autouse=True)
+@pytest.fixture(autouse=True, scope="session")
 def set_logger_level():
     logging.basicConfig(level=logging.DEBUG)
 

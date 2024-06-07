@@ -2,7 +2,7 @@
 
 class RequestErrorException(Exception):
     """Parent class for all ways a Request can fail."""
-    def __init__(self, exception, error_base, error_description):
+    def __init__(self, exception, error_base=None, error_description=None):
         super().__init__(exception)
         self.error_base = error_base
         self.error_details = error_description

@@ -79,7 +79,7 @@ class CreditNote(FikenObjectCounterable, FikenObjectAttachable, BaseModel):
             raise
 
         if invoice is None:
-            raise RequestContentNotFoundException(f"Invoice with id {invoiceId} not found.", None, None)
+            raise RequestContentNotFoundException(f"Invoice with id {invoiceId} not found.")
 
         credit_note_request = FullCreditNoteRequest(
             issueDate=issueDate if issueDate is not None else datetime.date.today(),

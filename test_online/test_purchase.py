@@ -19,7 +19,7 @@ def test_purchase_all(unique_id: str, generic_bank_account):
         currency="NOK",
         lines=[purchase_line],
         paid=True,
-        paymentAccount=generic_bank_account.bankAccountNumber,
+        paymentAccount=generic_bank_account.accountCode,
         paymentDate=datetime.date.today(),
     )
 

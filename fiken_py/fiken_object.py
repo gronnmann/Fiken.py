@@ -5,6 +5,7 @@ import logging
 import os.path
 import re
 import time
+import typing
 import uuid
 from enum import Enum
 from typing import Any, TypeVar, ClassVar
@@ -22,8 +23,6 @@ from fiken_py.errors import RequestWrongMediaTypeException, RequestConnectionExc
     RequestWrongMediaTypeException, RequestErrorException
 from fiken_py.shared_types import Attachment, Counter, Payment
 from fiken_py.util import handle_error
-
-T = TypeVar('T', bound='FikenObject')
 
 logger = logging.getLogger("fiken_py")
 
@@ -131,7 +130,7 @@ class FikenObject:
         cls.RATE_LIMIT_ENABLED = enabled
 
     @classmethod
-    def get(cls, **kwargs: Any) -> T | None:
+    def get(cls: type[typing.Self], **kwargs: Any) -> type[typing.Self] | None:
 
         try:
             response = cls._execute_method(RequestMethod.GET, **kwargs)
@@ -146,7 +145,7 @@ class FikenObject:
         return cls(**data)
 
     @classmethod
-    def getAll(cls, follow_pages: bool = True, **kwargs: Any) -> list[T]:
+    def getAll(cls, follow_pages: bool = True, **kwargs: Any) -> list[type[typing.Self]]:
 
         logger.debug(f"GETting many objects for {cls.__name__}")
         try:
@@ -176,7 +175,7 @@ class FikenObject:
         return objects
 
     @classmethod
-    def _getFromURL(cls, url: str) -> T | list[T]:
+    def _getFromURL(cls, url: str) -> type[typing.Self] | list[type[typing.Self]]:
         try:
             response = cls._execute_method(RequestMethod.GET, url=url)
         except RequestErrorException:
@@ -188,7 +187,7 @@ class FikenObject:
 
         return cls(**data)
 
-    def save(self, **kwargs: Any) -> T | None:
+    def save(self, **kwargs: Any) -> typing.Self | None:
         """
         Saves the object to the server.
         Checks if object is new or not and sends a POST or PUT request accordingly.
@@ -214,7 +213,7 @@ class FikenObject:
 
         return self._follow_location_and_update_class(response)
 
-    def _follow_location_and_update_class(self, response: requests.Response) -> None | T:
+    def _follow_location_and_update_class(self, response: requests.Response) -> None | typing.Self:
         """Follows the location header in the response and returns the new object.
         If new object is of the same class, updates the current object with the new one.
         """
@@ -434,7 +433,7 @@ class FikenObjectRequest(FikenObject):
     def getAll(**kwargs):
         raise RequestWrongMediaTypeException("Request objects can not be fetched")
 
-    def save(self, **kwargs: Any) -> T | None:
+    def save(self, **kwargs: Any) -> type[BASE_CLASS] | None:
         if self.__class__.BASE_CLASS is None:
             raise ValueError("BASE_CLASS not set")
 

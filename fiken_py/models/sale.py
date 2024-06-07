@@ -1,14 +1,15 @@
 import datetime
 from typing import Optional, ClassVar
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, model_validator
 
 from fiken_py.fiken_object import FikenObject, FikenObjectRequest, \
     FikenObjectAttachable, FikenObjectDeleteFlagable
+from fiken_py.models.draft import DraftOrder, DraftOrderCreateRequest
 
 from fiken_py.shared_types import OrderLine, Attachment, Note, AccountingAccountAssets
 from fiken_py.models.payment import Payment
-from fiken_py.shared_enums import SaleKind
+from fiken_py.shared_enums import SaleKind, VatTypeProductSale
 from fiken_py.models import Contact, Project
 
 
@@ -47,6 +48,7 @@ class Sale(FikenObjectAttachable, FikenObjectDeleteFlagable, SaleBase):
     notes: Optional[list[Note]] = None
     deleted: Optional[bool] = None
 
+
 class SaleRequest(FikenObjectRequest, SaleBase):
     BASE_CLASS: ClassVar[FikenObject] = Sale
     _POST_PATH = '/companies/{companySlug}/sales/'
@@ -59,3 +61,28 @@ class SaleRequest(FikenObjectRequest, SaleBase):
     customerId: Optional[int] = None
     paymentFee: Optional[int] = None
     projectId: Optional[str] = None
+
+
+class SaleDraft(DraftOrder):
+    _GET_PATH_SINGLE = '/companies/{companySlug}/sales/drafts/{draftId}'
+    _GET_PATH_MULTIPLE = '/companies/{companySlug}/sales/drafts'
+    _DELETE_PATH = '/companies/{companySlug}/sales/drafts/{draftId}'
+    _PUT_PATH = '/companies/{companySlug}/sales/drafts/{draftId}'
+
+    _CREATE_OBJECT_PATH = '/companies/{companySlug}/sales/drafts/{draftId}/createSale'
+    CREATED_OBJECT_CLASS: ClassVar[FikenObject] = Sale
+
+
+class SaleDraftCreateRequest(DraftOrderCreateRequest):
+    BASE_CLASS: ClassVar[FikenObject] = SaleDraft
+    _POST_PATH = '/companies/{companySlug}/sales/drafts'
+
+    @model_validator(mode="after")
+    @classmethod
+    def correct_vat_type(cls, value):
+        for line in value.lines:
+            try:
+                VatTypeProductSale(line.vatType)
+                return value
+            except ValueError:
+                raise ValueError("Only VatTypeProductPurchase is allowed for sale drafts")

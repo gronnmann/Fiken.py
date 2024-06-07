@@ -5,7 +5,8 @@ from pydantic import BaseModel, Field, model_validator
 
 from fiken_py.fiken_object import FikenObjectAttachable, FikenObjectRequest, FikenObject, FikenObjectDeleteFlagable
 from fiken_py.models import Contact, Project
-from fiken_py.shared_enums import PurchaseKind
+from fiken_py.models.draft import DraftOrder, DraftOrderCreateRequest
+from fiken_py.shared_enums import PurchaseKind, VatTypeProductPurchase
 from fiken_py.shared_types import OrderLine, Attachment, AccountingAccount
 from fiken_py.models.payment import Payment
 
@@ -64,3 +65,28 @@ class PurchaseRequest(FikenObjectRequest, PurchaseBase):
             assert value.supplierId is not None, "supplierId must be provided for non-cash purchases"
 
         return value
+
+
+class PurchaseDraft(DraftOrder):
+    _GET_PATH_SINGLE = '/companies/{companySlug}/purchases/drafts/{draftId}'
+    _GET_PATH_MULTIPLE = '/companies/{companySlug}/purchases/drafts'
+    _DELETE_PATH = '/companies/{companySlug}/purchases/drafts/{draftId}'
+    _PUT_PATH = '/companies/{companySlug}/purchases/drafts/{draftId}'
+
+    _CREATE_OBJECT_PATH = '/companies/{companySlug}/purchases/drafts/{draftId}/createPurchase'
+    CREATED_OBJECT_CLASS: ClassVar[FikenObject] = Purchase
+
+
+class PurchaseDraftCreateRequest(DraftOrderCreateRequest):
+    BASE_CLASS: ClassVar[FikenObject] = PurchaseDraft
+    _POST_PATH = '/companies/{companySlug}/purchases/drafts'
+
+    @model_validator(mode="after")
+    @classmethod
+    def correct_vat_type(cls, value):
+        for line in value.lines:
+            try:
+                VatTypeProductPurchase(line.vatType)
+                return value
+            except ValueError:
+                raise ValueError("Only VatTypeProductPurchase is allowed for sale drafts")

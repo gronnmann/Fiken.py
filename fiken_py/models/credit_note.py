@@ -2,12 +2,13 @@ from __future__ import annotations
 
 import datetime
 import typing
-from typing import Optional
+from typing import Optional, ClassVar
 
 from pydantic import BaseModel, Field
 
 from fiken_py.errors import RequestContentNotFoundException, RequestErrorException
-from fiken_py.fiken_object import FikenObjectAttachable, RequestMethod, FikenObjectCounterable
+from fiken_py.fiken_object import FikenObjectAttachable, RequestMethod, FikenObjectCountable, FikenObject
+from fiken_py.models.draft import DraftInvoiceIsh, DraftTypeInvoiceIsh, DraftInvoiceIshCreateRequest
 from fiken_py.shared_types import Address, InvoiceLine, Attachment, CreditNotePartialRequestLine
 from fiken_py.models import Contact, Project, Sale, Invoice
 
@@ -33,7 +34,7 @@ class PartialCreditNoteRequest(BaseModel):
     lines: list[CreditNotePartialRequestLine]
 
 
-class CreditNote(FikenObjectCounterable, FikenObjectAttachable, BaseModel):
+class CreditNote(FikenObjectCountable, BaseModel):
     _GET_PATH_SINGLE = '/companies/{companySlug}/creditNotes/{creditNoteId}'
     _GET_PATH_MULTIPLE = '/companies/{companySlug}/creditNotes/'
 
@@ -98,3 +99,23 @@ class CreditNote(FikenObjectCounterable, FikenObjectAttachable, BaseModel):
             raise RequestErrorException("No Location header in response")
 
         return CreditNote._getFromURL(loc)
+
+
+class CreditNoteDraft(DraftInvoiceIsh):
+    CREATED_OBJECT_CLASS: ClassVar[FikenObject] = CreditNote
+
+    _GET_PATH_SINGLE = '/companies/{companySlug}/creditNotes/drafts/{draftId}'
+    _GET_PATH_MULTIPLE = '/companies/{companySlug}/creditNotes/drafts'
+    _DELETE_PATH = '/companies/{companySlug}/creditNotes/drafts/{draftId}'
+    _PUT_PATH = '/companies/{companySlug}/creditNotes/drafts/{draftId}'
+
+    _CREATE_OBJECT_PATH = '/companies/{companySlug}/creditNotes/drafts/{draftId}/createCreditNote'
+
+    type: DraftTypeInvoiceIsh = DraftTypeInvoiceIsh.CREDIT_NOTE
+
+
+class CreditNoteDraftCreateRequest(DraftInvoiceIshCreateRequest):
+    BASE_CLASS: ClassVar[FikenObject] = CreditNoteDraft
+    _POST_PATH = '/companies/{companySlug}/creditNotes/drafts'
+
+    type: DraftTypeInvoiceIsh = DraftTypeInvoiceIsh.CREDIT_NOTE

@@ -6,8 +6,9 @@ import requests
 from pydantic import BaseModel, Field
 
 from fiken_py.errors import RequestWrongMediaTypeException, RequestErrorException
-from fiken_py.fiken_object import FikenObject, FikenObjectRequest, RequestMethod, FikenObjectCounterable, \
+from fiken_py.fiken_object import FikenObject, FikenObjectRequest, RequestMethod, FikenObjectCountable, \
     FikenObjectAttachable
+from fiken_py.models.draft import DraftInvoiceIsh, DraftTypeInvoiceIsh, DraftInvoiceIshCreateRequest
 from fiken_py.shared_types import Address, Attachment, InvoiceLineRequest, InvoiceLine
 from fiken_py.shared_enums import SendMethod, SendEmailOption, VatTypeProduct
 from fiken_py.models import Contact, Project, Sale
@@ -32,7 +33,7 @@ class InvoiceUpdateRequest(BaseModel):
     sentManually: Optional[bool] = None
 
 
-class Invoice(FikenObjectCounterable, FikenObjectAttachable, BaseModel):
+class Invoice(FikenObjectCountable, FikenObjectAttachable, BaseModel):
     _GET_PATH_SINGLE = '/companies/{companySlug}/invoices/{invoiceId}'
     _GET_PATH_MULTIPLE = '/companies/{companySlug}/invoices'
     _PATCH_PATH = '/companies/{companySlug}/invoices/{invoiceId}'
@@ -122,3 +123,22 @@ class InvoiceRequest(FikenObjectRequest, BaseModel):
     invoiceText: Optional[str] = Field(None, max_length=500)
     paymentAccount: Optional[str] = None  # needs when cash is provided
     projectId: Optional[int] = None
+
+
+class InvoiceDraft(DraftInvoiceIsh):
+    _GET_PATH_SINGLE = '/companies/{companySlug}/invoices/drafts/{draftId}'
+    _GET_PATH_MULTIPLE = '/companies/{companySlug}/invoices/drafts'
+    _DELETE_PATH = '/companies/{companySlug}/invoices/drafts/{draftId}'
+    _PUT_PATH = '/companies/{companySlug}/invoices/drafts/{draftId}'
+
+    _CREATE_OBJECT_PATH = '/companies/{companySlug}/invoices/drafts/{draftId}/createInvoice'
+    CREATED_OBJECT_CLASS: ClassVar[FikenObject] = Invoice
+
+    type: DraftTypeInvoiceIsh = DraftTypeInvoiceIsh.INVOICE
+
+
+class InvoiceDraftCreateRequest(DraftInvoiceIshCreateRequest):
+    BASE_CLASS: ClassVar[FikenObject] = InvoiceDraft
+    _POST_PATH = '/companies/{companySlug}/invoices/drafts'
+
+    type: DraftTypeInvoiceIsh = DraftTypeInvoiceIsh.INVOICE

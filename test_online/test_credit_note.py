@@ -5,7 +5,8 @@ import pytest
 from fiken_py.errors import RequestContentNotFoundException
 from fiken_py.shared_types import InvoiceLineRequest
 from fiken_py.models import Product, Contact, InvoiceRequest, Invoice
-from fiken_py.models.credit_note import CreditNote
+from fiken_py.models.credit_note import CreditNote, CreditNoteDraftCreateRequest, CreditNoteDraft
+from test_online import shared_tests
 
 
 def test_create_credit_note_full(unique_id: str, generic_product: Product,
@@ -39,8 +40,16 @@ def test_create_credit_note_full(unique_id: str, generic_product: Product,
         CreditNote.create_from_invoice_full(invoiceId=99999)
 
 
+def test_create_through_draft(unique_id, generic_customer, generic_product, generic_bank_account):
+    shared_tests.draftable_invoiceish_object_tests(
+        CreditNoteDraft,
+        CreditNoteDraftCreateRequest,
+        unique_id,
+        generic_product,
+        generic_customer,
+        generic_bank_account
+    )
+
+
 def test_counter():
-    counter: int = CreditNote.get_counter()
-    assert counter is not None
-    assert counter >= 0
-    assert isinstance(counter, int)
+    shared_tests.countable_object_tests(Invoice)

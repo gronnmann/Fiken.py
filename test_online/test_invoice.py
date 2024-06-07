@@ -2,7 +2,8 @@ import datetime
 
 from fiken_py.shared_types import InvoiceLineRequest
 from fiken_py.shared_enums import VatTypeProduct, VatTypeProductSale
-from fiken_py.models import Product, Contact, InvoiceRequest, Invoice
+from fiken_py.models import Product, Contact, InvoiceRequest, Invoice, InvoiceDraftCreateRequest, InvoiceDraft
+import test_online.shared_tests as shared_tests
 
 
 def test_create_get_patch_invoice_product(unique_id: str, generic_product: Product,
@@ -79,9 +80,20 @@ def test_create_invoice_product_freetext_and_invoice_counter(unique_id: str,
     assert get_invoice is not None
     assert get_invoice.invoiceId == invoice.invoiceId
 
+    # Invoice attachments for some reason don't take comment.
+    invoice.add_attachment("test_online/dummy_attachment.pdf", "dummy_attachment.pdf",)
+    assert len(invoice.get_attachments()) == 1
+
+def test_create_through_draft(unique_id, generic_customer, generic_product, generic_bank_account):
+    shared_tests.draftable_invoiceish_object_tests(
+        InvoiceDraft,
+        InvoiceDraftCreateRequest,
+        unique_id,
+        generic_product,
+        generic_customer,
+        generic_bank_account
+    )
+
 
 def test_counter():
-    counter: int = Invoice.get_counter()
-    assert counter is not None
-    assert counter >= 0
-    assert isinstance(counter, int)
+    shared_tests.countable_object_tests(Invoice)

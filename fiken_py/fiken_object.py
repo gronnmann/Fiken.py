@@ -331,8 +331,9 @@ class FikenObject:
         if file_data is not None and method != RequestMethod.POST:
             raise ValueError("Only POST requests can have file data")
 
-        if file_data is not None and dumped_object is not None:
-            raise ValueError("Only one of file data and instance can be provided")
+        # TODO - maybe re-add this?
+        # if file_data is not None and dumped_object is not None:
+        #     raise ValueError("Only one of file data and instance can be provided")
 
         if url is None:
             url = cls._get_method_base_URL(method)
@@ -343,7 +344,7 @@ class FikenObject:
         # Check if token is expired
         if isinstance(cls._AUTH_TOKEN, AccessToken):
             # get datetime as Z-time
-            now = datetime.datetime.now(datetime.timezone.utc) # Fiken uses GMT
+            now = datetime.datetime.now(datetime.timezone.utc)  # Fiken uses GMT
             if now > cls._AUTH_TOKEN.get_expiration_time() and trial == 0:
                 if cls._refresh_auth_token():
                     return cls._execute_method(method, url, dumped_object, file_data, trial + 1, **kwargs)
@@ -386,6 +387,9 @@ class FikenObject:
             cls._REQUESTS_COUNTER += 1
             cls._LAST_REQUEST_TIME = timestamp_ms
 
+        if file_data is not None:
+            request_data = None  # Only send the file if it is a file request
+
         headers_debug = headers.copy()
         headers_debug['Authorization'] = "Bearer [REDACTED]"
         logger.debug(f"""Executing {method_name} on {cls.__name__} at {url}
@@ -403,7 +407,7 @@ class FikenObject:
         try:
             response.raise_for_status()
         except requests.exceptions.HTTPError as e:
-            if e.response.status_code == 403 and trial == 0: # For 403 error - try refreshing token once
+            if e.response.status_code == 403 and trial == 0:  # For 403 error - try refreshing token once
                 if cls._refresh_auth_token():
                     return cls._execute_method(method, url, dumped_object, file_data, trial + 1, **kwargs)
 
@@ -446,10 +450,43 @@ class FikenObjectRequest(FikenObject):
 
 
 class FikenObjectAttachable(FikenObject):
+    _extension_to_mime_map = {
+        "pdf": "application/pdf",
+        "png": "image/png",
+        "jpg": "image/jpeg",
+        "jpeg": "image/jpeg",
+        "gif": "image/gif",
+        "bmp": "image/bmp",
+        "ico": "image/x-icon",
+        "svg": "image/svg+xml",
+        "svgz": "image/svg+xml",
+        "tiff": "image/tiff",
+        "tif": "image/tiff",
+        "ai": "application/postscript",
+        "drw": "application/drafting",
+        "pct": "image/pict",
+        "psp": "image/x-paintshoppro",
+        "webp": "image/webp",
+        "heic": "image/heic",
+        "raw": "image/raw",
+    }
 
     @classmethod  # TODO - some kind of @classproperty ?
     def _attachment_url(cls):
         return cls._get_method_base_URL(RequestMethod.GET) + "/attachments"
+
+    @classmethod
+    def _extract_extension(cls, filename: str) -> str:
+        if '.' not in filename:
+            raise ValueError("Filename must have an extension.")
+        return filename.split('.')[-1]
+
+    @classmethod
+    def _extension_to_mime(cls, extension: str) -> str:
+        if extension in cls._extension_to_mime_map:
+            return cls._extension_to_mime_map[extension]
+        else:
+            raise ValueError(f"Unsupported file extension {extension}")
 
     @classmethod
     def get_attachments_cls(cls, instance: FikenObjectAttachable = None, **kwargs) -> list[Attachment]:
@@ -477,11 +514,17 @@ class FikenObjectAttachable(FikenObject):
         if filename is None or data is None:
             raise ValueError("Filename and/or data must be provided")
 
-        if '.' not in filename:
-            raise ValueError("Filename must have an extension.")
+        if " " in filename:
+            raise ValueError("Filename must not contain spaces")
+
+        try:
+            extension = cls._extract_extension(filename)
+            extension_mime = cls._extension_to_mime(extension)
+        except ValueError:
+            raise
 
         sent_data = {
-            'file': (filename, data),
+            'file': (filename, data, extension_mime),
             'filename': (None, filename),
             'comment': (None, comment),
         }
@@ -522,7 +565,7 @@ class FikenObjectAttachable(FikenObject):
         return self.add_attachment_bytes_cls(filename, data, comment, instance=self, **kwargs)
 
 
-class FikenObjectCounterable(FikenObject):
+class FikenObjectCountable(FikenObject):
 
     @classmethod
     def get_counter(cls) -> int:

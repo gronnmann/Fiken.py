@@ -3,15 +3,13 @@ import typing
 from enum import Enum
 from typing import Optional, ClassVar, Any
 
-from pydantic import BaseModel, Field, model_validator
+from pydantic import BaseModel, Field
 
 from fiken_py.errors import RequestErrorException
 from fiken_py.fiken_object import FikenObjectRequest, FikenObject, RequestMethod, FikenObjectAttachable
-from fiken_py.shared_enums import VatTypeProductPurchase, VatTypeProductSale
 from fiken_py.shared_types import Attachment, AccountingAccount, BankAccountNumber, DraftLineInvoiceIsh, DraftLineOrder
 from fiken_py.models.payment import Payment
-from fiken_py.models import Contact, Invoice, Offer, Purchase, Project, Sale
-from fiken_py.models.credit_note import CreditNote
+from fiken_py.models import Contact, Project
 
 
 class DraftObject(FikenObjectAttachable):
@@ -77,7 +75,7 @@ class DraftTypeInvoiceIsh(str, Enum):
     CASH_INVOICE = "cash_invoice"
     OFFER = "offer"
     CREDIT_NOTE = "credit_note"
-    REPEATING_INVOICE = "repeating_invoice"
+    ORDER_CONFIRMATION = "order_confirmation"
 
 
 class DraftInvoiceIshBase(BaseModel):
@@ -121,65 +119,6 @@ class DraftInvoiceIshCreateRequest(FikenObjectRequest, DraftInvoiceIshBase):
     bankAccountNumber: BankAccountNumber  # TODO - maybe optional if set for user?
 
 
-class InvoiceDraft(DraftInvoiceIsh):
-    _GET_PATH_SINGLE = '/companies/{companySlug}/invoices/drafts/{draftId}'
-    _GET_PATH_MULTIPLE = '/companies/{companySlug}/invoices/drafts'
-    _DELETE_PATH = '/companies/{companySlug}/invoices/drafts/{draftId}'
-    _PUT_PATH = '/companies/{companySlug}/invoices/drafts/{draftId}'
-
-    _CREATE_OBJECT_PATH = '/companies/{companySlug}/invoices/drafts/{draftId}/createInvoice'
-    CREATED_OBJECT_CLASS: ClassVar[FikenObject] = Invoice
-
-    type: DraftTypeInvoiceIsh = DraftTypeInvoiceIsh.INVOICE
-
-
-class InvoiceDraftCreateRequest(DraftInvoiceIshCreateRequest):
-    BASE_CLASS: ClassVar[FikenObject] = InvoiceDraft
-    _POST_PATH = '/companies/{companySlug}/invoices/drafts'
-
-    type: DraftTypeInvoiceIsh = DraftTypeInvoiceIsh.INVOICE
-
-
-class CreditNoteDraft(DraftInvoiceIsh):
-    CREATED_OBJECT_CLASS: ClassVar[FikenObject] = CreditNote
-
-    _GET_PATH_SINGLE = '/companies/{companySlug}/creditNotes/drafts/{draftId}'
-    _GET_PATH_MULTIPLE = '/companies/{companySlug}/creditNotes/drafts'
-    _DELETE_PATH = '/companies/{companySlug}/creditNotes/drafts/{draftId}'
-    _PUT_PATH = '/companies/{companySlug}/creditNotes/drafts/{draftId}'
-
-    _CREATE_OBJECT_PATH = '/companies/{companySlug}/creditNotes/drafts/{draftId}/createCreditNote'
-
-    type: DraftTypeInvoiceIsh = DraftTypeInvoiceIsh.CREDIT_NOTE
-
-
-class CreditNoteDraftCreateRequest(DraftInvoiceIshCreateRequest):
-    BASE_CLASS: ClassVar[FikenObject] = CreditNoteDraft
-    _POST_PATH = '/companies/{companySlug}/creditNotes/drafts'
-
-    type: DraftTypeInvoiceIsh = DraftTypeInvoiceIsh.CREDIT_NOTE
-
-
-class OfferDraft(DraftInvoiceIsh):
-    CREATED_OBJECT_CLASS: ClassVar[FikenObject] = Offer
-
-    _GET_PATH_SINGLE = '/companies/{companySlug}/offers/drafts/{draftId}'
-    _GET_PATH_MULTIPLE = '/companies/{companySlug}/offers/drafts'
-    _DELETE_PATH = '/companies/{companySlug}/offers/drafts/{draftId}'
-    _PUT_PATH = '/companies/{companySlug}/offers/drafts/{draftId}'
-
-    _CREATE_OBJECT_PATH = '/companies/{companySlug}/offers/drafts/{draftId}/createOffer'
-
-    type: DraftTypeInvoiceIsh = DraftTypeInvoiceIsh.OFFER
-
-
-class OfferDraftCreateRequest(DraftInvoiceIshCreateRequest):
-    BASE_CLASS: ClassVar[FikenObject] = OfferDraft
-    _POST_PATH = '/companies/{companySlug}/offers/drafts'
-
-    type: DraftTypeInvoiceIsh = DraftTypeInvoiceIsh.OFFER
-
-
 class DraftOrderBase(BaseModel):
     draftId: Optional[int] = None
     uuid: Optional[str] = None
@@ -209,51 +148,3 @@ class DraftOrderCreateRequest(FikenObjectRequest, DraftOrderBase):
     projectId: Optional[int] = None
 
 
-class PurchaseDraft(DraftOrder):
-    _GET_PATH_SINGLE = '/companies/{companySlug}/purchases/drafts/{draftId}'
-    _GET_PATH_MULTIPLE = '/companies/{companySlug}/purchases/drafts'
-    _DELETE_PATH = '/companies/{companySlug}/purchases/drafts/{draftId}'
-    _PUT_PATH = '/companies/{companySlug}/purchases/drafts/{draftId}'
-
-    _CREATE_OBJECT_PATH = '/companies/{companySlug}/purchases/drafts/{draftId}/createPurchase'
-    CREATED_OBJECT_CLASS: ClassVar[FikenObject] = Purchase
-
-
-class PurchaseDraftCreateRequest(DraftOrderCreateRequest):
-    BASE_CLASS: ClassVar[FikenObject] = PurchaseDraft
-    _POST_PATH = '/companies/{companySlug}/purchases/drafts'
-
-    @model_validator(mode="after")
-    @classmethod
-    def correct_vat_type(cls, value):
-        for line in value.lines:
-            try:
-                VatTypeProductPurchase(line.vatType)
-                return value
-            except ValueError:
-                raise ValueError("Only VatTypeProductPurchase is allowed for sale drafts")
-
-
-class SaleDraft(DraftOrder):
-    _GET_PATH_SINGLE = '/companies/{companySlug}/sales/drafts/{draftId}'
-    _GET_PATH_MULTIPLE = '/companies/{companySlug}/sales/drafts'
-    _DELETE_PATH = '/companies/{companySlug}/sales/drafts/{draftId}'
-    _PUT_PATH = '/companies/{companySlug}/sales/drafts/{draftId}'
-
-    _CREATE_OBJECT_PATH = '/companies/{companySlug}/sales/drafts/{draftId}/createSale'
-    CREATED_OBJECT_CLASS: ClassVar[FikenObject] = Sale
-
-
-class SaleDraftCreateRequest(DraftOrderCreateRequest):
-    BASE_CLASS: ClassVar[FikenObject] = SaleDraft
-    _POST_PATH = '/companies/{companySlug}/sales/drafts'
-
-    @model_validator(mode="after")
-    @classmethod
-    def correct_vat_type(cls, value):
-        for line in value.lines:
-            try:
-                VatTypeProductSale(line.vatType)
-                return value
-            except ValueError:
-                raise ValueError("Only VatTypeProductPurchase is allowed for sale drafts")

@@ -1,9 +1,9 @@
 import datetime
 
 from fiken_py.shared_enums import VatTypeProduct, VatTypeProductSale
-from fiken_py.models import BankAccount, Contact, Product, InvoiceDraftCreateRequest, InvoiceDraft, Invoice, DraftLineInvoiceIsh
+from fiken_py.models import BankAccount, Contact, Product, InvoiceDraftCreateRequest, InvoiceDraft, Invoice, \
+    DraftLineInvoiceIsh, CreditNoteDraft, CreditNoteDraftCreateRequest
 from fiken_py.models.credit_note import CreditNote
-from fiken_py.models.draft import CreditNoteDraftCreateRequest, CreditNoteDraft
 
 
 def test_all_invoice_draft(unique_id: str, generic_product: Product, generic_customer: Contact,

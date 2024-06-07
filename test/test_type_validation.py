@@ -1,11 +1,11 @@
 import pytest
 from pydantic import ValidationError, BaseModel
 
-from fiken_py.models.draft import PurchaseDraftCreateRequest, SaleDraftCreateRequest
 from fiken_py.shared_enums import VatTypeProductSale, VatTypeProductPurchase
 from fiken_py.shared_types import InvoiceLineRequest, AccountingAccount, AccountingAccountAssets, \
     AccountingAccountCosts, AccountingAccountIncome, AccountingAccountEquityAndLiabilities, DraftLineOrder, OrderLine
-from fiken_py.models import BankAccount, BankAccountCreateRequest, DraftLineInvoiceIsh, BankAccountType
+from fiken_py.models import BankAccount, BankAccountCreateRequest, DraftLineInvoiceIsh, BankAccountType, \
+    PurchaseDraftCreateRequest, SaleDraftCreateRequest
 
 
 def test_validate_invoice_line():

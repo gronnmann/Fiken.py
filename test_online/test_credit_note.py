@@ -10,7 +10,7 @@ from test_online import shared_tests
 
 
 def test_create_credit_note_full(unique_id: str, generic_product: Product,
-                                 generic_customer: Contact, generic_bank_account):
+                                 generic_contact: Contact, generic_bank_account):
     invoice_line: InvoiceLineRequest = InvoiceLineRequest(
         productId=generic_product.productId,
         quantity=1,
@@ -19,7 +19,7 @@ def test_create_credit_note_full(unique_id: str, generic_product: Product,
     invoice: InvoiceRequest = InvoiceRequest(
         issueDate=datetime.date.today(),
         dueDate=datetime.date.today() + datetime.timedelta(days=14),
-        customerId=generic_customer.contactId,
+        customerId=generic_contact.contactId,
         lines=[invoice_line],
         bankAccountCode=generic_bank_account.accountCode,
         cash=False,
@@ -40,13 +40,13 @@ def test_create_credit_note_full(unique_id: str, generic_product: Product,
         CreditNote.create_from_invoice_full(invoiceId=99999)
 
 
-def test_create_through_draft(unique_id, generic_customer, generic_product, generic_bank_account):
+def test_create_through_draft(unique_id, generic_contact, generic_product, generic_bank_account):
     shared_tests.draftable_invoiceish_object_tests(
         CreditNoteDraft,
         CreditNoteDraftCreateRequest,
         unique_id,
         generic_product,
-        generic_customer,
+        generic_contact,
         generic_bank_account
     )
 

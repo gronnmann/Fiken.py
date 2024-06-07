@@ -4,14 +4,14 @@ from test_online import shared_tests
 
 
 def test_create_order_confirmation_full(unique_id: str, generic_product: Product,
-                                        generic_customer: Contact, generic_bank_account):
+                                        generic_contact: Contact, generic_bank_account):
 
     draft_from_test: OrderConfirmation = shared_tests.draftable_invoiceish_object_tests(
         DraftObject=OrderConfirmationDraft,
-        CraftCreateRequestObject=OrderConfirmationDraftCreateRequest,
+        DraftCreateRequestObject=OrderConfirmationDraftCreateRequest,
         unique_id=unique_id,
         generic_product=generic_product,
-        generic_customer=generic_customer,
+        generic_customer=generic_contact,
         generic_bank_account=generic_bank_account,
     )
 

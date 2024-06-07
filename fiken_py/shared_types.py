@@ -67,7 +67,7 @@ class OrderLine(BaseModel):
     netPrice: Optional[int] = None
     vat: Optional[int] = None
     account: Optional[AccountingAccount] = None
-    vatType: VatTypeProductSale
+    vatType: VatTypeProductSale | VatTypeProductPurchase
     netPriceInCurrency: Optional[int] = None
     vatInCurrency: Optional[int] = None
     projectId: Optional[int] = None
@@ -155,7 +155,7 @@ class InvoiceLine(InvoiceLineBase):
 class DraftLineOrderBase(BaseModel):
     text: Optional[str] = None
     vatType: Optional[VatTypeProductSale | VatTypeProductPurchase] = None
-    incomeAccount: Optional[AccountingAccountIncome] = None
+    incomeAccount: Optional[AccountingAccountIncome | AccountingAccountCosts] = None
     net: Optional[int] = None
     gross: Optional[int] = None
 

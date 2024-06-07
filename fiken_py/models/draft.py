@@ -44,11 +44,7 @@ class DraftObject(FikenObjectAttachable):
         return self.draftId is None
 
     def _to_draft_create_request(self):
-        dumped = self.model_dump(exclude_unset=True)
-        dumped['customerId'] = self.customers[0].contactId
-        # TODO - is this really the best way to do this?
-
-        return DraftInvoiceIshCreateRequest(**dumped)
+        raise NotImplementedError("Method _to_draft_create_request must be implemented in subclass")
 
     def submit_object(self):
         if self.CREATED_OBJECT_CLASS is None:
@@ -107,6 +103,13 @@ class DraftInvoiceIsh(DraftObject, DraftInvoiceIshBase):
     attachments: Optional[list[Attachment]] = []
     createdFromInvoiceId: Optional[int] = None
 
+    def _to_draft_create_request(self):
+        dumped = self.model_dump(exclude_unset=True)
+        dumped['customerId'] = self.customers[0].contactId
+        # TODO - is this really the best way to do this?
+
+        return DraftInvoiceIshCreateRequest(**dumped)
+
 
 class DraftInvoiceIshCreateRequest(FikenObjectRequest, DraftInvoiceIshBase):
     BASE_CLASS: ClassVar[FikenObject] = DraftInvoiceIsh
@@ -137,6 +140,12 @@ class DraftOrderBase(BaseModel):
 class DraftOrder(DraftObject, DraftOrderBase):
     contact: Optional[Contact] = None
     project: Optional[Project] = None
+
+    def _to_draft_create_request(self):
+        dumped = self.model_dump(exclude_unset=True)
+        dumped['draftId'] = self.draftId
+
+        return DraftOrderCreateRequest(**dumped)
 
 
 class DraftOrderCreateRequest(FikenObjectRequest, DraftOrderBase):

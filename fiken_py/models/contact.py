@@ -45,7 +45,9 @@ class Contact(BaseModel, FikenObjectAttachable):
     def is_new(self):
         return self.contactId is None
 
-    # Contact is for some reason only object with no get_attachments method
     @classmethod
     def get_attachments_cls(cls, instance: FikenObjectAttachable = None, **kwargs) -> list[Attachment]:
-        raise RequestWrongMediaTypeException("Contact does not support listing attachments.")
+        return instance.documents
+
+    def get_attachments(self, **kwargs) -> list[Attachment]:
+        return self.documents

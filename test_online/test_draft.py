@@ -6,7 +6,7 @@ from fiken_py.models import BankAccount, Contact, Product, InvoiceDraftCreateReq
 from fiken_py.models.credit_note import CreditNote
 
 
-def test_all_invoice_draft(unique_id: str, generic_product: Product, generic_customer: Contact,
+def test_all_invoice_draft(unique_id: str, generic_product: Product, generic_contact: Contact,
                            generic_bank_account: BankAccount):
     draft_line = DraftLineInvoiceIsh(
         productId=generic_product.productId,
@@ -25,7 +25,7 @@ def test_all_invoice_draft(unique_id: str, generic_product: Product, generic_cus
     draft: InvoiceDraftCreateRequest = InvoiceDraftCreateRequest(
         issueDate=datetime.date.today(),
         daysUntilDueDate=7,
-        customerId=generic_customer.contactId,
+        customerId=generic_contact.contactId,
         lines=[draft_line, draft_line_non_product],
         ourReference=f"Test draft ({unique_id}#product)",
         invoiceText="This is a test draft sent by FikenPy",
@@ -38,7 +38,7 @@ def test_all_invoice_draft(unique_id: str, generic_product: Product, generic_cus
     draft: InvoiceDraft = draft.save()
     assert draft.draftId is not None
     assert draft.daysUntilDueDate == 7
-    assert draft.customers[0].contactId == generic_customer.contactId
+    assert draft.customers[0].contactId == generic_contact.contactId
     assert draft.lines[0].productId == generic_product.productId
     for k, v in draft_line_non_product.model_dump().items():
         if v is None:
@@ -72,7 +72,7 @@ def test_all_invoice_draft(unique_id: str, generic_product: Product, generic_cus
     assert InvoiceDraft.get(draftId=id) is None
 
 
-def test_all_credit_note(unique_id: str, generic_product: Product, generic_customer: Contact,
+def test_all_credit_note(unique_id: str, generic_product: Product, generic_contact: Contact,
                          generic_bank_account: BankAccount):
     draft_line = DraftLineInvoiceIsh(
         productId=generic_product.productId,
@@ -83,7 +83,7 @@ def test_all_credit_note(unique_id: str, generic_product: Product, generic_custo
     draft: CreditNoteDraftCreateRequest = CreditNoteDraftCreateRequest(
         issueDate=datetime.date.today(),
         daysUntilDueDate=7,
-        customerId=generic_customer.contactId,
+        customerId=generic_contact.contactId,
         lines=[draft_line],
         ourReference=f"Test credit note ({unique_id}#product)",
         invoiceText="This is a test credit note sent by FikenPy",

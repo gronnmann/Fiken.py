@@ -6,7 +6,7 @@ from pydantic import BaseModel, Field, model_validator
 from fiken_py.fiken_object import FikenObjectAttachable, FikenObjectRequest, FikenObject, FikenObjectDeleteFlagable
 from fiken_py.models import Contact, Project
 from fiken_py.shared_enums import PurchaseKind
-from fiken_py.shared_types import OrderLine, Attachment
+from fiken_py.shared_types import OrderLine, Attachment, AccountingAccount
 from fiken_py.models.payment import Payment
 
 
@@ -21,7 +21,7 @@ class PurchaseBase(BaseModel):
     identifier: Optional[str] = None
     dueDate: Optional[datetime.date] = None
     kid: Optional[str] = None
-    paymentAccount: Optional[str] = None
+    paymentAccount: Optional[AccountingAccount] = None
     paymentDate: Optional[datetime.date] = None
 
 

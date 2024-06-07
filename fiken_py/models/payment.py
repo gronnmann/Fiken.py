@@ -6,13 +6,14 @@ from typing import Optional
 from pydantic import BaseModel
 
 from fiken_py.fiken_object import FikenObject
+from fiken_py.shared_types import AccountingAccount
 
 
 class Payment(FikenObject, BaseModel):
     description: Optional[str] = None
     paymentId: Optional[int] = None
     date: date
-    account: str  # TODO - update with account type
+    account: AccountingAccount
     amount: int
     amountInNok: Optional[int] = None
     currency: Optional[str] = None

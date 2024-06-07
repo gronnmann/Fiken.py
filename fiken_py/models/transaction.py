@@ -18,6 +18,10 @@ class Transaction(BaseModel, FikenObject):
     type: Optional[str] = None
     entries: Optional[list[JournalEntry]] = []
 
+    @property
+    def id_attr(self):
+        return "transactionId", self.transactionId
+
 
 class JournalEntryRequest(BaseModel, FikenObjectRequest):
     # TODO - move this to own class?

@@ -121,9 +121,9 @@ def attachable_object_tests(attachable_object: FikenObjectAttachable, test_comme
     with open("test_online/dummy_attachment.pdf", "rb") as file:
         pdf_data = file.read()
 
-    attachable_object.add_attachment("test_online/dummy_attachment.pdf", "dummy_attachment.pdf",
+    assert attachable_object.add_attachment("test_online/dummy_attachment.pdf", "dummy_attachment.pdf",
                                      "This is the second attachment test" if test_comments else None)
-    attachable_object.add_attachment_bytes("bytes_attachment.pdf", pdf_data,
+    assert attachable_object.add_attachment_bytes("bytes_attachment.pdf", pdf_data,
                                            "This is the first attachment test" if test_comments else None)
 
     attachments: list[Attachment] = attachable_object.get_attachments()

@@ -39,6 +39,10 @@ class OrderConfirmation(FikenObjectCountable, FikenObjectAttachable, BaseModel):
     archived: Optional[bool] = None
     internalComment: Optional[str] = None
 
+    @property
+    def id_attr(self):
+        return "confirmationId", self.confirmationId
+
     @classmethod
     def to_invoice_draft_cls(cls, **kwargs) -> InvoiceDraft:
         url = cls._get_method_base_URL("TO_INVOICE")

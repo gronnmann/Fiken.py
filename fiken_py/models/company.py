@@ -23,3 +23,7 @@ class Company(BaseModel, FikenObject):
     hasApiAccess: Optional[bool] = None
     testCompany: Optional[bool] = None
     accountingStartDate: Optional[datetime.date] = None
+
+    @property
+    def id_attr(self):
+        return "companySlug", self.slug

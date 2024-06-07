@@ -119,6 +119,11 @@ class FikenObject:
 
         return True
 
+    @property
+    def id_attr(self) -> tuple[str, str]:
+        """Returns the ID field (to be used in URLs) and its value for the object."""
+        raise NotImplementedError("id_attr must be implemented in subclass")
+
     @classmethod
     def set_company_slug(cls, company_slug):
         cls._COMPANY_SLUG = company_slug
@@ -232,15 +237,24 @@ class FikenObject:
 
     def _refresh_object(self, **kwargs):
         try:
-            fiken_object = self.get(**self.__dict__, **kwargs)
+            id_attr, id_attr_val = self.id_attr
+
+            if kwargs.get(id_attr) is None:
+                kwargs[id_attr] = id_attr_val
+
+            fiken_object = self.get(**kwargs)
         except RequestErrorException as e:
             raise
         self.__dict__.update(fiken_object.__dict__)
 
     def delete(self, **kwargs: Any) -> bool:
 
+        attr_name, attr_val = self.id_attr
+        if kwargs.get(attr_name) is None:
+            kwargs[attr_name] = attr_val
+
         try:
-            response = self._execute_method(RequestMethod.DELETE, dumped_object=self, **kwargs)
+            response = self._execute_method(RequestMethod.DELETE, **kwargs)
         except RequestErrorException:
             raise
 

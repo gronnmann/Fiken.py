@@ -21,6 +21,10 @@ class DraftObject(FikenObjectAttachable):
 
     CREATED_OBJECT_CLASS: ClassVar[FikenObject] = None  # Which class to use when making into a real object
 
+    @property
+    def id_attr(self):
+        return "draftId", self.draftId
+
     def save(self, **kwargs: Any) -> typing.Self | None:
 
         if self._get_method_base_URL(RequestMethod.PUT) is not None:

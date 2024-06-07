@@ -33,6 +33,10 @@ class Offer(FikenObjectCountable, FikenObjectAttachable, BaseModel):
     projectId: Optional[int] = None
     archived: Optional[bool] = None
 
+    @property
+    def id_attr(self):
+        return "offerId", self.offerId
+
 
 class OfferDraft(DraftInvoiceIsh):
     CREATED_OBJECT_CLASS: ClassVar[FikenObject] = Offer

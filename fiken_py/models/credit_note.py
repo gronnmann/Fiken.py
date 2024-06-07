@@ -70,6 +70,10 @@ class CreditNote(FikenObjectCountable, BaseModel):
     currency: Optional[str] = Field(None, pattern=r"^[A-Z]{3}$")
     issueDate: Optional[datetime.date] = None
 
+    @property
+    def id_attr(self):
+        return "creditNoteId", self.creditNoteId
+
     @classmethod
     def create_from_invoice_full(cls, invoiceId: int, issueDate: datetime.date | str = None,
                                  creditNoteText: str = None, companySlug: str = None) -> typing.Self:

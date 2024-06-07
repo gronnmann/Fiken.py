@@ -13,7 +13,7 @@ from fiken_py.models.credit_note import CreditNote
 from sample_data_reader import get_sample_from_json
 
 from fiken_py.fiken_object import FikenObject
-from fiken_py.models import UserInfo, Account, BankAccount, Company, Contact, ContactPerson, Product, \
+from fiken_py.models import UserInfo, BalanceAccount, BankAccount, Company, Contact, ContactPerson, Product, \
     ProductSalesReport, ProductSalesReportRequest, Transaction, JournalEntry, InboxDocument, Sale, Project, Invoice, \
     InvoiceDraft, Offer, Purchase, OrderConfirmation
 
@@ -37,7 +37,7 @@ def m():
 
 @pytest.mark.parametrize("object", [
     UserInfo,
-    Account,
+    BalanceAccount,
     BankAccount,
     Company,
     Contact,

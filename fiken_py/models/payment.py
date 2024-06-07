@@ -19,6 +19,10 @@ class Payment(FikenObject, BaseModel):
     currency: Optional[str] = None
     fee: Optional[int] = None
 
+    @property
+    def id_attr(self):
+        return "paymentId", self.paymentId
+
 
 class PaymentPurchase(Payment):
     _GET_PATH_MULTIPLE = '/companies/{companySlug}/purchases/{purchaseId}/payments'

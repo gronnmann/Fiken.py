@@ -1,6 +1,6 @@
 from .user_info import UserInfo
 from .company import Company
-from .account import Account
+from .balance_account import BalanceAccount
 from .bank_account import BankAccount, BankAccountCreateRequest, BankAccountType
 from .contact_person import ContactPerson
 from .contact import Contact

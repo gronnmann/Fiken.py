@@ -19,5 +19,8 @@ class ContactPerson(BaseModel, FikenObject):
     address: Optional[Address] = None
 
     @property
+    def id_attr(self):
+        return "contactPersonId", self.contactPersonId
+    @property
     def is_new(self):
         return self.contactPersonId is None

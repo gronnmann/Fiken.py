@@ -45,9 +45,29 @@ class Contact(BaseModel, FikenObjectAttachable):
     def is_new(self):
         return self.contactId is None
 
+    @property
+    def id_attr(self):
+        return "contactId", self.contactId
+
     @classmethod
     def get_attachments_cls(cls, instance: FikenObjectAttachable = None, **kwargs) -> list[Attachment]:
         return instance.documents
 
     def get_attachments(self, **kwargs) -> list[Attachment]:
         return self.documents
+
+    def add_attachment(self, filepath, filename: str = None, comment: str = None, **kwargs):
+        resp = self.add_attachment_cls(filepath, filename, comment, instance=self, **kwargs)
+
+        if resp:
+            self._refresh_object()
+
+        return resp
+
+    def add_attachment_bytes(self, filename: str, data: bytes, comment: str = None, **kwargs):
+        resp = self.add_attachment_bytes_cls(filename, data, comment, instance=self, **kwargs)
+
+        if resp:
+            self._refresh_object()
+
+        return resp

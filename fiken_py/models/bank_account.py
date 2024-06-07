@@ -37,6 +37,10 @@ class BankAccount(BankAccountBase, FikenObject):
     reconciledBalance: Optional[int] = None
     reconciledDate: Optional[date] = None  # TODO - new date type
 
+    @property
+    def id_attr(self):
+        return "bankAccountId", self.bankAccountId
+
 
 class BankAccountCreateRequest(BankAccountBase, FikenObjectRequest):
     BASE_CLASS: ClassVar[FikenObject] = BankAccount

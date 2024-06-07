@@ -21,3 +21,7 @@ class JournalEntry(BaseModel, FikenObjectAttachable):
     date: date
     lines: list[JournalEntryLine]
     attachments: Optional[list[Attachment]] = []
+
+    @property
+    def id_attr(self):
+        return "journalEntryId", self.journalEntryId

@@ -37,6 +37,10 @@ class Project(FikenObject, ProjectBase):
     completed: Optional[bool] = None
 
     @property
+    def id_attr(self):
+        return "projectId", self.projectId
+
+    @property
     def is_new(self):
         return self.projectId is None
 

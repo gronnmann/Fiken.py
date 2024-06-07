@@ -41,6 +41,9 @@ class Purchase(FikenObjectAttachable, FikenObjectDeleteFlagable, PurchaseBase):
     project: Optional[List[Project]] = None
     deleted: Optional[bool] = None
 
+    @property
+    def id_attr(self):
+        return "purchaseId", self.purchaseId
 
 class PurchaseRequest(FikenObjectRequest, PurchaseBase):
     _POST_PATH = '/companies/{companySlug}/purchases/'

@@ -19,6 +19,10 @@ class InboxDocument(BaseModel, FikenObject):
     status: Optional[bool] = None
     createdDate: Optional[datetime] = None
 
+    @property
+    def id_attr(self):
+        return "inboxDocumentId", self.documentId
+
 
 class InboxDocumentRequest(FikenObjectRequest, BaseModel):
     BASE_CLASS: ClassVar[FikenObject] = InboxDocument

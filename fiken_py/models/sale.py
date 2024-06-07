@@ -50,6 +50,10 @@ class Sale(FikenObjectAttachable, FikenObjectDeleteFlagable, SaleBase):
     notes: Optional[list[Note]] = None
     deleted: Optional[bool] = None
 
+    @property
+    def id_attr(self):
+        return "saleId", self.saleId
+
     def set_settled(self, settledDate: datetime.date = datetime.date.today()) -> None:
         """Sets the sale as settled with the given date (equivalent to 'Sett til oppgjort uten betaling')."""
         url = self._get_method_base_URL("SET_SETTLED")

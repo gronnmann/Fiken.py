@@ -72,6 +72,10 @@ class Invoice(FikenObjectCountable, FikenObjectAttachable, BaseModel):
     sale: Optional[Sale] = None,
     project: Optional[Project] = None
 
+    @property
+    def id_attr(self):
+        return "invoiceId", self.invoiceId
+
     def save(self, **kwargs: Any) -> typing.Self | None:
         if self._get_method_base_URL(RequestMethod.PATCH) is None:
             raise RequestWrongMediaTypeException(f"Object {self.__class__.__name__} does not support PATCH")

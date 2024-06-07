@@ -8,8 +8,8 @@ from pydantic import BaseModel, Field, model_validator
 from fiken_py.errors import RequestErrorException
 from fiken_py.fiken_object import FikenObjectRequest, FikenObject, RequestMethod, FikenObjectAttachable
 from fiken_py.shared_enums import VatTypeProductPurchase, VatTypeProductSale
-from fiken_py.shared_types import Attachment, AccountingAccount, BankAccountNumber, DraftLineInvoiceIsh, Payment, \
-    DraftLineOrder
+from fiken_py.shared_types import Attachment, AccountingAccount, BankAccountNumber, DraftLineInvoiceIsh, DraftLineOrder
+from fiken_py.models.payment import Payment
 from fiken_py.models import Contact, Invoice, Offer, Purchase, Project, Sale
 from fiken_py.models.credit_note import CreditNote
 

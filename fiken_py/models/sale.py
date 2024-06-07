@@ -1,12 +1,13 @@
 import datetime
-from typing import Optional, Literal, Annotated, ClassVar
+from typing import Optional, ClassVar
 
 from pydantic import BaseModel, Field
 
-from fiken_py.fiken_object import FikenObject, FikenObjectRequest, RequestMethod, FikenObjectPaymentPaymentable, \
-    FikenObjectAttachable
+from fiken_py.fiken_object import FikenObject, FikenObjectRequest, \
+    FikenObjectAttachable, FikenObjectDeleteFlagable
 
-from fiken_py.shared_types import OrderLine, Payment, Attachment, Note, AccountingAccountAssets
+from fiken_py.shared_types import OrderLine, Attachment, Note, AccountingAccountAssets
+from fiken_py.models.payment import Payment
 from fiken_py.shared_enums import SaleKind
 from fiken_py.models import Contact, Project
 
@@ -21,9 +22,10 @@ class SaleBase(BaseModel):
     paymentDate: Optional[datetime.date] = None
 
 
-class Sale(FikenObjectAttachable, FikenObjectPaymentPaymentable, SaleBase):
+class Sale(FikenObjectAttachable, FikenObjectDeleteFlagable, SaleBase):
     _GET_PATH_SINGLE = '/companies/{companySlug}/sales/{saleId}'
     _GET_PATH_MULTIPLE = '/companies/{companySlug}/sales'
+    _DELETE_PATH = '/companies/{companySlug}/sales/{saleId}/delete'
 
     saleId: Optional[int] = None
     lastModifiedDate: Optional[datetime.date] = None
@@ -44,9 +46,6 @@ class Sale(FikenObjectAttachable, FikenObjectPaymentPaymentable, SaleBase):
     project: Optional[Project] = None
     notes: Optional[list[Note]] = None
     deleted: Optional[bool] = None
-
-    def _refresh_object(self, **kwargs):
-        return self._refresh_object(saleId=self.saleId, **kwargs)
 
 class SaleRequest(FikenObjectRequest, SaleBase):
     BASE_CLASS: ClassVar[FikenObject] = Sale

@@ -17,11 +17,9 @@ from importlib.metadata import version
 from pydantic import BaseModel, ValidationError
 
 from fiken_py.authorization import AccessToken, Authorization
-from fiken_py.errors import RequestWrongMediaTypeException, RequestConnectionException, RequestBadRequestException, \
-    RequestUserUnauthenticatedException, RequestForbiddenException, RequestContentNotFoundException, \
-    RequestUnsupportedMethodException, \
+from fiken_py.errors import RequestConnectionException, RequestContentNotFoundException, \
     RequestWrongMediaTypeException, RequestErrorException
-from fiken_py.shared_types import Attachment, Counter, Payment
+from fiken_py.shared_types import Attachment, Counter
 from fiken_py.util import handle_error
 
 logger = logging.getLogger("fiken_py")
@@ -231,6 +229,13 @@ class FikenObject:
             return new_object
 
         return None
+
+    def _refresh_object(self, **kwargs):
+        try:
+            fiken_object = self.get(**self.__dict__, **kwargs)
+        except RequestErrorException as e:
+            raise
+        self.__dict__.update(fiken_object.__dict__)
 
     def delete(self, **kwargs: Any) -> bool:
 
@@ -552,56 +557,21 @@ class FikenObjectCounterable(FikenObject):
         return True
 
 
-class FikenObjectPaymentPaymentable(FikenObject):
-    """
-    Base class for objects that can have payments and can be deleted by setting a deleted flag.
-    """
+class FikenObjectDeleteFlagable(FikenObject):
+    """Base class for FikenObjects who are deleted by creating a counter-entry and setting a deleted-flag to True"""
 
-    def _refresh_object(self, **kwargs):
-        try:
-            fiken_object = self.get(**kwargs)
-        except RequestErrorException as e:
-            raise
-
-        self.__dict__.update(fiken_object.__dict__)
-
-    def delete(self, **kwargs):
+    def delete(self, description: str, **kwargs):
         """
         Does not delete the object itself, but creates a counter-entry and sets the deleted flag to True.
-        :return:
+        :arg description: The description of the deletion
+        :return: None
         """
 
+        kwargs["description"] = description
+
         try:
-            self._execute_method(RequestMethod.PATCH, path=self._get_method_base_URL(RequestMethod.PATCH),
-                                 **kwargs)
+            self._execute_method(RequestMethod.PATCH, url=self._get_method_base_URL(RequestMethod.DELETE),
+                                 dumped_object=self, **kwargs)
             self._refresh_object(**kwargs)
         except RequestErrorException as e:
             raise
-
-    def get_payment(self, paymentId: int, **kwargs):
-        try:
-            response = self._execute_method(RequestMethod.GET, path=self._get_method_base_URL("PAYMENTS_SINGLE"),
-                                            paymentId=paymentId, **kwargs)
-        except RequestErrorException as e:
-            raise
-
-        return Payment(**response.json())
-
-    def get_payments(self, **kwargs):
-        try:
-            response = self._execute_method(RequestMethod.GET, path=self._get_method_base_URL("PAYMENTS"),
-                                            **kwargs)
-        except RequestErrorException as e:
-            raise
-
-        return [Payment(**payment) for payment in response.json()]
-
-    def create_payment(self, payment: Payment, **kwargs) -> Payment:
-        try:
-            response = self._execute_method(RequestMethod.POST, path=self._get_method_base_URL("PAYMENTS"),
-                                            dumped_object=payment)
-            self._refresh_object(**kwargs)
-        except RequestErrorException as e:
-            raise
-
-        return Payment(**response.json())

@@ -3,12 +3,11 @@ from typing import Optional, List, ClassVar
 
 from pydantic import BaseModel, Field, model_validator
 
-from fiken_py.errors import RequestErrorException
-from fiken_py.fiken_object import FikenObjectAttachable, FikenObjectRequest, FikenObject, RequestMethod, \
-    FikenObjectPaymentPaymentable
+from fiken_py.fiken_object import FikenObjectAttachable, FikenObjectRequest, FikenObject, FikenObjectDeleteFlagable
 from fiken_py.models import Contact, Project
 from fiken_py.shared_enums import PurchaseKind
-from fiken_py.shared_types import OrderLine, Attachment, Payment
+from fiken_py.shared_types import OrderLine, Attachment
+from fiken_py.models.payment import Payment
 
 
 class PurchaseBase(BaseModel):
@@ -26,7 +25,7 @@ class PurchaseBase(BaseModel):
     paymentDate: Optional[datetime.date] = None
 
 
-class Purchase(FikenObjectAttachable, FikenObjectPaymentPaymentable, PurchaseBase):
+class Purchase(FikenObjectAttachable, FikenObjectDeleteFlagable, PurchaseBase):
     _GET_PATH_SINGLE = '/companies/{companySlug}/purchases/{purchaseId}'
     _GET_PATH_MULTIPLE = '/companies/{companySlug}/purchases'
     _DELETE_PATH = '/companies/{companySlug}/purchases/{purchaseId}/delete'
@@ -40,9 +39,6 @@ class Purchase(FikenObjectAttachable, FikenObjectPaymentPaymentable, PurchaseBas
     purchaseAttachments: Optional[list[Attachment]] = None
     project: Optional[List[Project]] = None
     deleted: Optional[bool] = None
-
-    def _refresh_object(self, **kwargs):
-        return self._refresh_object(purchaseId=self.purchaseId, **kwargs)
 
 
 class PurchaseRequest(FikenObjectRequest, PurchaseBase):

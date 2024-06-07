@@ -18,3 +18,4 @@ from .purchase import Purchase, PurchaseRequest
 from .draft import (InvoiceDraft, InvoiceDraftCreateRequest, DraftLineInvoiceIsh, OfferDraft, OfferDraftCreateRequest,
                     CreditNoteDraft, CreditNoteDraftCreateRequest, PurchaseDraft, PurchaseDraftCreateRequest, SaleDraft,
                     SaleDraftCreateRequest)
+from .payment import PaymentPurchase, PaymentSale, Payment

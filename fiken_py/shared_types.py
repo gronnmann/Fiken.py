@@ -56,17 +56,6 @@ class JournalEntryLine(BaseModel):
     lastModifiedDate: Optional[date] = None
 
 
-class Payment(BaseModel):
-    description: Optional[str] = None
-    paymentId: Optional[int] = None
-    date: date
-    account: str  # TODO - update with account type
-    amount: int
-    amountInNok: Optional[int] = None
-    currency: Optional[str] = None
-    fee: Optional[int] = None
-
-
 class Note(BaseModel):
     description: Optional[str] = None
     author: Optional[str] = None

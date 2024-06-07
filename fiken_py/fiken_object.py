@@ -8,7 +8,7 @@ import time
 import typing
 import uuid
 from enum import Enum
-from typing import Any, TypeVar, ClassVar
+from typing import Any, ClassVar
 
 import requests
 import platform

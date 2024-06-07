@@ -1,11 +1,12 @@
 import datetime
+import typing
 from enum import Enum
 from typing import Optional, ClassVar, Any
 
 from pydantic import BaseModel, Field, model_validator
 
 from fiken_py.errors import RequestErrorException
-from fiken_py.fiken_object import FikenObjectRequest, FikenObject, T, RequestMethod, FikenObjectAttachable
+from fiken_py.fiken_object import FikenObjectRequest, FikenObject, RequestMethod, FikenObjectAttachable
 from fiken_py.shared_enums import VatTypeProductPurchase, VatTypeProductSale
 from fiken_py.shared_types import Attachment, AccountingAccount, BankAccountNumber, DraftLineInvoiceIsh, Payment, \
     DraftLineOrder
@@ -22,7 +23,7 @@ class DraftObject(FikenObjectAttachable):
 
     CREATED_OBJECT_CLASS: ClassVar[FikenObject] = None  # Which class to use when making into a real object
 
-    def save(self, **kwargs: Any) -> T | None:
+    def save(self, **kwargs: Any) -> typing.Self | None:
 
         if self._get_method_base_URL(RequestMethod.PUT) is not None:
             if self.is_new is None:

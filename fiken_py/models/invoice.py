@@ -1,17 +1,16 @@
 import datetime
-from typing import Optional, ClassVar, Any, TypeVar
+import typing
+from typing import Optional, ClassVar, Any
 
 import requests
 from pydantic import BaseModel, Field
 
 from fiken_py.errors import RequestWrongMediaTypeException, RequestErrorException
-from fiken_py.fiken_object import FikenObject, FikenObjectRequest, RequestMethod, T, FikenObjectCounterable, \
+from fiken_py.fiken_object import FikenObject, FikenObjectRequest, RequestMethod, FikenObjectCounterable, \
     FikenObjectAttachable
 from fiken_py.shared_types import Address, Attachment, InvoiceLineRequest, InvoiceLine
 from fiken_py.shared_enums import SendMethod, SendEmailOption, VatTypeProduct
 from fiken_py.models import Contact, Project, Sale
-
-Inv = TypeVar('Inv', bound='Invoice')
 
 
 class InvoiceSendRequest(BaseModel):
@@ -72,7 +71,7 @@ class Invoice(FikenObjectCounterable, FikenObjectAttachable, BaseModel):
     sale: Optional[Sale] = None,
     project: Optional[Project] = None
 
-    def save(self, **kwargs: Any) -> Inv | None:
+    def save(self, **kwargs: Any) -> typing.Self | None:
         if self._get_method_base_URL(RequestMethod.PATCH) is None:
             raise RequestWrongMediaTypeException(f"Object {self.__class__.__name__} does not support PATCH")
 

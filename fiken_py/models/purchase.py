@@ -1,5 +1,5 @@
 import datetime
-from typing import Optional, List, ClassVar, TypeVar
+from typing import Optional, List, ClassVar
 
 from pydantic import BaseModel, Field, model_validator
 
@@ -9,8 +9,6 @@ from fiken_py.fiken_object import FikenObjectAttachable, FikenObjectRequest, Fik
 from fiken_py.models import Contact, Project
 from fiken_py.shared_enums import PurchaseKind
 from fiken_py.shared_types import OrderLine, Attachment, Payment
-
-Purch = TypeVar('Purch', bound='Purchase')
 
 
 class PurchaseBase(BaseModel):

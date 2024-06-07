@@ -1,7 +1,8 @@
 from __future__ import annotations
 
 import datetime
-from typing import Optional, TypeVar
+import typing
+from typing import Optional
 
 from pydantic import BaseModel, Field
 
@@ -9,8 +10,6 @@ from fiken_py.errors import RequestContentNotFoundException, RequestErrorExcepti
 from fiken_py.fiken_object import FikenObjectAttachable, RequestMethod, FikenObjectCounterable
 from fiken_py.shared_types import Address, InvoiceLine, Attachment, CreditNotePartialRequestLine
 from fiken_py.models import Contact, Project, Sale, Invoice
-
-CN = TypeVar('CN', bound='CreditNote')
 
 
 class FullCreditNoteRequest(BaseModel):
@@ -72,7 +71,7 @@ class CreditNote(FikenObjectCounterable, FikenObjectAttachable, BaseModel):
 
     @classmethod
     def create_from_invoice_full(cls, invoiceId: int, issueDate: datetime.date | str = None,
-                                 creditNoteText: str = None, companySlug: str = None) -> CN:
+                                 creditNoteText: str = None, companySlug: str = None) -> typing.Self:
 
         try:
             invoice = Invoice.get(invoiceId=invoiceId, companySlug=companySlug)
@@ -80,7 +79,7 @@ class CreditNote(FikenObjectCounterable, FikenObjectAttachable, BaseModel):
             raise
 
         if invoice is None:
-            raise RequestContentNotFoundException(f"Invoice with id {invoiceId} not found.")
+            raise RequestContentNotFoundException(f"Invoice with id {invoiceId} not found.", None, None)
 
         credit_note_request = FullCreditNoteRequest(
             issueDate=issueDate if issueDate is not None else datetime.date.today(),

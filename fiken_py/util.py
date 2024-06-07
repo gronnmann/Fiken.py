@@ -19,8 +19,12 @@ def handle_error(e: HTTPError):
             err = json["error"]
         if json.get("error_description"):
             err_description = json["error_description"]
+        else:
+            err = "Unparsed error"
+            err_description = e.response.text
     except Exception:
-        pass
+        err = "Unparsed error"
+        err_description = e.response.text
 
     if e.response.status_code == 400:
         raise RequestBadRequestException(e, err, err_description)

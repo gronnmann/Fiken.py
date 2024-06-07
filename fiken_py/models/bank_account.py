@@ -4,7 +4,7 @@ from typing import Optional, ClassVar
 
 from pydantic import BaseModel, model_validator, Field
 
-from fiken_py.fiken_object import FikenObject, T, FikenObjectRequest
+from fiken_py.fiken_object import FikenObject, FikenObjectRequest
 from fiken_py.shared_types import AccountingAccount, AccountingAccountAssets, BankAccountNumber
 
 

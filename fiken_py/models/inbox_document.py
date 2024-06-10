@@ -5,6 +5,7 @@ from typing import Optional, ClassVar
 import requests
 from pydantic import BaseModel
 
+from fiken_py.authorization import AccessToken
 from fiken_py.fiken_object import FikenObject, FikenObjectRequest, RequestMethod
 
 
@@ -18,6 +19,10 @@ class InboxDocument(BaseModel, FikenObject):
     filename: Optional[str] = None
     status: Optional[bool] = None
     createdDate: Optional[datetime] = None
+
+    @property
+    def id_attr(self):
+        return "inboxDocumentId", self.documentId
 
 
 class InboxDocumentRequest(FikenObjectRequest, BaseModel):
@@ -37,8 +42,7 @@ class InboxDocumentRequest(FikenObjectRequest, BaseModel):
         with open(filepath, 'rb') as f:
             return cls(name=name, filename=filepath, description=description, file=f.read())
 
-    def save(self, **kwargs):
-
+    def save(self, token: AccessToken | str = None, **kwargs):
         file_data = {
             'file': (self.filename, self.file),
             'filename': (None, self.filename),
@@ -46,6 +50,6 @@ class InboxDocumentRequest(FikenObjectRequest, BaseModel):
             'name': (None, self.name)
         }
 
-        response = self._execute_file_upload_request(file_data, **kwargs)
+        response = self._execute_method(RequestMethod.POST, file_data=file_data, token=token, **kwargs)
 
-        return self._follow_location_and_update_class(response)
+        return self._follow_location_and_update_class(response, token=token, companySlug=self._company_slug)

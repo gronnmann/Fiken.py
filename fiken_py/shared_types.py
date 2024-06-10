@@ -1,9 +1,12 @@
+from __future__ import annotations
+
 from datetime import date
 from typing import Optional, Annotated, ClassVar
 
 from pydantic import BaseModel, Field, model_validator
 
-from fiken_py.shared_enums import AttachmentType, VatTypeProductSale
+
+from fiken_py.shared_enums import AttachmentType, VatTypeProductSale, VatTypeProductPurchase
 from fiken_py.vat_validation import VATValidator
 
 AccountingAccount = Annotated[str, Field(pattern=r"^[1-8]\d{3}(:\d{5})?$")]  # All kontoklasser
@@ -53,17 +56,6 @@ class JournalEntryLine(BaseModel):
     lastModifiedDate: Optional[date] = None
 
 
-class Payment(BaseModel):
-    description: Optional[str] = None
-    paymentId: Optional[int] = None
-    date: date
-    account: str  # TODO - update with account type
-    amount: int
-    amountInNok: Optional[int] = None
-    currency: Optional[str] = None
-    fee: Optional[int] = None
-
-
 class Note(BaseModel):
     description: Optional[str] = None
     author: Optional[str] = None
@@ -74,11 +66,18 @@ class OrderLine(BaseModel):
     description: Optional[str] = None
     netPrice: Optional[int] = None
     vat: Optional[int] = None
-    account: Optional[AccountingAccountIncome] = None
-    vatType: VatTypeProductSale
+    account: Optional[AccountingAccount] = None
+    vatType: VatTypeProductSale | VatTypeProductPurchase
     netPriceInCurrency: Optional[int] = None
     vatInCurrency: Optional[int] = None
     projectId: Optional[int] = None
+
+    @model_validator(mode="after")
+    @classmethod
+    def validate_netPrice_or_netPriceInCurrency(cls, value):
+        assert (value.netPrice is not None) or (value.netPriceInCurrency is not None), \
+            "Either netPrice or netPriceInCurrency must be provided"
+        return value
 
 
 class InvoiceIshLineBase(BaseModel):
@@ -124,7 +123,7 @@ class CreditNotePartialRequestLine(InvoiceIshLineBase):
     quantity: int
 
 
-class DraftLine(InvoiceIshLineBase):
+class DraftLineInvoiceIsh(InvoiceIshLineBase):
     validate_product_or_line: ClassVar[bool] = True
 
     invoiceishDraftLineId: Optional[int] = None
@@ -151,6 +150,22 @@ class InvoiceLine(InvoiceLineBase):
     vatInNok: Optional[int] = None
     grossInNok: Optional[int] = None
     quantity: Optional[int] = None
+
+
+class DraftLineOrderBase(BaseModel):
+    text: Optional[str] = None
+    vatType: Optional[VatTypeProductSale | VatTypeProductPurchase] = None
+    incomeAccount: Optional[AccountingAccountIncome | AccountingAccountCosts] = None
+    net: Optional[int] = None
+    gross: Optional[int] = None
+
+
+class DraftLineOrder(DraftLineOrderBase):
+    project: Optional['Project'] = None
+
+
+class DraftLineOrderRequest(DraftLineOrderBase):
+    projectId: Optional[int] = None
 
 
 class Counter(BaseModel):

@@ -2,7 +2,19 @@
 
 class RequestErrorException(Exception):
     """Parent class for all ways a Request can fail."""
-    pass
+    def __init__(self, exception, error_base=None, error_description=None):
+        super().__init__(exception)
+        self.error_base = error_base
+        self.error_details = error_description
+
+    def __str__(self):
+        if self.error_details:
+            if self.error_base:
+                return f"{super().__str__()} ({self.error_base}: {self.error_details})"
+            else:
+                return f"{super().__str__()} ({self.error_details})"
+        else:
+            return super().__str__()
 
 
 class RequestConnectionException(RequestErrorException):

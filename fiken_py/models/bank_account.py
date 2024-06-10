@@ -4,7 +4,7 @@ from typing import Optional, ClassVar
 
 from pydantic import BaseModel, model_validator, Field
 
-from fiken_py.fiken_object import FikenObject, T, FikenObjectRequest
+from fiken_py.fiken_object import FikenObject, FikenObjectRequest
 from fiken_py.shared_types import AccountingAccount, AccountingAccountAssets, BankAccountNumber
 
 
@@ -37,8 +37,12 @@ class BankAccount(BankAccountBase, FikenObject):
     reconciledBalance: Optional[int] = None
     reconciledDate: Optional[date] = None  # TODO - new date type
 
+    @property
+    def id_attr(self):
+        return "bankAccountId", self.bankAccountId
 
-class BankAccountCreateRequest(BankAccountBase, FikenObjectRequest):
+
+class BankAccountRequest(BankAccountBase, FikenObjectRequest):
     BASE_CLASS: ClassVar[FikenObject] = BankAccount
 
     _POST_PATH = '/companies/{companySlug}/bankAccounts/'

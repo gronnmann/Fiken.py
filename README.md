@@ -15,10 +15,42 @@ This will give you a private token. You can create a private app in Fiken by goi
 API -> Ny API-nøkkel
 
 Then, set the token using the following code:
+
 ```python
 FikenObject.set_auth_token('{your_token_here}')
 ```
 
+### Public apps
+To use the Fiken API publically, you need to authenticate using OAuth2.
+You can create a public app by going to Account -> Rediger konto -> API
+-> Ny app
+
+Then, first create an endpoint to redirect to (for example via FastAPI), and
+then redirect the user to a URL retrieved from:
+```python
+url, state = Authorization.generate_auth_url(FIKEN_APP_ID, REDIRECT_URI)
+```
+This will open a window for the user to authenticate with Fiken.
+When the user is authenticated, they will be redirected to the `REDIRECT_URI` with a `code` and `state` parameter.
+
+Make sure the `state` parameter is the same as the one you generated.
+
+Then, use the `code` to get the access token:
+```python
+access_token = Authorization.get_access_token_authcode(FIKEN_APP_ID, FIKEN_APP_SECRET, REDIRECT_URI, code)
+```
+
+The `redirect_uri` should be the same as the one you used to generate the URL.
+
+Then, set the access token:
+```python
+FikenObject.set_auth_token(access_token, (client_id, client_secret))
+```
+
+You can skip setting the client_id and client_secret if you don't wish the app to automatically 
+refresh the token. That happens when doing a request, and either 1) expiry time says its expired or 2) you get a 403 error.
+
+### Setting company slug
 If you wish, you can also set the company slug, as its required for most API calls.
 ```python
 FikenObject.set_company_slug('{your_company_slug_here}')
@@ -97,11 +129,6 @@ This is a list of known quirks you might encounter:
 The `JournalEntryRequest` object maps, when saved, returns the 
 `Transaction` object in Fiken (and not `JournalEntry`).
 
-### CreditNotePartialRequestLine and CreditNoteLine
-When accessing credit notes, the lines are of type `InvoiceLine` as in the API.
-However, in the API, when sending a partial credit note request, the lines are of type `creditNoteLineResult`, which
-I found confusing. That type is therefore called `CreditNotePartialRequestLine` in the library.
-
 ```python
 journal_entry: JournalEntryRequest
 
@@ -110,6 +137,25 @@ journal_entry = request.save(companySlug='fiken-demo-drage-og-elefant-as')
 
 print(type(journal_entry)) # <class 'fiken_py.models.transaction.Transaction'>
 ```
+
+### CreditNotePartialRequestLine and CreditNoteLine
+When accessing credit notes, the lines are of type `InvoiceLine` as in the API.
+However, in the API, when sending a partial credit note request, the lines are of type `creditNoteLineResult`, which
+I found confusing. That type is therefore called `CreditNotePartialRequestLine` in the library.
+
+### Draft types
+The main draft type used by both Invoice, CreditNote, Offer and Order Confirmation is in the api called
+`invoiceIshDraftResult`. Here they all have their own draft type, eg `InvoiceDraft` etc, all
+inheriting from `InvoiceIshDraft`.
+
+The draft types for sales and purcases in the API are `draftResult`.
+Here they are split into `SalesDraft` and `PurchaseDraft`, inheriting
+from `DraftOrder`.
+
+### /accounts and /accountBalances
+They both have their own class `BalanceAccount` and `BalanceAccountBalance` respectively.
+The balance itself can also be fetched calling upon `balance_account_instance.get_balance()`
+
 
 ## Rate limiting
 From the [Fiken API documentation](https://api.fiken.no/api/v2/docs/):
@@ -127,7 +173,7 @@ FikenObject.set_rate_limit(False)
 Tests are done using pytest. There's two directories with tests:
 - `tests` - Tests that run locally and do not require a Fiken account
 - `tests_online` - Tests that interact with the Fiken API. These require a Fiken account and a private token.
-These should only be used with a test account, as they will create and delete objects in Fiken.
+These should only be used with a test company, as they will create and delete objects in Fiken.
 
 To use the `test_online`, you need to set the following environment variables (in `test_online/.env`):
 ```dotenv

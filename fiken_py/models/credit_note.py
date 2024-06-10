@@ -1,16 +1,17 @@
 from __future__ import annotations
 
 import datetime
-from typing import Optional, TypeVar
+import typing
+from typing import Optional, ClassVar
 
 from pydantic import BaseModel, Field
 
+from fiken_py.authorization import AccessToken
 from fiken_py.errors import RequestContentNotFoundException, RequestErrorException
-from fiken_py.fiken_object import FikenObjectAttachable, RequestMethod, FikenObjectCounterable
+from fiken_py.fiken_object import FikenObjectAttachable, RequestMethod, FikenObjectCountable, FikenObject
+from fiken_py.models.draft import DraftInvoiceIsh, DraftTypeInvoiceIsh, DraftInvoiceIshCreateRequest
 from fiken_py.shared_types import Address, InvoiceLine, Attachment, CreditNotePartialRequestLine
 from fiken_py.models import Contact, Project, Sale, Invoice
-
-CN = TypeVar('CN', bound='CreditNote')
 
 
 class FullCreditNoteRequest(BaseModel):
@@ -34,7 +35,7 @@ class PartialCreditNoteRequest(BaseModel):
     lines: list[CreditNotePartialRequestLine]
 
 
-class CreditNote(FikenObjectCounterable, FikenObjectAttachable, BaseModel):
+class CreditNote(FikenObjectCountable, BaseModel):
     _GET_PATH_SINGLE = '/companies/{companySlug}/creditNotes/{creditNoteId}'
     _GET_PATH_MULTIPLE = '/companies/{companySlug}/creditNotes/'
 
@@ -70,12 +71,17 @@ class CreditNote(FikenObjectCounterable, FikenObjectAttachable, BaseModel):
     currency: Optional[str] = Field(None, pattern=r"^[A-Z]{3}$")
     issueDate: Optional[datetime.date] = None
 
+    @property
+    def id_attr(self):
+        return "creditNoteId", self.creditNoteId
+
     @classmethod
     def create_from_invoice_full(cls, invoiceId: int, issueDate: datetime.date | str = None,
-                                 creditNoteText: str = None, companySlug: str = None) -> CN:
+                                 creditNoteText: str = None, companySlug: str = None,
+                                 token: AccessToken | str = None) -> typing.Self:
 
         try:
-            invoice = Invoice.get(invoiceId=invoiceId, companySlug=companySlug)
+            invoice = Invoice.get(invoiceId=invoiceId, companySlug=companySlug, token=token)
         except RequestErrorException:
             raise
 
@@ -90,7 +96,7 @@ class CreditNote(FikenObjectCounterable, FikenObjectAttachable, BaseModel):
 
         try:
             response = cls._execute_method(RequestMethod.POST, url=cls._get_method_base_URL("POST_FULL"),
-                                           dumped_object=credit_note_request, companySlug=companySlug)
+                                           dumped_object=credit_note_request, token=token, companySlug=companySlug)
         except RequestErrorException:
             raise
 
@@ -98,4 +104,24 @@ class CreditNote(FikenObjectCounterable, FikenObjectAttachable, BaseModel):
         if loc is None:
             raise RequestErrorException("No Location header in response")
 
-        return CreditNote._getFromURL(loc)
+        return CreditNote._get_from_url(loc, token=token, companySlug=companySlug)
+
+
+class CreditNoteDraft(DraftInvoiceIsh):
+    CREATED_OBJECT_CLASS: ClassVar[FikenObject] = CreditNote
+
+    _GET_PATH_SINGLE = '/companies/{companySlug}/creditNotes/drafts/{draftId}'
+    _GET_PATH_MULTIPLE = '/companies/{companySlug}/creditNotes/drafts'
+    _DELETE_PATH = '/companies/{companySlug}/creditNotes/drafts/{draftId}'
+    _PUT_PATH = '/companies/{companySlug}/creditNotes/drafts/{draftId}'
+
+    _CREATE_OBJECT_PATH = '/companies/{companySlug}/creditNotes/drafts/{draftId}/createCreditNote'
+
+    type: DraftTypeInvoiceIsh = DraftTypeInvoiceIsh.CREDIT_NOTE
+
+
+class CreditNoteDraftRequest(DraftInvoiceIshCreateRequest):
+    BASE_CLASS: ClassVar[FikenObject] = CreditNoteDraft
+    _POST_PATH = '/companies/{companySlug}/creditNotes/drafts'
+
+    type: DraftTypeInvoiceIsh = DraftTypeInvoiceIsh.CREDIT_NOTE

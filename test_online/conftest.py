@@ -8,7 +8,7 @@ import pytest
 
 from fiken_py.fiken_object import FikenObject
 from fiken_py.shared_enums import VatTypeProduct
-from fiken_py.models import Product, Contact, BankAccount, BankAccountCreateRequest, BankAccountType
+from fiken_py.models import Product, Contact, BankAccount, BankAccountRequest, BankAccountType
 
 
 @pytest.fixture(autouse=True, scope="session")
@@ -44,14 +44,14 @@ def generic_product(set_auth_token) -> Product:
 
 
 @pytest.fixture(scope="session")
-def generic_customer(set_auth_token) -> Contact:
+def generic_contact(set_auth_token) -> Contact:
     name = "Pippi Hippie (generisk testkunde)"
     found_contacts = Contact.getAll(name=name)
     if len(found_contacts) > 0:
         return found_contacts[0]
     else:
         contact = Contact(name=name, email="test@test.com",
-                          customer=True)
+                          customer=True, supplier=True)
         contact.save()
         return contact
 
@@ -66,6 +66,6 @@ def generic_bank_account(set_auth_token) -> BankAccount:
             if bank_account.name == name:
                 return bank_account
 
-    bank_account = BankAccountCreateRequest(name=name, bankAccountNumber="11112233334", type=BankAccountType.NORMAL)
+    bank_account = BankAccountRequest(name=name, bankAccountNumber="11112233334", type=BankAccountType.NORMAL)
     bank_account: BankAccount = bank_account.save()
     return bank_account

@@ -1,6 +1,6 @@
 import random
 
-from fiken_py.models import Project, ProjectCreateRequest
+from fiken_py.models import Project, ProjectRequest
 
 
 def get_or_create_project(unique_id) -> Project:
@@ -12,18 +12,11 @@ def get_or_create_project(unique_id) -> Project:
             found = True
             break
 
-    proj_nr = int(projects[0].number)
-    while True:
-        proj_nr = proj_nr + random.choice(range(1, 5))
-        proj_nr = str(proj_nr)
-        if proj_nr not in [int(p.number) for p in projects]:
-            break
-
     if not found:
-        project_request = ProjectCreateRequest(
+        project_request = ProjectRequest(
             name=f"Test project ({unique_id})",
             startDate="2021-01-01",
-            number=proj_nr,
+            number=unique_id,
         )
 
         project = project_request.save()

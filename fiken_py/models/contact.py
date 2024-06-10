@@ -45,7 +45,43 @@ class Contact(BaseModel, FikenObjectAttachable):
     def is_new(self):
         return self.contactId is None
 
-    # Contact is for some reason only object with no get_attachments method
+    @property
+    def id_attr(self):
+        return "contactId", self.contactId
+
     @classmethod
     def get_attachments_cls(cls, instance: FikenObjectAttachable = None, **kwargs) -> list[Attachment]:
-        raise RequestWrongMediaTypeException("Contact does not support listing attachments.")
+        return instance.documents
+
+    def get_attachments(self, **kwargs) -> list[Attachment]:
+        return self.documents
+
+    def add_attachment(self, filepath, filename: str = None, comment: str = None, **kwargs):
+        resp = self.add_attachment_cls(filepath, filename, comment, instance=self, **kwargs)
+
+        if resp:
+            self._refresh_object()
+
+        return resp
+
+    def add_attachment_bytes(self, filename: str, data: bytes, comment: str = None, **kwargs):
+        resp = self.add_attachment_bytes_cls(filename, data, comment, instance=self, **kwargs)
+
+        if resp:
+            self._refresh_object()
+
+        return resp
+
+    def get_contact_persons(self, **kwargs) -> List[ContactPerson]:
+        return ContactPerson.getAll(companySlug=self._company_slug, token=self._auth_token, contactId=self.contactId,
+                                    **kwargs)
+
+    def get_contact_person(self, contact_person_id: int, **kwargs) -> ContactPerson:
+        return ContactPerson.get(contactPersonId=contact_person_id, companySlug=self._company_slug,
+                                 token=self._auth_token, contactId=self.contactId, **kwargs)
+
+    def create_contact_person(self, contact_person: ContactPerson, **kwargs) -> ContactPerson:
+        person = contact_person.save(token=self._auth_token, contactId=self.contactId, companySlug=self._company_slug, **kwargs)
+        self._refresh_object()
+
+        return person

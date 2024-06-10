@@ -1,15 +1,14 @@
 from __future__ import annotations
 
+import typing
 from datetime import date
-from typing import Optional, ClassVar, Any, TypeVar
+from typing import Optional, ClassVar, Any
 
 from pydantic import BaseModel
 
 from fiken_py.errors import RequestWrongMediaTypeException, RequestErrorException
-from fiken_py.fiken_object import FikenObject, FikenObjectRequest, T, RequestMethod
+from fiken_py.fiken_object import FikenObject, FikenObjectRequest, RequestMethod
 from fiken_py.models import Contact
-
-Proj = TypeVar('Proj', bound='Project')
 
 
 class ProjectBase(BaseModel):
@@ -38,10 +37,14 @@ class Project(FikenObject, ProjectBase):
     completed: Optional[bool] = None
 
     @property
+    def id_attr(self):
+        return "projectId", self.projectId
+
+    @property
     def is_new(self):
         return self.projectId is None
 
-    def save(self, **kwargs: Any) -> Proj | None:
+    def save(self, **kwargs: Any) -> typing.Self | None:
         if self._get_method_base_URL(RequestMethod.PATCH) is None:
             raise RequestWrongMediaTypeException(f"Object {self.__class__.__name__} does not support PATCH")
 
@@ -56,7 +59,7 @@ class Project(FikenObject, ProjectBase):
         return self._follow_location_and_update_class(response)
 
 
-class ProjectCreateRequest(FikenObjectRequest, ProjectBase):
+class ProjectRequest(FikenObjectRequest, ProjectBase):
     BASE_CLASS: ClassVar[FikenObject] = Project
     _POST_PATH = '/companies/{companySlug}/projects'
 

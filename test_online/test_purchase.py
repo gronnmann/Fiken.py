@@ -1,10 +1,10 @@
 import datetime
 
-from fiken_py.models import PurchaseRequest, Purchase, Contact, BankAccount, PurchaseDraft, PurchaseDraftCreateRequest
+from fiken_py.models import PurchaseRequest, Purchase, Contact, BankAccount, PurchaseDraft, PurchaseDraftRequest
 from fiken_py.shared_enums import PurchaseKind
 from fiken_py.shared_types import OrderLine
 from fiken_py.models.payment import Payment, PaymentPurchase
-from test_online import shared_tests
+from test_online import shared_tests, sample_object_factory
 
 
 def test_purchase_cash(unique_id: str, generic_bank_account):
@@ -36,21 +36,9 @@ def test_purchase_cash(unique_id: str, generic_bank_account):
 
 
 def test_purchase_supplier(unique_id: str, generic_bank_account, generic_contact: Contact):
-    purchase_line = OrderLine(
-        description=f"En veldig billig AK (testprodukt {unique_id})",
-        vatType="HIGH",
-        account="4300",
-        netPrice=100000,
-        vat="25000",
-    )
-
-    purchase_request = PurchaseRequest(
-        date=datetime.date.today(),
-        kind=PurchaseKind.SUPPLIER,
-        currency="NOK",
-        lines=[purchase_line],
-        paid=True,
-        supplierId=generic_contact.contactId,
+    purchase_request = sample_object_factory.purchase_request(
+        unique_id,
+        generic_contact
     )
 
     purchase: Purchase = purchase_request.save()
@@ -82,7 +70,7 @@ def test_purchase_supplier(unique_id: str, generic_bank_account, generic_contact
 def test_purchase_draft(unique_id: str, generic_contact: Contact, generic_bank_account: BankAccount):
     shared_tests.draftable_order_object_tests(
         PurchaseDraft,
-        PurchaseDraftCreateRequest,
+        PurchaseDraftRequest,
         "3000",
         unique_id,
         generic_contact,

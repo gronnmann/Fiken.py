@@ -3,7 +3,8 @@ from typing import Optional, List, ClassVar
 
 from pydantic import BaseModel, Field, model_validator
 
-from fiken_py.fiken_object import FikenObjectAttachable, FikenObjectRequest, FikenObject, FikenObjectDeleteFlagable
+from fiken_py.fiken_object import FikenObjectAttachable, FikenObjectRequest, FikenObject, FikenObjectDeleteFlagable, \
+    FikenObjectPaymentable
 from fiken_py.models import Contact, Project
 from fiken_py.models.draft import DraftOrder, DraftOrderCreateRequest
 from fiken_py.shared_enums import PurchaseKind, VatTypeProductPurchase
@@ -26,7 +27,7 @@ class PurchaseBase(BaseModel):
     paymentDate: Optional[datetime.date] = None
 
 
-class Purchase(FikenObjectAttachable, FikenObjectDeleteFlagable, PurchaseBase):
+class Purchase(FikenObjectAttachable, FikenObjectDeleteFlagable, FikenObjectPaymentable, PurchaseBase):
     _GET_PATH_SINGLE = '/companies/{companySlug}/purchases/{purchaseId}'
     _GET_PATH_MULTIPLE = '/companies/{companySlug}/purchases'
     _DELETE_PATH = '/companies/{companySlug}/purchases/{purchaseId}/delete'
@@ -80,7 +81,7 @@ class PurchaseDraft(DraftOrder):
     CREATED_OBJECT_CLASS: ClassVar[FikenObject] = Purchase
 
 
-class PurchaseDraftCreateRequest(DraftOrderCreateRequest):
+class PurchaseDraftRequest(DraftOrderCreateRequest):
     BASE_CLASS: ClassVar[FikenObject] = PurchaseDraft
     _POST_PATH = '/companies/{companySlug}/purchases/drafts'
 

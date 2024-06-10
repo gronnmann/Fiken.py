@@ -4,25 +4,12 @@ from fiken_py.shared_types import InvoiceLineRequest
 from fiken_py.shared_enums import VatTypeProduct, VatTypeProductSale
 from fiken_py.models import Product, Contact, InvoiceRequest, Invoice, InvoiceDraftRequest, InvoiceDraft
 import test_online.shared_tests as shared_tests
+from test_online import sample_object_factory
 
 
 def test_create_get_patch_invoice_product(unique_id: str, generic_product: Product,
                                           generic_contact: Contact, generic_bank_account):
-    invoice_line: InvoiceLineRequest = InvoiceLineRequest(
-        productId=generic_product.productId,
-        quantity=1,
-    )
-
-    invoice: InvoiceRequest = InvoiceRequest(
-        issueDate=datetime.date.today(),
-        dueDate=datetime.date.today() + datetime.timedelta(days=14),
-        customerId=generic_contact.contactId,
-        lines=[invoice_line],
-        bankAccountCode=generic_bank_account.accountCode,
-        cash=False,
-        ourReference=f"Test invoice ({unique_id}#product)",
-        invoiceText="This is a test invoice sent by FikenPy",
-    )
+    invoice = sample_object_factory.invoice_request(unique_id, generic_product, generic_contact, generic_bank_account)
 
     invoice: Invoice = invoice.save()
 
@@ -81,6 +68,7 @@ def test_create_invoice_product_freetext_and_invoice_counter(unique_id: str,
     assert get_invoice.invoiceId == invoice.invoiceId
 
     shared_tests.attachable_object_tests(get_invoice, False)
+
 
 def test_create_through_draft(unique_id, generic_contact, generic_product, generic_bank_account):
     shared_tests.draftable_invoiceish_object_tests(

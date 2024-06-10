@@ -81,7 +81,7 @@ class CreditNote(FikenObjectCountable, BaseModel):
                                  token: AccessToken | str = None) -> typing.Self:
 
         try:
-            invoice = Invoice.get(invoiceId=invoiceId, companySlug=companySlug)
+            invoice = Invoice.get(invoiceId=invoiceId, companySlug=companySlug, token=token)
         except RequestErrorException:
             raise
 
@@ -96,7 +96,7 @@ class CreditNote(FikenObjectCountable, BaseModel):
 
         try:
             response = cls._execute_method(RequestMethod.POST, url=cls._get_method_base_URL("POST_FULL"),
-                                           dumped_object=credit_note_request, companySlug=companySlug)
+                                           dumped_object=credit_note_request, token=token, companySlug=companySlug)
         except RequestErrorException:
             raise
 

@@ -1,12 +1,9 @@
 from fiken_py.models import BankAccount, BankAccountRequest, BankAccountType
+from test_online import sample_object_factory
 
 
 def test_create_bankaccount(unique_id):
-    bank_account_request: BankAccountRequest = BankAccountRequest(
-        name=f"Test account ({unique_id})",
-        bankAccountNumber="11112233334",
-        type=BankAccountType.NORMAL,
-    )
+    bank_account_request = sample_object_factory.bank_account_request()
 
     bank_account: BankAccount = bank_account_request.save()
 

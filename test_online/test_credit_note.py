@@ -6,28 +6,17 @@ from fiken_py.errors import RequestContentNotFoundException
 from fiken_py.shared_types import InvoiceLineRequest
 from fiken_py.models import Product, Contact, InvoiceRequest, Invoice
 from fiken_py.models.credit_note import CreditNote, CreditNoteDraftRequest, CreditNoteDraft
-from test_online import shared_tests
+from test_online import shared_tests, sample_object_factory
 
 
 def test_create_credit_note_full(unique_id: str, generic_product: Product,
                                  generic_contact: Contact, generic_bank_account):
-    invoice_line: InvoiceLineRequest = InvoiceLineRequest(
-        productId=generic_product.productId,
-        quantity=1,
+    invoice_request = sample_object_factory.invoice_request(
+        unique_id, generic_product, generic_contact, generic_bank_account
     )
+    invoice_request.ourReference = "#test_credit_note_full"
 
-    invoice: InvoiceRequest = InvoiceRequest(
-        issueDate=datetime.date.today(),
-        dueDate=datetime.date.today() + datetime.timedelta(days=14),
-        customerId=generic_contact.contactId,
-        lines=[invoice_line],
-        bankAccountCode=generic_bank_account.accountCode,
-        cash=False,
-        ourReference=f"Test invoice to be fully refunded ({unique_id}#product)",
-        invoiceText="This is a test invoice sent by FikenPy",
-    )
-
-    invoice: Invoice = invoice.save()
+    invoice: Invoice = invoice_request.save()
 
     assert invoice is not None
 

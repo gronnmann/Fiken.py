@@ -98,6 +98,10 @@ class FikenObject:
         cls._COMPANY_SLUG = company_slug
 
     @classmethod
+    def clear_company_slug(cls):
+        cls._COMPANY_SLUG = None
+
+    @classmethod
     def set_rate_limit(cls, enabled: bool):
         cls.RATE_LIMIT_ENABLED = enabled
 
@@ -140,7 +144,7 @@ class FikenObject:
                 logger.debug(f"Multiple pages found. Fetching {page_count} pages")
                 for i in range(1, page_count):
                     try:
-                        response = cls._execute_method(RequestMethod.GET_MULTIPLE, page=i, **kwargs)
+                        response = cls._execute_method(RequestMethod.GET_MULTIPLE, page=i, token=token, **kwargs)
                     except RequestErrorException as e:
                         raise
 
@@ -149,9 +153,11 @@ class FikenObject:
         objects = []
         for page in pages:
             for item in page:
-                objects.append(cls(**item))
+                obj = cls(**item)
+                obj = cls._inject_token_and_slug_and_return(obj, token, kwargs.get("companySlug"))
+                objects.append(obj)
 
-        objects = [cls._inject_token_and_slug_and_return(obj, token, kwargs.get("companySlug")) for obj in objects]
+
         return objects
 
     @classmethod
@@ -246,6 +252,9 @@ class FikenObject:
 
         if kwargs.get("companySlug") is None:
             kwargs["companySlug"] = self._company_slug
+
+        if token is None:
+            token = self._auth_token
 
         try:
             response = self._execute_method(RequestMethod.DELETE, token=token, **kwargs)
@@ -676,6 +685,9 @@ class FikenObjectDeleteFlagable(FikenObject):
         if token is None:
             token = self._auth_token
 
+        if kwargs.get("companySlug") is None:
+            kwargs["companySlug"] = self._company_slug
+
         try:
             self._execute_method(RequestMethod.PATCH, url=self._get_method_base_URL(RequestMethod.DELETE),
                                  token=token,
@@ -683,3 +695,20 @@ class FikenObjectDeleteFlagable(FikenObject):
             self._refresh_object(**kwargs)
         except RequestErrorException as e:
             raise
+
+
+class FikenObjectPaymentable(FikenObject):
+
+    def add_payment(self, payment: 'Payment', token: AccessToken | str = None, **kwargs) -> 'Payment':
+        """Adds a payment to the object"""
+
+        if kwargs.get(self.id_attr[0]) is None:
+            kwargs[self.id_attr[0]] = self.id_attr[1]
+
+        if token is None:
+            token = self._auth_token
+
+        if kwargs.get("companySlug") is None:
+            kwargs["companySlug"] = self._company_slug
+
+        return payment.save(token=token, **kwargs)

@@ -5,6 +5,7 @@ from typing import Optional, ClassVar, Any
 
 from pydantic import BaseModel, Field
 
+from fiken_py.authorization import AccessToken
 from fiken_py.errors import RequestErrorException
 from fiken_py.fiken_object import FikenObjectRequest, FikenObject, RequestMethod, FikenObjectAttachable
 from fiken_py.shared_types import Attachment, AccountingAccount, BankAccountNumber, DraftLineInvoiceIsh, DraftLineOrder
@@ -50,7 +51,7 @@ class DraftObject(FikenObjectAttachable):
     def _to_draft_create_request(self):
         raise NotImplementedError("Method _to_draft_create_request must be implemented in subclass")
 
-    def submit_object(self):
+    def submit_object(self, companySlug: str = None, token: AccessToken | str = None):
         if self.CREATED_OBJECT_CLASS is None:
             raise NotImplementedError(f"Object {self.__class__.__name__} does not have a TARGET_CLASS specified")
 
@@ -58,8 +59,14 @@ class DraftObject(FikenObjectAttachable):
         if url is None:
             raise NotImplementedError(f"Object {self.__class__.__name__} does not have a CREATE_OBJECT path specified")
 
+        if token is None:
+            token = self._auth_token
+
+        if companySlug is None:
+            companySlug = self._company_slug
+
         try:
-            response = self._execute_method(RequestMethod.POST, url, draftId=self.draftId)
+            response = self._execute_method(RequestMethod.POST, url, token=token, companySlug=companySlug, draftId=self.draftId)
         except RequestErrorException:
             raise
 

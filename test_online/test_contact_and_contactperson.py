@@ -1,9 +1,9 @@
 from fiken_py.models import Contact, ContactPerson
-from test_online import shared_tests
+from test_online import shared_tests, sample_object_factory
 
 
 def test_contact(unique_id):
-    contact = Contact(name=f"Test contact ({unique_id})")
+    contact = sample_object_factory.contact(unique_id)
 
     contact.save()
 
@@ -13,11 +13,7 @@ def test_contact(unique_id):
 
     contact_id = contact.contactId
 
-    contact_person = ContactPerson(
-        name=f"Ola {unique_id}",
-        email="test@test.com",
-        phoneNumber="123456789",
-    )
+    contact_person = sample_object_factory.contact_person(unique_id)
 
     actual_contact_person = contact.create_contact_person(contact_person)
     assert actual_contact_person.contactPersonId is not None

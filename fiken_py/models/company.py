@@ -9,7 +9,7 @@ from fiken_py.models import BalanceAccount, BankAccount, Contact, ProductSalesRe
     InvoiceRequest, InvoiceDraft, InvoiceDraftRequest, CreditNote, CreditNoteDraft, CreditNoteDraftRequest, Offer, \
     OfferDraft, OfferDraftRequest, OrderConfirmation, OrderConfirmationDraft, OrderConfirmationDraftRequest, Sale, \
     SaleRequest, SaleDraft, SaleDraftRequest, Purchase, PurchaseDraft, PurchaseRequest, Project, ProjectRequest, \
-    BankAccountRequest, BalanceAccountBalance
+    BankAccountRequest, BalanceAccountBalance, PurchaseDraftRequest
 from fiken_py.shared_types import Address, AccountingAccount
 from fiken_py.shared_enums import CompanyVatType
 
@@ -50,24 +50,20 @@ class Company(BaseModel, FikenObject):
         return BalanceAccount.getAll(companySlug=self.slug, follow_pages=follow_pages, page=page, token=self._auth_token, **kwargs)
 
     def get_balance_account(self, accountCode: AccountingAccount | str, **kwargs) -> BalanceAccount:
-        if isinstance(accountCode, AccountingAccount):
-            accountCode = accountCode.value
-        else:
-            AccountingAccount(accountCode)
-
+        if isinstance(accountCode, str):
+            accountCode = AccountingAccount(accountCode)
         return BalanceAccount.get(companySlug=self.slug, accountCode=accountCode, token=self._auth_token, **kwargs)
 
     def get_balance_account_balances(self, follow_pages=True, page: int = None, **kwargs) -> (
             List)[BalanceAccountBalance]:
         return BalanceAccount.getAll(companySlug=self.slug, follow_pages=follow_pages, page=page, token=self._auth_token, **kwargs)
 
-    def get_balance_account_balance(self, accountCode: AccountingAccount | str, **kwargs) -> BalanceAccountBalance:
-        if isinstance(accountCode, AccountingAccount):
-            accountCode = accountCode.value
-        else:
-            AccountingAccount(accountCode)
+    def get_balance_account_balance(self, accountCode: AccountingAccount | str,
+                                    date: datetime.date = datetime.date.today(), **kwargs) -> BalanceAccountBalance:
+        if isinstance(accountCode, str):
+            accountCode = AccountingAccount(accountCode)
 
-        return BalanceAccountBalance.get(companySlug=self.slug, accountCode=accountCode, token=self._auth_token, **kwargs)
+        return BalanceAccountBalance.get(companySlug=self.slug, date=date, accountCode=accountCode, token=self._auth_token, **kwargs)
 
     # Bank accounts
 
@@ -164,7 +160,7 @@ class Company(BaseModel, FikenObject):
     def get_credit_note(self, creditNoteId: int, **kwargs) -> CreditNote:
         return CreditNote.get(companySlug=self.slug, creditNoteId=creditNoteId, token=self._auth_token, **kwargs)
 
-    def create_credit_note_from_invoice_full(self, invoiceId, issueDate, creditNoteText, **kwargs) -> CreditNote:
+    def create_credit_note_from_invoice_full(self, invoiceId, creditNoteText: str = None, issueDate=datetime.date.today(), **kwargs) -> CreditNote:
         return CreditNote.create_from_invoice_full(invoiceId=invoiceId, issueDate=issueDate,
                                                    creditNoteText=creditNoteText, companySlug=self.slug, token=self._auth_token, **kwargs)
 
@@ -262,6 +258,9 @@ class Company(BaseModel, FikenObject):
 
     def get_purchase_draft(self, draftId: int, **kwargs) -> PurchaseDraft:
         return PurchaseDraft.get(companySlug=self.slug, draftId=draftId, token=self._auth_token, **kwargs)
+
+    def create_purchase_draft(self, purchase_draft_request: PurchaseDraftRequest, **kwargs) -> PurchaseDraft:
+        return purchase_draft_request.save(companySlug=self.slug, token=self._auth_token, **kwargs)
 
     # Projects
 

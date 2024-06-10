@@ -6,6 +6,7 @@ from fiken_py.models import Contact, Product, BankAccount
 from fiken_py.models.draft import DraftInvoiceIsh, DraftInvoiceIshCreateRequest, DraftOrder, DraftOrderCreateRequest
 from fiken_py.shared_enums import VatTypeProductSale, VatTypeProduct
 from fiken_py.shared_types import DraftLineInvoiceIsh, Attachment, OrderLine, DraftLineOrder
+from test_online import sample_object_factory
 
 
 def draftable_invoiceish_object_tests(DraftObject: Type[DraftInvoiceIsh],
@@ -17,18 +18,8 @@ def draftable_invoiceish_object_tests(DraftObject: Type[DraftInvoiceIsh],
     """Tests for Draft objects, such as OfferDraft, InvoiceDraft, CreditNoteDraft.
     Returns the object created from the draft.
     """
-    draft_line = DraftLineInvoiceIsh(
-        productId=generic_product.productId,
-        quantity=1,
-        vatType=VatTypeProductSale.HIGH,
-    )
-
-    draft = DraftCreateRequestObject(
-        customerId=generic_customer.contactId,
-        lines=[draft_line],
-        daysUntilDueDate=7,
-        bankAccountNumber=generic_bank_account.bankAccountNumber,
-        ourReference=unique_id,
+    draft = sample_object_factory.draft_invoiceish_request(
+        unique_id, DraftCreateRequestObject, generic_product, generic_customer, generic_bank_account
     )
 
     draft_copied = draft.model_copy()
@@ -66,22 +57,8 @@ def draftable_order_object_tests(
         generic_customer: Contact,
         generic_bank_account: BankAccount
 ):
-    order_line = DraftLineOrder(
-        text=f"En billig yacht (testprodukt {unique_id})",
-        vatType="HIGH",
-        net=10000,
-        gross=12500,
-        incomeAccount=product_account,
-    )
-
-    draft = DraftCreateRequestObject(
-        customerId=generic_customer.contactId,
-        lines=[order_line],
-        bankAccountCode=generic_bank_account.accountCode,
-        cash=False,
-        paid=False,
-        invoiceIssueDate=datetime.date.today(),
-        contactId=generic_customer.contactId,
+    draft = sample_object_factory.draft_order_request(
+        unique_id, DraftCreateRequestObject, product_account, generic_customer, generic_bank_account
     )
 
     draft_copied = draft.model_copy()

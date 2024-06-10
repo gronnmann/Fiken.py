@@ -5,7 +5,7 @@ from pydantic import BaseModel, Field, model_validator
 
 from fiken_py.errors import RequestErrorException
 from fiken_py.fiken_object import FikenObject, FikenObjectRequest, \
-    FikenObjectAttachable, FikenObjectDeleteFlagable, RequestMethod
+    FikenObjectAttachable, FikenObjectDeleteFlagable, RequestMethod, FikenObjectPaymentable
 from fiken_py.models.draft import DraftOrder, DraftOrderCreateRequest
 
 from fiken_py.shared_types import OrderLine, Attachment, Note, AccountingAccountAssets
@@ -24,7 +24,7 @@ class SaleBase(BaseModel):
     paymentDate: Optional[datetime.date] = None
 
 
-class Sale(FikenObjectAttachable, FikenObjectDeleteFlagable, SaleBase):
+class Sale(FikenObjectAttachable, FikenObjectDeleteFlagable, FikenObjectPaymentable, SaleBase):
     _GET_PATH_SINGLE = '/companies/{companySlug}/sales/{saleId}'
     _GET_PATH_MULTIPLE = '/companies/{companySlug}/sales'
     _DELETE_PATH = '/companies/{companySlug}/sales/{saleId}/delete'

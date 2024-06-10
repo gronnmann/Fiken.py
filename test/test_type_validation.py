@@ -5,7 +5,7 @@ from fiken_py.shared_enums import VatTypeProductSale, VatTypeProductPurchase
 from fiken_py.shared_types import InvoiceLineRequest, AccountingAccount, AccountingAccountAssets, \
     AccountingAccountCosts, AccountingAccountIncome, AccountingAccountEquityAndLiabilities, DraftLineOrder, OrderLine
 from fiken_py.models import BankAccount, BankAccountRequest, DraftLineInvoiceIsh, BankAccountType, \
-    PurchaseDraftCreateRequest, SaleDraftRequest
+    PurchaseDraftRequest, SaleDraftRequest
 
 
 def test_validate_invoice_line():
@@ -213,17 +213,17 @@ def test_sale_purcahse_draft_vat_types():
         vatType="HIGH"
     )
 
-    correct = PurchaseDraftCreateRequest(
+    correct = PurchaseDraftRequest(
         cash=True, lines=[draft_line_purchase]
     )
     assert correct is not None
 
     with pytest.raises(ValidationError):
-        wrong = PurchaseDraftCreateRequest(
+        wrong = PurchaseDraftRequest(
             cash=True, lines=[draft_line_sale]
         )
 
-    correct = PurchaseDraftCreateRequest(
+    correct = PurchaseDraftRequest(
         cash=True, lines=[draft_line_both]
     )
     assert correct is not None

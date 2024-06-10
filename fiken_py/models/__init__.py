@@ -13,7 +13,7 @@ from .sale import Sale, SaleRequest, SaleDraft, SaleDraftRequest
 from .invoice import Invoice, InvoiceRequest, InvoiceSendRequest, InvoiceDraft, InvoiceDraftRequest
 from .credit_note import CreditNote, PartialCreditNoteRequest, CreditNoteDraft, CreditNoteDraftRequest
 from .offer import Offer, OfferDraft, OfferDraftRequest
-from .purchase import Purchase, PurchaseRequest, PurchaseDraft, PurchaseDraftCreateRequest
+from .purchase import Purchase, PurchaseRequest, PurchaseDraft, PurchaseDraftRequest
 from .order_confirmation import OrderConfirmation, OrderConfirmationDraft, OrderConfirmationDraftRequest
 from .draft import (DraftLineInvoiceIsh)
 from .payment import PaymentPurchase, PaymentSale, Payment

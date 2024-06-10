@@ -53,10 +53,12 @@ class FikenObject:
     Use {placeholder} for the object ID.
     """
     PATH_BASE: ClassVar[str] = 'https://api.fiken.no/api/v2'
-    _AUTH_TOKEN: str | AccessToken = None
-    _APP_CREDENTIALS = None
 
-    _HEADERS = {}
+    """Authentication token for the session. Can be either personal token or OAuth2 token.
+    Can be specified globally for all objects or for each object separately.
+    """
+    _AUTH_TOKEN: str | AccessToken | None = None
+
     _COMPANY_SLUG = None
 
     BASE_CLASS = None  # For FikenObjectRequest and save not to give AttributeError
@@ -67,7 +69,7 @@ class FikenObject:
     _LAST_REQUEST_TIME = 0
 
     @classmethod
-    def set_auth_token(cls, token: str | AccessToken, credentials: tuple[str, str] = None):
+    def set_auth_token(cls, token: str | AccessToken):
         """
         Sets the personal authentication token.
         Can be either personal token (str) or OAuth2 token gotten from Authorization class.
@@ -80,44 +82,11 @@ class FikenObject:
             raise ValueError("Some form of authentication token is already set (personal or OAuth2)."
                              "Please clear session first (clear_auth_token()).")
 
-        actual_token = token if isinstance(token, str) else token.access_token
-
         cls._AUTH_TOKEN = token
-
-        if credentials is not None:
-            cls._APP_CREDENTIALS = credentials
-
-        cls._HEADERS = {
-            'Authorization': f'Bearer {actual_token}',
-            'User-Agent': 'FikenPy/%s (Python %s)' % (version('fiken_py'), platform.python_version()),
-            'Content-Type': 'application/json'
-        }
 
     @classmethod
     def clear_auth_token(cls):
         cls._AUTH_TOKEN = None
-        cls._HEADERS = {}
-
-    @classmethod
-    def _refresh_auth_token(cls) -> bool:
-        """
-        Tries refreshing the OAuth2 token.
-        :return: True on success
-        """
-        if cls._APP_CREDENTIALS is None:
-            return False
-
-        client_id, client_secret = cls._APP_CREDENTIALS
-
-        try:
-            token = Authorization.get_access_token_refresh(client_id, client_secret, cls._AUTH_TOKEN.refresh_token)
-        except RequestErrorException as e:
-            return False
-
-        cls._AUTH_TOKEN = token
-        cls._HEADERS['Authorization'] = f'Bearer {token.access_token}'
-
-        return True
 
     @property
     def id_attr(self) -> tuple[str, str]:
@@ -133,10 +102,10 @@ class FikenObject:
         cls.RATE_LIMIT_ENABLED = enabled
 
     @classmethod
-    def get(cls: type[typing.Self], **kwargs: Any) -> type[typing.Self] | None:
+    def get(cls: type[typing.Self], token: AccessToken | str = None, **kwargs: Any) -> type[typing.Self] | None:
 
         try:
-            response = cls._execute_method(RequestMethod.GET, **kwargs)
+            response = cls._execute_method(RequestMethod.GET, token=token, **kwargs)
         except RequestContentNotFoundException as e:
             return None
         except Exception as e:
@@ -145,14 +114,15 @@ class FikenObject:
         logger.debug(f"GETting single object for {cls.__name__}")
 
         data = response.json()
-        return cls(**data)
+        return cls._inject_token_and_slug_and_return(cls(**data), token, kwargs.get("companySlug"))
 
     @classmethod
-    def getAll(cls, follow_pages: bool = True, page: int = None, **kwargs: Any) -> list[type[typing.Self]]:
+    def getAll(cls, token: AccessToken | str = None, follow_pages: bool = True, page: int = None, **kwargs: Any) \
+            -> list[type[typing.Self]]:
 
         logger.debug(f"GETting many objects for {cls.__name__}")
         try:
-            response = cls._execute_method(RequestMethod.GET_MULTIPLE, **kwargs)
+            response = cls._execute_method(RequestMethod.GET_MULTIPLE, token=token, **kwargs)
         except RequestErrorException as e:
             raise
 
@@ -180,12 +150,15 @@ class FikenObject:
         for page in pages:
             for item in page:
                 objects.append(cls(**item))
+
+        objects = [cls._inject_token_and_slug_and_return(obj, token, kwargs.get("companySlug")) for obj in objects]
         return objects
 
     @classmethod
-    def _getFromURL(cls, url: str) -> type[typing.Self] | list[type[typing.Self]]:
+    def _get_from_url(cls, url: str, token: AccessToken | str = None,
+                      **kwargs) -> type[typing.Self] | list[type[typing.Self]]:
         try:
-            response = cls._execute_method(RequestMethod.GET, url=url)
+            response = cls._execute_method(RequestMethod.GET, url=url, token=token, **kwargs)
         except RequestErrorException:
             raise
 
@@ -193,18 +166,25 @@ class FikenObject:
 
         data = response.json()
 
-        return cls(**data)
+        return cls._inject_token_and_slug_and_return(cls(**data), token, kwargs.get("companySlug"))
 
-    def save(self, **kwargs: Any) -> typing.Self | None:
+    def save(self, token: AccessToken | str = None, **kwargs: Any) -> typing.Self | None:
         """
         Saves the object to the server.
         Checks if object is new or not and sends a POST or PUT request accordingly.
         If object has no method for checking if it is new, assumes POST.
         Throws an exception if object has PUT method defined, but no is new check.
 
+        :param token: Access token to use for the request
         :param kwargs: arguments to replace placeholders in the path
         :return: None or the new object
         """
+
+        if token is None:
+            token = self._auth_token
+
+        if kwargs.get("companySlug") is None:
+            kwargs["companySlug"] = self._company_slug
 
         if self._get_method_base_URL(RequestMethod.PUT) is not None:
             if self.is_new is None:
@@ -215,13 +195,14 @@ class FikenObject:
         used_method = RequestMethod.POST if use_post else RequestMethod.PUT
 
         try:
-            response = self._execute_method(used_method, dumped_object=self, **kwargs)
+            response = self._execute_method(used_method, token=token, dumped_object=self, **kwargs)
         except RequestErrorException:
             raise
 
-        return self._follow_location_and_update_class(response)
+        return self._follow_location_and_update_class(response, token, **kwargs)
 
-    def _follow_location_and_update_class(self, response: requests.Response) -> None | typing.Self:
+    def _follow_location_and_update_class(self, response: requests.Response, token: AccessToken | str = None,
+                                          **kwargs) -> None | typing.Self:
         """Follows the location header in the response and returns the new object.
         If new object is of the same class, updates the current object with the new one.
         """
@@ -230,7 +211,7 @@ class FikenObject:
             logger.debug(f"Location of new object: {location}")
 
             base_class = self.__class__.BASE_CLASS if issubclass(self.__class__, FikenObjectRequest) else self.__class__
-            new_object = base_class._getFromURL(location)
+            new_object = base_class._get_from_url(location, token, **kwargs)
 
             if base_class == self.__class__:
                 # Override the current object with the new one
@@ -247,19 +228,27 @@ class FikenObject:
             if kwargs.get(id_attr) is None:
                 kwargs[id_attr] = id_attr_val
 
+            if kwargs.get("companySlug") is None:
+                kwargs["companySlug"] = self._company_slug
+
+            if kwargs.get("token") is None:
+                kwargs["token"] = self._auth_token
+
             fiken_object = self.get(**kwargs)
         except RequestErrorException as e:
             raise
         self.__dict__.update(fiken_object.__dict__)
 
-    def delete(self, **kwargs: Any) -> bool:
-
+    def delete(self, token: AccessToken | str = None, **kwargs: Any) -> bool:
         attr_name, attr_val = self.id_attr
         if kwargs.get(attr_name) is None:
             kwargs[attr_name] = attr_val
 
+        if kwargs.get("companySlug") is None:
+            kwargs["companySlug"] = self._company_slug
+
         try:
-            response = self._execute_method(RequestMethod.DELETE, **kwargs)
+            response = self._execute_method(RequestMethod.DELETE, token=token, **kwargs)
         except RequestErrorException:
             raise
 
@@ -330,9 +319,11 @@ class FikenObject:
         return None
 
     @classmethod
-    def _execute_method(cls, method: RequestMethod, url: str = None,
+    def _execute_method(cls, method: RequestMethod,
+                        url: str = None,
                         dumped_object: FikenObject | dict | BaseModel = None,
                         file_data: dict[str, tuple[Any | None, Any]] = None,
+                        token: str | AccessToken = None,
                         trial: int = 0,
                         **kwargs: Any) -> requests.Response:
         """Executes a method on the object
@@ -344,8 +335,15 @@ class FikenObject:
         :kwargs: dict - the arguments to pass to the method
         """
 
-        if cls._AUTH_TOKEN is None:
-            raise ValueError("Auth token not set")
+        # Check if token is expired
+        if isinstance(token, AccessToken):
+            # get datetime as Z-time
+            if token.is_expired() and trial == 0:
+                try:
+                    token.attempt_refresh()
+                    return cls._execute_method(method, url, dumped_object, file_data, token, trial + 1, **kwargs)
+                except RequestErrorException as e:
+                    logger.error(f"Failed to refresh token: {e}")
 
         if file_data is not None and method != RequestMethod.POST:
             raise ValueError("Only POST requests can have file data")
@@ -357,16 +355,13 @@ class FikenObject:
         if url is None:
             url = cls._get_method_base_URL(method)
 
+        if token is None:
+            if cls._AUTH_TOKEN is None:
+                raise ValueError("Auth token not set")
+            token = cls._AUTH_TOKEN
+
         if url is None:
             raise RequestWrongMediaTypeException(f"Object {cls.__name__} does not support {method.name}")
-
-        # Check if token is expired
-        if isinstance(cls._AUTH_TOKEN, AccessToken):
-            # get datetime as Z-time
-            now = datetime.datetime.now(datetime.timezone.utc)  # Fiken uses GMT
-            if now > cls._AUTH_TOKEN.get_expiration_time() and trial == 0:
-                if cls._refresh_auth_token():
-                    return cls._execute_method(method, url, dumped_object, file_data, trial + 1, **kwargs)
 
         if issubclass(dumped_object.__class__, BaseModel):
             url = cls._extract_placeholders_basemodel(url, dumped_object)
@@ -388,7 +383,13 @@ class FikenObject:
                 else:
                     raise ValueError("instance must be a BaseModel object or dict")
 
-        headers = cls._HEADERS.copy()
+        headers = {
+            'Authorization': f'Bearer {token.access_token if isinstance(token, AccessToken) else token}',
+            'User-Agent': 'FikenPy/%s (Python %s)' % (version('fiken_py'), platform.python_version()),
+            'Content-Type': 'application/json'
+        }
+
+        headers = headers.copy()
         if file_data is not None:
             headers.pop("Content-Type")
         headers["X-Request-ID"] = str(uuid.uuid4())
@@ -443,6 +444,31 @@ class FikenObject:
         """
         return None
 
+    @property
+    def is_auth_token_local(self) -> bool:
+        return (self._AUTH_TOKEN is not None) and (FikenObject._AUTH_TOKEN is None)
+
+    @property
+    def _auth_token(self) -> AccessToken | str | None:
+        """Get either the local or global auth token."""
+        return self._AUTH_TOKEN
+
+    @property
+    def _company_slug(self) -> str | None:
+        """Gets either the local or global company slug."""
+        return self._COMPANY_SLUG
+
+    @classmethod
+    def _inject_token_and_slug_and_return(cls, obj: object, token: AccessToken | str,
+                                          company_slug: str = None) -> object:
+        """Injects the token and company slug into the object and returns it.
+        Takes first the local token and company slug, then the global ones.
+        """
+        obj._AUTH_TOKEN = token
+        obj._COMPANY_SLUG = company_slug
+
+        return obj
+
 
 class FikenObjectRequest(FikenObject):
     """
@@ -461,11 +487,11 @@ class FikenObjectRequest(FikenObject):
     def getAll(**kwargs):
         raise RequestWrongMediaTypeException("Request objects can not be fetched")
 
-    def save(self, **kwargs: Any) -> type[BASE_CLASS] | None:
+    def save(self, token: AccessToken | str = None, **kwargs: Any) -> type[BASE_CLASS] | None:
         if self.__class__.BASE_CLASS is None:
             raise ValueError("BASE_CLASS not set")
 
-        return super().save(**kwargs)
+        return super().save(token=token, **kwargs)
 
 
 class FikenObjectAttachable(FikenObject):
@@ -508,11 +534,15 @@ class FikenObjectAttachable(FikenObject):
             raise ValueError(f"Unsupported file extension {extension}")
 
     @classmethod
-    def get_attachments_cls(cls, instance: FikenObjectAttachable = None, **kwargs) -> list[Attachment]:
+    def get_attachments_cls(cls, instance: FikenObjectAttachable = None, token: AccessToken | str = None, **kwargs) -> \
+            list[Attachment]:
         url = cls._attachment_url()
 
+        if token is None:
+            token = instance._auth_token
+
         try:
-            response = cls._execute_method(RequestMethod.GET, url, instance, **kwargs)
+            response = cls._execute_method(RequestMethod.GET, url, instance, token=token, **kwargs)
         except RequestErrorException:
             raise
 
@@ -520,15 +550,16 @@ class FikenObjectAttachable(FikenObject):
 
         return [Attachment(**item) for item in data]
 
-    def get_attachments(self, **kwargs) -> list[Attachment]:
+    def get_attachments(self, token: AccessToken | str = None, **kwargs) -> list[Attachment]:
         """Gets all attachments for the resource.
 
         """
-        return self.__class__.get_attachments_cls(self, **kwargs)
+        return self.__class__.get_attachments_cls(self, token=token, **kwargs)
 
     @classmethod
     def add_attachment_bytes_cls(cls, filename: str, data: bytes, comment: str = None,
-                                 instance: FikenObjectAttachable = None, **kwargs):
+                                 instance: FikenObjectAttachable = None,
+                                 token: AccessToken | str = None, **kwargs):
         """Adds an attachment in form of bytes."""
         if filename is None or data is None:
             raise ValueError("Filename and/or data must be provided")
@@ -551,7 +582,7 @@ class FikenObjectAttachable(FikenObject):
         try:
             response = cls._execute_method(RequestMethod.POST,
                                            url=cls._attachment_url(), dumped_object=instance,
-                                           file_data=sent_data, **kwargs)
+                                           file_data=sent_data, token=token, **kwargs)
         except RequestErrorException:
             raise
 
@@ -561,7 +592,8 @@ class FikenObjectAttachable(FikenObject):
 
     @classmethod
     def add_attachment_cls(cls, filepath, filename: str = None, comment: str = None,
-                           instance: FikenObjectAttachable = None, **kwargs):
+                           instance: FikenObjectAttachable = None,
+                           token: AccessToken | str = None, **kwargs):
         """Adds an attachment."""
         if filepath is None:
             raise ValueError("A path to the attachment must be provided")
@@ -575,23 +607,29 @@ class FikenObjectAttachable(FikenObject):
         if filename is None:
             filename = filepath.split('/')[-1]
 
-        return cls.add_attachment_bytes_cls(filename, file_data, comment, instance, **kwargs)
+        return cls.add_attachment_bytes_cls(filename, file_data, comment, instance, token=token, **kwargs)
 
-    def add_attachment(self, filepath, filename: str = None, comment: str = None, **kwargs):
-        return self.add_attachment_cls(filepath, filename, comment, instance=self, **kwargs)
+    def add_attachment(self, filepath, filename: str = None, comment: str = None, token: AccessToken | str = None,
+                       **kwargs):
+        if token is None:
+            token = self._auth_token
+        return self.add_attachment_cls(filepath, filename, comment, instance=self, token=token, **kwargs)
 
-    def add_attachment_bytes(self, filename: str, data: bytes, comment: str = None, **kwargs):
-        return self.add_attachment_bytes_cls(filename, data, comment, instance=self, **kwargs)
+    def add_attachment_bytes(self, filename: str, data: bytes, comment: str = None, token: AccessToken | str = None,
+                             **kwargs):
+        if token is None:
+            token = self._auth_token
+        return self.add_attachment_bytes_cls(filename, data, comment, instance=self, token=token, **kwargs)
 
 
 class FikenObjectCountable(FikenObject):
 
     @classmethod
-    def get_counter(cls, **kwargs) -> int:
+    def get_counter(cls, token: AccessToken | str = None, **kwargs) -> int:
         url = cls._get_method_base_URL("COUNTER")
 
         try:
-            response = cls._execute_method(RequestMethod.GET, url, **kwargs)
+            response = cls._execute_method(RequestMethod.GET, url, token=token, **kwargs)
         except RequestErrorException:
             raise
 
@@ -601,8 +639,9 @@ class FikenObjectCountable(FikenObject):
             raise
 
     @classmethod
-    def set_initial_counter(cls, counter: int, **kwargs) -> bool:
+    def set_initial_counter(cls, counter: int, token: AccessToken | str = None, **kwargs) -> bool:
         """Set the default invoice counter to the given value
+        :param token: Token to use for the request
         :param counter: The value to set the counter to
         :return: True if the counter was set successfully, False otherwise"""
         url = cls._get_method_base_URL("COUNTER")
@@ -610,7 +649,7 @@ class FikenObjectCountable(FikenObject):
         counter = Counter(value=counter)
 
         try:
-            response = cls._execute_method(RequestMethod.POST, url, dumped_object=counter, **kwargs)
+            response = cls._execute_method(RequestMethod.POST, url, token=token, dumped_object=counter, **kwargs)
         except RequestErrorException:
             raise
 
@@ -622,17 +661,24 @@ class FikenObjectCountable(FikenObject):
 class FikenObjectDeleteFlagable(FikenObject):
     """Base class for FikenObjects who are deleted by creating a counter-entry and setting a deleted-flag to True"""
 
-    def delete(self, description: str, **kwargs):
+    def delete(self, description: str = None, token: AccessToken | str = None, **kwargs):
         """
         Does not delete the object itself, but creates a counter-entry and sets the deleted flag to True.
         :arg description: The description of the deletion
         :return: None
         """
 
+        if description is None:
+            raise ValueError("Description must be provided")
+
         kwargs["description"] = description
+
+        if token is None:
+            token = self._auth_token
 
         try:
             self._execute_method(RequestMethod.PATCH, url=self._get_method_base_URL(RequestMethod.DELETE),
+                                 token=token,
                                  dumped_object=self, **kwargs)
             self._refresh_object(**kwargs)
         except RequestErrorException as e:

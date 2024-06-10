@@ -67,7 +67,7 @@ class DraftObject(FikenObjectAttachable):
         if loc is None:
             raise RequestErrorException("No Location header in response")
 
-        return self.CREATED_OBJECT_CLASS._getFromURL(loc)
+        return self.CREATED_OBJECT_CLASS._get_from_url(loc, self._auth_token, companySlug=self._company_slug)
 
 
 class DraftTypeInvoiceIsh(str, Enum):

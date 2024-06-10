@@ -170,9 +170,9 @@ def _compare_object_to_sample_data(obj, sample_data):
                 _compare_object_to_sample_data(item, sample_data[attr][i])
         else:
             # if the attribute is not a model, check if the attribute is in the sample data
+            if obj.model_fields.get(attr) is not None: # Dont check FikenObject attributes
+                if obj.model_fields[attr].default_factory is not None:
+                    assert attr in sample_data
 
-            if obj.model_fields[attr].default_factory is not None:
-                assert attr in sample_data
-
-            # check if the attribute is the same as the sample data
-            assert val == sample_data.get(attr)
+                # check if the attribute is the same as the sample data
+                assert val == sample_data.get(attr)

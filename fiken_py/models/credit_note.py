@@ -6,6 +6,7 @@ from typing import Optional, ClassVar
 
 from pydantic import BaseModel, Field
 
+from fiken_py.authorization import AccessToken
 from fiken_py.errors import RequestContentNotFoundException, RequestErrorException
 from fiken_py.fiken_object import FikenObjectAttachable, RequestMethod, FikenObjectCountable, FikenObject
 from fiken_py.models.draft import DraftInvoiceIsh, DraftTypeInvoiceIsh, DraftInvoiceIshCreateRequest
@@ -76,7 +77,8 @@ class CreditNote(FikenObjectCountable, BaseModel):
 
     @classmethod
     def create_from_invoice_full(cls, invoiceId: int, issueDate: datetime.date | str = None,
-                                 creditNoteText: str = None, companySlug: str = None) -> typing.Self:
+                                 creditNoteText: str = None, companySlug: str = None,
+                                 token: AccessToken | str = None) -> typing.Self:
 
         try:
             invoice = Invoice.get(invoiceId=invoiceId, companySlug=companySlug)
@@ -102,7 +104,7 @@ class CreditNote(FikenObjectCountable, BaseModel):
         if loc is None:
             raise RequestErrorException("No Location header in response")
 
-        return CreditNote._getFromURL(loc)
+        return CreditNote._get_from_url(loc, token=token, companySlug=companySlug)
 
 
 class CreditNoteDraft(DraftInvoiceIsh):

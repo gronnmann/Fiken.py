@@ -1,7 +1,7 @@
 import datetime
 import email.utils
 import uuid
-from typing import Tuple
+from typing import Tuple, Optional
 
 import requests
 from pydantic import BaseModel
@@ -19,8 +19,20 @@ class AccessToken(BaseModel):
     expires_in: int
     request_timestamp: datetime.datetime
 
+    client_id: Optional[str] = None
+    client_secret: Optional[str] = None
+
     def get_expiration_time(self) -> datetime.datetime:
         return self.request_timestamp + datetime.timedelta(seconds=self.expires_in)
+
+    def is_expired(self) -> bool:
+        return self.get_expiration_time() < datetime.datetime.now(datetime.timezone.utc)
+
+    def attempt_refresh(self):
+        if self.client_id is None or self.client_secret is None:
+            raise ValueError("Client id or secret not set")
+
+        return Authorization.get_access_token_refresh(self.client_id, self.client_secret, self.refresh_token)
 
 
 class Authorization:
@@ -86,7 +98,11 @@ class Authorization:
         if date_header is not None:
             date_parsed = email.utils.parsedate_to_datetime(date_header)
 
-        return AccessToken(**response_data, request_timestamp=date_parsed if date_header is not None else datetime.datetime.now())
+        token = AccessToken(**response_data, request_timestamp=date_parsed if date_header is not None else datetime.datetime.now())
+        token.client_id = client_id
+        token.client_secret = client_secret
+
+        return token
 
     @classmethod
     def get_access_token_authcode(cls, client_id: str, client_secret: str, code: str, redirect_uri: str) -> AccessToken:

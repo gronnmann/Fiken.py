@@ -18,3 +18,4 @@ from .order_confirmation import OrderConfirmation, OrderConfirmationDraft, Order
 from .draft import (DraftLineInvoiceIsh)
 from .payment import PaymentPurchase, PaymentSale, Payment
 from .company import Company
+from .fiken_py import FikenPy

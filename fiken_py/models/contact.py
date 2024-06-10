@@ -71,3 +71,17 @@ class Contact(BaseModel, FikenObjectAttachable):
             self._refresh_object()
 
         return resp
+
+    def get_contact_persons(self, **kwargs) -> List[ContactPerson]:
+        return ContactPerson.getAll(companySlug=self._company_slug, token=self._auth_token, contactId=self.contactId,
+                                    **kwargs)
+
+    def get_contact_person(self, contact_person_id: int, **kwargs) -> ContactPerson:
+        return ContactPerson.get(contactPersonId=contact_person_id, companySlug=self._company_slug,
+                                 token=self._auth_token, contactId=self.contactId, **kwargs)
+
+    def create_contact_person(self, contact_person: ContactPerson, **kwargs) -> ContactPerson:
+        person = contact_person.save(token=self._auth_token, contactId=self.contactId, companySlug=self._company_slug, **kwargs)
+        self._refresh_object()
+
+        return person

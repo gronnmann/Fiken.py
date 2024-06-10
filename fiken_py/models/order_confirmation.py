@@ -3,6 +3,7 @@ from typing import Optional, ClassVar
 
 from pydantic import BaseModel, Field
 
+from fiken_py.authorization import AccessToken
 from fiken_py.errors import RequestErrorException
 from fiken_py.fiken_object import FikenObjectAttachable, FikenObjectCountable, RequestMethod, FikenObject
 from fiken_py.models import InvoiceDraft
@@ -44,7 +45,7 @@ class OrderConfirmation(FikenObjectCountable, FikenObjectAttachable, BaseModel):
         return "confirmationId", self.confirmationId
 
     @classmethod
-    def to_invoice_draft_cls(cls, **kwargs) -> InvoiceDraft:
+    def to_invoice_draft_cls(cls, token: AccessToken | str = None, **kwargs) -> InvoiceDraft:
         url = cls._get_method_base_URL("TO_INVOICE")
 
         try:
@@ -52,7 +53,7 @@ class OrderConfirmation(FikenObjectCountable, FikenObjectAttachable, BaseModel):
         except RequestErrorException as e:
             raise e
 
-        return InvoiceDraft._getFromURL(response.headers['Location'])
+        return InvoiceDraft._get_from_url(response.headers['Location'], token, **kwargs)
 
     def to_invoice_draft(self, **kwargs) -> InvoiceDraft:
         return self.to_invoice_draft_cls(confirmationId=self.confirmationId, **kwargs)

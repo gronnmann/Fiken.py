@@ -148,13 +148,18 @@ class FikenObject:
         return cls(**data)
 
     @classmethod
-    def getAll(cls, follow_pages: bool = True, **kwargs: Any) -> list[type[typing.Self]]:
+    def getAll(cls, follow_pages: bool = True, page: int = None, **kwargs: Any) -> list[type[typing.Self]]:
 
         logger.debug(f"GETting many objects for {cls.__name__}")
         try:
             response = cls._execute_method(RequestMethod.GET_MULTIPLE, **kwargs)
         except RequestErrorException as e:
             raise
+
+        if page is not None:
+            if follow_pages:
+                raise ValueError("Cannot specify page number when follow_pages is True")
+            kwargs["page"] = page
 
         pages = [response.json()]
         if follow_pages:
@@ -582,11 +587,11 @@ class FikenObjectAttachable(FikenObject):
 class FikenObjectCountable(FikenObject):
 
     @classmethod
-    def get_counter(cls) -> int:
+    def get_counter(cls, **kwargs) -> int:
         url = cls._get_method_base_URL("COUNTER")
 
         try:
-            response = cls._execute_method(RequestMethod.GET, url)
+            response = cls._execute_method(RequestMethod.GET, url, **kwargs)
         except RequestErrorException:
             raise
 
@@ -596,7 +601,7 @@ class FikenObjectCountable(FikenObject):
             raise
 
     @classmethod
-    def set_initial_counter(cls, counter: int) -> bool:
+    def set_initial_counter(cls, counter: int, **kwargs) -> bool:
         """Set the default invoice counter to the given value
         :param counter: The value to set the counter to
         :return: True if the counter was set successfully, False otherwise"""
@@ -605,7 +610,7 @@ class FikenObjectCountable(FikenObject):
         counter = Counter(value=counter)
 
         try:
-            response = cls._execute_method(RequestMethod.POST, url, dumped_object=counter)
+            response = cls._execute_method(RequestMethod.POST, url, dumped_object=counter, **kwargs)
         except RequestErrorException:
             raise
 

@@ -1,6 +1,6 @@
 import datetime
 
-from fiken_py.models import SaleDraftCreateRequest, SaleDraft, Contact, BankAccount, Sale, SaleRequest, PaymentSale
+from fiken_py.models import SaleDraftRequest, SaleDraft, Contact, BankAccount, Sale, SaleRequest, PaymentSale
 from fiken_py.shared_enums import SaleKind
 from fiken_py.shared_types import OrderLine
 from test_online import shared_tests
@@ -46,7 +46,7 @@ def test_sale_manual(unique_id: str, generic_contact: Contact, generic_bank_acco
 def test_sale_draft(unique_id: str, generic_contact: Contact, generic_bank_account: BankAccount):
     sale: Sale = shared_tests.draftable_order_object_tests(
         SaleDraft,
-        SaleDraftCreateRequest,
+        SaleDraftRequest,
         "4000",
         unique_id,
         generic_contact,

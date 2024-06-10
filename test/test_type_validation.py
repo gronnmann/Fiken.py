@@ -4,8 +4,8 @@ from pydantic import ValidationError, BaseModel
 from fiken_py.shared_enums import VatTypeProductSale, VatTypeProductPurchase
 from fiken_py.shared_types import InvoiceLineRequest, AccountingAccount, AccountingAccountAssets, \
     AccountingAccountCosts, AccountingAccountIncome, AccountingAccountEquityAndLiabilities, DraftLineOrder, OrderLine
-from fiken_py.models import BankAccount, BankAccountCreateRequest, DraftLineInvoiceIsh, BankAccountType, \
-    PurchaseDraftCreateRequest, SaleDraftCreateRequest
+from fiken_py.models import BankAccount, BankAccountRequest, DraftLineInvoiceIsh, BankAccountType, \
+    PurchaseDraftCreateRequest, SaleDraftRequest
 
 
 def test_validate_invoice_line():
@@ -66,7 +66,7 @@ def test_validate_draft_line():
 
 
 def test_bankaccount_request_foreignservice():
-    bank_account = BankAccountCreateRequest(
+    bank_account = BankAccountRequest(
         name="Test Bank Account",
         bankAccountNumber="12345678901",
         type=BankAccountType.FOREIGN,
@@ -75,7 +75,7 @@ def test_bankaccount_request_foreignservice():
 
     assert bank_account is not None
 
-    bank_account = BankAccountCreateRequest(
+    bank_account = BankAccountRequest(
         name="Test Bank Account",
         bankAccountNumber="12345678901",
         type=BankAccountType.NORMAL,
@@ -85,7 +85,7 @@ def test_bankaccount_request_foreignservice():
 
     # type normal, but foreignService
     with pytest.raises(ValidationError):
-        bank_account = BankAccountCreateRequest(
+        bank_account = BankAccountRequest(
             name="Test Bank Account",
             bankAccountNumber="12345678901",
             type=BankAccountType.NORMAL,
@@ -94,7 +94,7 @@ def test_bankaccount_request_foreignservice():
 
     # type foreign, but no foreignService
     with pytest.raises(ValidationError):
-        bank_account = BankAccountCreateRequest(
+        bank_account = BankAccountRequest(
             name="Test Bank Account",
             bankAccountNumber="12345678901",
             type=BankAccountType.FOREIGN,
@@ -228,17 +228,17 @@ def test_sale_purcahse_draft_vat_types():
     )
     assert correct is not None
 
-    correct = SaleDraftCreateRequest(
+    correct = SaleDraftRequest(
         cash=True, lines=[draft_line_sale]
     )
     assert correct is not None
 
     with pytest.raises(ValidationError):
-        wrong = SaleDraftCreateRequest(
+        wrong = SaleDraftRequest(
             cash=True, lines=[draft_line_purchase]
         )
 
-    correct = SaleDraftCreateRequest(
+    correct = SaleDraftRequest(
         cash=True, lines=[draft_line_both]
     )
 

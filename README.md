@@ -152,6 +152,10 @@ The draft types for sales and purcases in the API are `draftResult`.
 Here they are split into `SalesDraft` and `PurchaseDraft`, inheriting
 from `DraftOrder`.
 
+### /accounts and /accountBalances
+They both have their own class `BalanceAccount` and `BalanceAccountBalance` respectively.
+The balance itself can also be fetched calling upon `balance_account_instance.get_balance()`
+
 
 ## Rate limiting
 From the [Fiken API documentation](https://api.fiken.no/api/v2/docs/):

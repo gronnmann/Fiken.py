@@ -141,7 +141,7 @@ class InvoiceDraft(DraftInvoiceIsh):
     type: DraftTypeInvoiceIsh = DraftTypeInvoiceIsh.INVOICE
 
 
-class InvoiceDraftCreateRequest(DraftInvoiceIshCreateRequest):
+class InvoiceDraftRequest(DraftInvoiceIshCreateRequest):
     BASE_CLASS: ClassVar[FikenObject] = InvoiceDraft
     _POST_PATH = '/companies/{companySlug}/invoices/drafts'
 

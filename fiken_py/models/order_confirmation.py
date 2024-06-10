@@ -69,7 +69,7 @@ class OrderConfirmationDraft(DraftInvoiceIsh):
     _CREATE_OBJECT_PATH = '/companies/{companySlug}/orderConfirmations/drafts/{draftId}/createOrderConfirmation'
 
 
-class OrderConfirmationDraftCreateRequest(DraftInvoiceIshCreateRequest):
+class OrderConfirmationDraftRequest(DraftInvoiceIshCreateRequest):
     BASE_CLASS: ClassVar[FikenObject] = OrderConfirmationDraft
     _POST_PATH = '/companies/{companySlug}/orderConfirmations/drafts'
 

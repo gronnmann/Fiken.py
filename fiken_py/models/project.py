@@ -59,7 +59,7 @@ class Project(FikenObject, ProjectBase):
         return self._follow_location_and_update_class(response)
 
 
-class ProjectCreateRequest(FikenObjectRequest, ProjectBase):
+class ProjectRequest(FikenObjectRequest, ProjectBase):
     BASE_CLASS: ClassVar[FikenObject] = Project
     _POST_PATH = '/companies/{companySlug}/projects'
 

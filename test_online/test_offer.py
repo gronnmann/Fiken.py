@@ -1,4 +1,4 @@
-from fiken_py.models import Product, Contact, Offer, OfferDraft, OfferDraftCreateRequest
+from fiken_py.models import Product, Contact, Offer, OfferDraft, OfferDraftRequest
 
 import test_online.shared_tests as shared_tests
 
@@ -7,7 +7,7 @@ def test_create_offer_full(unique_id: str, generic_product: Product,
                            generic_contact: Contact, generic_bank_account):
     draft_from_test: Offer = shared_tests.draftable_invoiceish_object_tests(
         DraftObject=OfferDraft,
-        DraftCreateRequestObject=OfferDraftCreateRequest,
+        DraftCreateRequestObject=OfferDraftRequest,
         unique_id=unique_id,
         generic_product=generic_product,
         generic_customer=generic_contact,

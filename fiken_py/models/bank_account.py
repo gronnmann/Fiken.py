@@ -42,7 +42,7 @@ class BankAccount(BankAccountBase, FikenObject):
         return "bankAccountId", self.bankAccountId
 
 
-class BankAccountCreateRequest(BankAccountBase, FikenObjectRequest):
+class BankAccountRequest(BankAccountBase, FikenObjectRequest):
     BASE_CLASS: ClassVar[FikenObject] = BankAccount
 
     _POST_PATH = '/companies/{companySlug}/bankAccounts/'

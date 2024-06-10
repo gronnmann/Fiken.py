@@ -118,7 +118,7 @@ class CreditNoteDraft(DraftInvoiceIsh):
     type: DraftTypeInvoiceIsh = DraftTypeInvoiceIsh.CREDIT_NOTE
 
 
-class CreditNoteDraftCreateRequest(DraftInvoiceIshCreateRequest):
+class CreditNoteDraftRequest(DraftInvoiceIshCreateRequest):
     BASE_CLASS: ClassVar[FikenObject] = CreditNoteDraft
     _POST_PATH = '/companies/{companySlug}/creditNotes/drafts'
 

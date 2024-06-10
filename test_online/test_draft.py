@@ -1,8 +1,8 @@
 import datetime
 
 from fiken_py.shared_enums import VatTypeProduct, VatTypeProductSale
-from fiken_py.models import BankAccount, Contact, Product, InvoiceDraftCreateRequest, InvoiceDraft, Invoice, \
-    DraftLineInvoiceIsh, CreditNoteDraft, CreditNoteDraftCreateRequest
+from fiken_py.models import BankAccount, Contact, Product, InvoiceDraftRequest, InvoiceDraft, Invoice, \
+    DraftLineInvoiceIsh, CreditNoteDraft, CreditNoteDraftRequest
 from fiken_py.models.credit_note import CreditNote
 
 
@@ -22,7 +22,7 @@ def test_all_invoice_draft(unique_id: str, generic_product: Product, generic_con
         quantity=2,
     )
 
-    draft: InvoiceDraftCreateRequest = InvoiceDraftCreateRequest(
+    draft: InvoiceDraftRequest = InvoiceDraftRequest(
         issueDate=datetime.date.today(),
         daysUntilDueDate=7,
         customerId=generic_contact.contactId,
@@ -80,7 +80,7 @@ def test_all_credit_note(unique_id: str, generic_product: Product, generic_conta
         vatType=VatTypeProductSale.HIGH,
     )
 
-    draft: CreditNoteDraftCreateRequest = CreditNoteDraftCreateRequest(
+    draft: CreditNoteDraftRequest = CreditNoteDraftRequest(
         issueDate=datetime.date.today(),
         daysUntilDueDate=7,
         customerId=generic_contact.contactId,

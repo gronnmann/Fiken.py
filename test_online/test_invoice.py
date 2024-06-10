@@ -2,7 +2,7 @@ import datetime
 
 from fiken_py.shared_types import InvoiceLineRequest
 from fiken_py.shared_enums import VatTypeProduct, VatTypeProductSale
-from fiken_py.models import Product, Contact, InvoiceRequest, Invoice, InvoiceDraftCreateRequest, InvoiceDraft
+from fiken_py.models import Product, Contact, InvoiceRequest, Invoice, InvoiceDraftRequest, InvoiceDraft
 import test_online.shared_tests as shared_tests
 
 
@@ -85,7 +85,7 @@ def test_create_invoice_product_freetext_and_invoice_counter(unique_id: str,
 def test_create_through_draft(unique_id, generic_contact, generic_product, generic_bank_account):
     shared_tests.draftable_invoiceish_object_tests(
         InvoiceDraft,
-        InvoiceDraftCreateRequest,
+        InvoiceDraftRequest,
         unique_id,
         generic_product,
         generic_contact,

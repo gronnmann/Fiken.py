@@ -1,8 +1,8 @@
-from fiken_py.models import BankAccount, BankAccountCreateRequest, BankAccountType
+from fiken_py.models import BankAccount, BankAccountRequest, BankAccountType
 
 
 def test_create_bankaccount(unique_id):
-    bank_account_request: BankAccountCreateRequest = BankAccountCreateRequest(
+    bank_account_request: BankAccountRequest = BankAccountRequest(
         name=f"Test account ({unique_id})",
         bankAccountNumber="11112233334",
         type=BankAccountType.NORMAL,

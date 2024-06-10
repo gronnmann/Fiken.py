@@ -51,7 +51,7 @@ class OfferDraft(DraftInvoiceIsh):
     type: DraftTypeInvoiceIsh = DraftTypeInvoiceIsh.OFFER
 
 
-class OfferDraftCreateRequest(DraftInvoiceIshCreateRequest):
+class OfferDraftRequest(DraftInvoiceIshCreateRequest):
     BASE_CLASS: ClassVar[FikenObject] = OfferDraft
     _POST_PATH = '/companies/{companySlug}/offers/drafts'
 

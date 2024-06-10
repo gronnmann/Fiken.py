@@ -103,6 +103,22 @@ class SaleRequest(FikenObjectRequest, SaleBase):
                 "customerId must be provided for external invoices"
         return value
 
+    @model_validator(mode="after")
+    @classmethod
+    def validate_date_if_cashsale(cls, value):
+        if value.kind == SaleKind.CASH_SALE:
+            assert value.paymentDate is not None, \
+                "paymentDate must be provided for cash sales"
+        return value
+
+    @model_validator(mode="after")
+    @classmethod
+    def validate_payment_account_if_payment_date(cls, value):
+        if value.paymentDate is not None:
+            assert value.paymentAccount is not None, \
+                "paymentAccount must be provided if paymentDate is provided"
+        return value
+
 
 class SaleDraft(DraftOrder):
     _GET_PATH_SINGLE = '/companies/{companySlug}/sales/drafts/{draftId}'
@@ -114,7 +130,7 @@ class SaleDraft(DraftOrder):
     CREATED_OBJECT_CLASS: ClassVar[FikenObject] = Sale
 
 
-class SaleDraftCreateRequest(DraftOrderCreateRequest):
+class SaleDraftRequest(DraftOrderCreateRequest):
     BASE_CLASS: ClassVar[FikenObject] = SaleDraft
     _POST_PATH = '/companies/{companySlug}/sales/drafts'
 

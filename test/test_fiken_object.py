@@ -14,22 +14,27 @@ def m():
 
 
 def test_auth_token_not_set():
+    class TestFikenObject(FikenObject):
+        @property
+        def id_attr(self):
+            return "testId", None
+
     with pytest.raises(ValueError) as e:
-        FikenObject.get()
+        TestFikenObject.get()
     assert str(e.value) == "Auth token not set"
 
     with pytest.raises(ValueError) as e:
-        FikenObject.getAll()
+        TestFikenObject.getAll()
     assert str(e.value) == "Auth token not set"
 
     # test save and delete
-    object = FikenObject()
+    test_obj = TestFikenObject()
     with pytest.raises(ValueError) as e:
-        object.save()
+        test_obj.save()
     assert str(e.value) == "Auth token not set"
 
     with pytest.raises(ValueError) as e:
-        object.delete()
+        test_obj.delete()
     assert str(e.value) == "Auth token not set"
 
 

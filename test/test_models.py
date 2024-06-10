@@ -15,7 +15,7 @@ from sample_data_reader import get_sample_from_json
 from fiken_py.fiken_object import FikenObject
 from fiken_py.models import UserInfo, BalanceAccount, BankAccount, Company, Contact, ContactPerson, Product, \
     ProductSalesReport, ProductSalesReportRequest, Transaction, JournalEntry, InboxDocument, Sale, Project, Invoice, \
-    InvoiceDraft, Offer, Purchase, OrderConfirmation
+    InvoiceDraft, Offer, Purchase, OrderConfirmation, BalanceAccountBalance
 
 
 @pytest.fixture(autouse=True, scope="session")
@@ -38,6 +38,7 @@ def m():
 @pytest.mark.parametrize("object", [
     UserInfo,
     BalanceAccount,
+    BalanceAccountBalance,
     BankAccount,
     Company,
     Contact,

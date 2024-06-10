@@ -1,6 +1,6 @@
 import random
 
-from fiken_py.models import Project, ProjectCreateRequest
+from fiken_py.models import Project, ProjectRequest
 
 
 def get_or_create_project(unique_id) -> Project:
@@ -20,7 +20,7 @@ def get_or_create_project(unique_id) -> Project:
             break
 
     if not found:
-        project_request = ProjectCreateRequest(
+        project_request = ProjectRequest(
             name=f"Test project ({unique_id})",
             startDate="2021-01-01",
             number=proj_nr,

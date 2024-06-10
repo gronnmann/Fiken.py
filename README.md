@@ -8,17 +8,22 @@ pip install fiken_py
 ```
 You can now import the package and use it in your code.
 
-## Usage
 ### Private apps
 To use the Fiken API you need to create a private app in Fiken. 
 This will give you a private token. You can create a private app in Fiken by going to Account -> Rediger konto -> 
 API -> Ny API-nøkkel
 
-Then, set the token using the following code:
+Then, either set the token globally for the whole application using:
 
 ```python
 FikenObject.set_auth_token('{your_token_here}')
 ```
+
+Or create it for a specific object:
+```python
+fiken_py = FikenPy('{your_token_here}')
+```
+You can then access the objects using the `fiken_py` object.
 
 ### Public apps
 To use the Fiken API publically, you need to authenticate using OAuth2.
@@ -43,24 +48,38 @@ access_token = Authorization.get_access_token_authcode(FIKEN_APP_ID, FIKEN_APP_S
 The `redirect_uri` should be the same as the one you used to generate the URL.
 
 Then, set the access token:
+
+Globally:
 ```python
-FikenObject.set_auth_token(access_token, (client_id, client_secret))
+FikenObject.set_auth_token(access_token)
 ```
+
+For a single object:
+```python
+fiken_py = FikenPy(access_token)
+```
+
 
 You can skip setting the client_id and client_secret if you don't wish the app to automatically 
 refresh the token. That happens when doing a request, and either 1) expiry time says its expired or 2) you get a 403 error.
 
 ### Setting company slug
-If you wish, you can also set the company slug, as its required for most API calls.
+If you wish, you can also set the company slug globally, as its required for most API calls.
 ```python
 FikenObject.set_company_slug('{your_company_slug_here}')
 ```
 This is not required, and can be done on a per-call basis (using the kwargs argument).
 It can also be overridden the same way.
 
+When using an OOP-style-approach, you can get a compajny object using
+```python
+company = fiken_py.get_company(company_slug='your_company_slug')
+```
+And then use its methods to get objects related to that company.
+
 ### General syntax
 All objects reside in the 'fiken_py.models' module.
-Mostly correspond to the objects in the Fiken API.
+They mostly correspond to the objects in the Fiken API.
 
 Generally, all objects have the following methods:
 - `get` - Fetches a single object (class method)
@@ -70,6 +89,8 @@ Generally, all objects have the following methods:
 
 Not all methods are available for all objects, please check the Fiken API documentation for more information.
 Errors will give a `RequestWrongMediaTypeException`.
+
+You can either access the objects directly, or use the `FikenPy` (or other object classes) to access them.
 
 
 ### Placeholders and kwargs
@@ -90,7 +111,7 @@ For example `POST bankAccounts` uses `BankAccountRequest` instead of `BankAccoun
 In those cases, create a new object of the `Request` (for example `BankAccountRequest`) class and pass it to the `save` method.
 The `save` method will then respond with the actual `BankAccount` object.
 
-### Examples
+### Examples - Using methods directly
 #### Getting all contacts
 ```python
 contacts = Contact.getAll(companySlug='your_company_slug')
@@ -122,7 +143,32 @@ new_account = new_account_request.save(companySlug='fiken-demo-drage-og-elefant-
 # new_account is <class 'fiken_py.models.bank_account.BankAccount'>
 ```
 
-## Notes
+### Examples - Using OOP-style
+First, create an object and get the company:
+```python
+fiken_py = FikenPy('{your_token_here}')
+company = fiken_py.get_company(company_slug='your_company_slug')
+```
+
+Then:
+
+#### Getting all contacts
+```python
+contacts = company.get_contacts()
+```
+
+#### Getting a single contact
+```python
+contact = company.get_contact(contact_id='contact_id')
+```
+
+#### Creating and saving new contact
+```python
+contact = Contact(name="John Doe")
+contact = company.create_contact(contact)
+```
+
+# Notes
 Some objects do behave weirdly or not as expected.
 This is a list of known quirks you might encounter:
 ### JournalEntryRequest maps to Transaction
@@ -151,6 +197,9 @@ inheriting from `InvoiceIshDraft`.
 The draft types for sales and purcases in the API are `draftResult`.
 Here they are split into `SalesDraft` and `PurchaseDraft`, inheriting
 from `DraftOrder`.
+
+All the methods of creating the objects from drafts, eg `createInvoice` are accessed through
+the common method `draft.to_object()`.
 
 ### /accounts and /accountBalances
 They both have their own class `BalanceAccount` and `BalanceAccountBalance` respectively.

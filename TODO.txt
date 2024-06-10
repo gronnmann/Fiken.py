@@ -1,5 +1,4 @@
 - /companies/{company_slug}/groups
-- accessing methods object oritented way
 - init method for all classes that can be submitted
 - maybe remove _getFromURL and use the other method?
 - when checking POST classes, check if is_new is @attribute. Maybe just try accessing it without calling?
@@ -7,3 +6,5 @@
 - VAT validation
 - maybe rename _GET_PATH to GET_PATH etc for pydantic not messing with it (regex _(?<path>\w*_PATH(_\w*)?))
 - organize imports better
+- credit note partial?
+- auto go from PAyment->SalePayment|PurchasePayment

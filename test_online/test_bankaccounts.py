@@ -3,7 +3,7 @@ from test_online import sample_object_factory
 
 
 def test_create_bankaccount(unique_id):
-    bank_account_request = sample_object_factory.bank_account_request()
+    bank_account_request = sample_object_factory.bank_account_request(unique_id)
 
     bank_account: BankAccount = bank_account_request.save()
 
@@ -20,7 +20,7 @@ def test_get_accounts():
 
 
 def test_get_account(unique_id):
-    acc_name = f"Test account ({unique_id})"
+    acc_name = f"Onkel Skrues safe ({unique_id})"
     print(f"Searching for account with name {acc_name}")
 
     bank_accounts = BankAccount.getAll()

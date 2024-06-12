@@ -407,4 +407,6 @@ if __name__ == "__main__":
     print("Only in Invoice: ", only_inv_draft)
     print("Only in Draft: ", only_draft_inv)
 
+    Invoice.get()
+
     # print("Only in OrderLine: ", only_order)

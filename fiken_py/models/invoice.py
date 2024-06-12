@@ -76,7 +76,7 @@ class Invoice(FikenObjectCountable, FikenObjectAttachable, BaseModel):
     def id_attr(self):
         return "invoiceId", self.invoiceId
 
-    def save(self, **kwargs: Any) -> typing.Self | None:
+    def save(self, **kwargs: Any) -> typing.Self:
         if self._get_method_base_URL(RequestMethod.PATCH) is None:
             raise RequestWrongMediaTypeException(f"Object {self.__class__.__name__} does not support PATCH")
 
@@ -95,7 +95,12 @@ class Invoice(FikenObjectCountable, FikenObjectAttachable, BaseModel):
 
     @classmethod
     def send_to_customer(cls, invoice_request: InvoiceSendRequest, companySlug=None):
-        url = cls._get_method_base_URL(RequestMethod.GET_MULTIPLE) + "/send"
+        url_base = cls._get_method_base_URL(cls._get_method_base_URL(RequestMethod.GET_MULTIPLE))
+
+        if url_base is None:
+            raise RequestWrongMediaTypeException(f"Object {cls.__name__} does not support GET_MULTIPLE = used for infering 'send' URL")
+
+        url = url_base + "/send"
 
         try:
             response = cls._execute_method(RequestMethod.POST, url, dumped_object=invoice_request, companySlug=companySlug,)

@@ -6,7 +6,7 @@ import requests
 from pydantic import BaseModel
 
 from fiken_py.authorization import AccessToken
-from fiken_py.fiken_object import FikenObject, FikenObjectRequest, RequestMethod
+from fiken_py.fiken_object import FikenObject, FikenObjectRequest, RequestMethod, OptionalAccessToken
 
 
 class InboxDocument(BaseModel, FikenObject):
@@ -42,7 +42,7 @@ class InboxDocumentRequest(FikenObjectRequest, BaseModel):
         with open(filepath, 'rb') as f:
             return cls(name=name, filename=filepath, description=description, file=f.read())
 
-    def save(self, token: AccessToken | str = None, **kwargs):
+    def save(self, token: OptionalAccessToken = None, **kwargs):
         file_data = {
             'file': (self.filename, self.file),
             'filename': (None, self.filename),

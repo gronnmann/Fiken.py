@@ -161,5 +161,5 @@ def purchase_request(unique_id: str, contact: Contact) -> PurchaseRequest:
 
 
 def project(unique_id) -> ProjectRequest:
-    return ProjectRequest(name=f"Prosjekt {unique_id}", number=unique_id,
+    return ProjectRequest(name=f"Prosjekt {unique_id}", number=unique_id + "_sample",
                           startDate=datetime.date.today())

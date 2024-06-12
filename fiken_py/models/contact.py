@@ -50,13 +50,13 @@ class Contact(BaseModel, FikenObjectAttachable):
         return "contactId", self.contactId
 
     @classmethod
-    def get_attachments_cls(cls, instance: FikenObjectAttachable = None, **kwargs) -> list[Attachment]:
+    def get_attachments_cls(cls, instance: Optional[FikenObjectAttachable] = None, **kwargs) -> list[Attachment]:
         return instance.documents
 
     def get_attachments(self, **kwargs) -> list[Attachment]:
         return self.documents
 
-    def add_attachment(self, filepath, filename: str = None, comment: str = None, **kwargs):
+    def add_attachment(self, filepath, filename: Optional[str]= None, comment: Optional[str] = None, **kwargs):
         resp = self.add_attachment_cls(filepath, filename, comment, instance=self, **kwargs)
 
         if resp:
@@ -64,7 +64,7 @@ class Contact(BaseModel, FikenObjectAttachable):
 
         return resp
 
-    def add_attachment_bytes(self, filename: str, data: bytes, comment: str = None, **kwargs):
+    def add_attachment_bytes(self, filename: str, data: bytes, comment: Optional[str] = None, **kwargs):
         resp = self.add_attachment_bytes_cls(filename, data, comment, instance=self, **kwargs)
 
         if resp:
@@ -76,7 +76,7 @@ class Contact(BaseModel, FikenObjectAttachable):
         return ContactPerson.getAll(companySlug=self._company_slug, token=self._auth_token, contactId=self.contactId,
                                     **kwargs)
 
-    def get_contact_person(self, contact_person_id: int, **kwargs) -> ContactPerson:
+    def get_contact_person(self, contact_person_id: int, **kwargs) -> ContactPerson | None:
         return ContactPerson.get(contactPersonId=contact_person_id, companySlug=self._company_slug,
                                  token=self._auth_token, contactId=self.contactId, **kwargs)
 

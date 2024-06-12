@@ -32,7 +32,11 @@ class AccessToken(BaseModel):
         if self.client_id is None or self.client_secret is None:
             raise ValueError("Client id or secret not set")
 
-        return Authorization.get_access_token_refresh(self.client_id, self.client_secret, self.refresh_token)
+        new_token =  Authorization.get_access_token_refresh(self.client_id, self.client_secret, self.refresh_token)
+
+        self.access_token = new_token.access_token
+        self.refresh_token = new_token.refresh_token
+        self.expires_in = new_token.expires_in
 
 
 class Authorization:

@@ -3,7 +3,7 @@ import re
 
 from fiken_py.shared_enums import VatTypeProductSale
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Optional
 
 if TYPE_CHECKING:
     from fiken_py.shared_types import AccountingAccountIncome
@@ -67,8 +67,8 @@ class VATValidator:
         return True if re.match(match_as_regex, account_code) else False
 
     @classmethod
-    def validate_vat_type_sale(cls, vat_type: VatTypeProductSale, account_code: 'AccountingAccountIncome' = None,
-                               percentage: float = None):
+    def validate_vat_type_sale(cls, vat_type: VatTypeProductSale, account_code: Optional['AccountingAccountIncome'] = None,
+                               percentage: Optional[float] = None):
         """Validates either an vat type against an account code or a percentage.
             Account data is from: https://kontohjelp.fiken.no/as/medMoms/
 

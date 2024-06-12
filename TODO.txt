@@ -8,3 +8,4 @@
 - organize imports better
 - credit note partial?
 - auto go from PAyment->SalePayment|PurchasePayment
+- remove is_new where implemented?

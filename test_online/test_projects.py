@@ -10,6 +10,7 @@ def get_or_create_project(unique_id) -> Project:
     for project in projects:
         if project.name == f"Test project ({unique_id})":
             found = True
+            print(f"Found project {project.projectId}")
             break
 
     if not found:

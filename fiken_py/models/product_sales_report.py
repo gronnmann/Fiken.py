@@ -24,4 +24,8 @@ class ProductSalesReportRequest(BaseModel, FikenObjectRequest):
     from_: date = Field(..., alias='from')
     to: date
 
+    @property
+    def id_attr(self) -> tuple[str, Any]:
+        return "NONE", None
+
     _POST_PATH = '/companies/{companySlug}/products/salesReport'

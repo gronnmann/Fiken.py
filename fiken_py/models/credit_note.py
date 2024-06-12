@@ -8,7 +8,8 @@ from pydantic import BaseModel, Field
 
 from fiken_py.authorization import AccessToken
 from fiken_py.errors import RequestContentNotFoundException, RequestErrorException
-from fiken_py.fiken_object import FikenObjectAttachable, RequestMethod, FikenObjectCountable, FikenObject
+from fiken_py.fiken_object import FikenObjectAttachable, RequestMethod, FikenObjectCountable, FikenObject, \
+    OptionalAccessToken
 from fiken_py.models.draft import DraftInvoiceIsh, DraftTypeInvoiceIsh, DraftInvoiceIshCreateRequest
 from fiken_py.shared_types import Address, InvoiceLine, Attachment, CreditNotePartialRequestLine
 from fiken_py.models import Contact, Project, Sale, Invoice
@@ -76,9 +77,9 @@ class CreditNote(FikenObjectCountable, BaseModel):
         return "creditNoteId", self.creditNoteId
 
     @classmethod
-    def create_from_invoice_full(cls, invoiceId: int, issueDate: datetime.date | str = None,
-                                 creditNoteText: str = None, companySlug: str = None,
-                                 token: AccessToken | str = None) -> typing.Self:
+    def create_from_invoice_full(cls, invoiceId: int, issueDate: Optional[datetime.date | str] = None,
+                                 creditNoteText: Optional[str] = None, companySlug: Optional[str] = None,
+                                 token: OptionalAccessToken = None) -> typing.Self:
 
         try:
             invoice = Invoice.get(invoiceId=invoiceId, companySlug=companySlug, token=token)

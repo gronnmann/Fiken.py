@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import abc
 import datetime
 import logging
 import os.path
@@ -8,7 +9,7 @@ import time
 import typing
 import uuid
 from enum import Enum
-from typing import Any, ClassVar
+from typing import Any, ClassVar, Optional
 
 import requests
 import platform
@@ -23,6 +24,8 @@ from fiken_py.shared_types import Attachment, Counter
 from fiken_py.util import handle_error
 
 logger = logging.getLogger("fiken_py")
+
+type OptionalAccessToken = Optional[AccessToken | str]
 
 
 class RequestMethod(Enum):
@@ -57,19 +60,20 @@ class FikenObject:
     """Authentication token for the session. Can be either personal token or OAuth2 token.
     Can be specified globally for all objects or for each object separately.
     """
-    _AUTH_TOKEN: str | AccessToken | None = None
+    _AUTH_TOKEN: OptionalAccessToken = None
 
-    _COMPANY_SLUG = None
+    _COMPANY_SLUG: Optional[str] = None
 
-    BASE_CLASS = None  # For FikenObjectRequest and save not to give AttributeError
+    BASE_CLASS: ClassVar[
+        Optional[type[FikenObject]]] = None  # For FikenObjectRequest and save not to give AttributeError
 
-    _RATE_LIMIT_ENABLED = True
-    _MAX_REQUESTS_PER_SECOND = 4
-    _REQUESTS_COUNTER = 0
-    _LAST_REQUEST_TIME = 0
+    _RATE_LIMIT_ENABLED: ClassVar[bool] = True
+    _MAX_REQUESTS_PER_SECOND: ClassVar[int] = 4
+    _REQUESTS_COUNTER: ClassVar[int] = 0
+    _LAST_REQUEST_TIME: ClassVar[int] = 0
 
     @classmethod
-    def set_auth_token(cls, token: str | AccessToken):
+    def set_auth_token(cls, token: OptionalAccessToken):
         """
         Sets the personal authentication token.
         Can be either personal token (str) or OAuth2 token gotten from Authorization class.
@@ -89,9 +93,10 @@ class FikenObject:
         cls._AUTH_TOKEN = None
 
     @property
-    def id_attr(self) -> tuple[str, str]:
+    @abc.abstractmethod
+    def id_attr(self) -> tuple[str, str | None]:
         """Returns the ID field (to be used in URLs) and its value for the object."""
-        raise NotImplementedError("id_attr must be implemented in subclass")
+        return "UNKNOWN", None
 
     @classmethod
     def set_company_slug(cls, company_slug):
@@ -103,10 +108,10 @@ class FikenObject:
 
     @classmethod
     def set_rate_limit(cls, enabled: bool):
-        cls.RATE_LIMIT_ENABLED = enabled
+        cls._RATE_LIMIT_ENABLED = enabled
 
     @classmethod
-    def get(cls: type[typing.Self], token: AccessToken | str = None, **kwargs: Any) -> type[typing.Self] | None:
+    def get(cls: type[typing.Self], token: OptionalAccessToken = None, **kwargs: Any) -> typing.Self | None:
 
         try:
             response = cls._execute_method(RequestMethod.GET, token=token, **kwargs)
@@ -121,8 +126,9 @@ class FikenObject:
         return cls._inject_token_and_slug_and_return(cls(**data), token, kwargs.get("companySlug"))
 
     @classmethod
-    def getAll(cls, token: AccessToken | str = None, follow_pages: bool = True, page: int = None, **kwargs: Any) \
-            -> list[type[typing.Self]]:
+    def getAll(cls, token: OptionalAccessToken = None, follow_pages: bool = True, page: Optional[int] = None,
+               **kwargs: Any) \
+            -> list[typing.Self]:
 
         logger.debug(f"GETting many objects for {cls.__name__}")
         try:
@@ -135,7 +141,7 @@ class FikenObject:
                 raise ValueError("Cannot specify page number when follow_pages is True")
             kwargs["page"] = page
 
-        pages = [response.json()]
+        fetched_pages = [response.json()]
         if follow_pages:
             page_count = response.headers.get("Fiken-Api-Page-Count")
             if page_count is not None:
@@ -148,21 +154,20 @@ class FikenObject:
                     except RequestErrorException as e:
                         raise
 
-                    pages.append(response.json())
+                    fetched_pages.append(response.json())
 
         objects = []
-        for page in pages:
-            for item in page:
+        for fetched_page in fetched_pages:
+            for item in fetched_page:
                 obj = cls(**item)
                 obj = cls._inject_token_and_slug_and_return(obj, token, kwargs.get("companySlug"))
                 objects.append(obj)
 
-
         return objects
 
     @classmethod
-    def _get_from_url(cls, url: str, token: AccessToken | str = None,
-                      **kwargs) -> type[typing.Self] | list[type[typing.Self]]:
+    def _get_from_url(cls, url: str, token: OptionalAccessToken = None,
+                      **kwargs) -> typing.Self:
         try:
             response = cls._execute_method(RequestMethod.GET, url=url, token=token, **kwargs)
         except RequestErrorException:
@@ -174,7 +179,7 @@ class FikenObject:
 
         return cls._inject_token_and_slug_and_return(cls(**data), token, kwargs.get("companySlug"))
 
-    def save(self, token: AccessToken | str = None, **kwargs: Any) -> typing.Self | None:
+    def save(self, token: OptionalAccessToken = None, **kwargs: Any) -> typing.Self:
         """
         Saves the object to the server.
         Checks if object is new or not and sends a POST or PUT request accordingly.
@@ -205,9 +210,15 @@ class FikenObject:
         except RequestErrorException:
             raise
 
-        return self._follow_location_and_update_class(response, token, **kwargs)
+        ret = self._follow_location_and_update_class(response, token, **kwargs)
 
-    def _follow_location_and_update_class(self, response: requests.Response, token: AccessToken | str = None,
+        if ret is None:
+            raise RequestContentNotFoundException("Saved object not found in response")
+
+        return ret
+
+    def _follow_location_and_update_class(self: typing.Self, response: requests.Response,
+                                          token: OptionalAccessToken = None,
                                           **kwargs) -> None | typing.Self:
         """Follows the location header in the response and returns the new object.
         If new object is of the same class, updates the current object with the new one.
@@ -216,7 +227,15 @@ class FikenObject:
         if location:
             logger.debug(f"Location of new object: {location}")
 
-            base_class = self.__class__.BASE_CLASS if issubclass(self.__class__, FikenObjectRequest) else self.__class__
+            if issubclass(self.__class__, FikenObjectRequest):
+                base_class = self.__class__.BASE_CLASS
+
+                if base_class is None:
+                    raise ValueError(f"BASE_CLASS for request class {self.__class__} not set")
+
+            else:
+                base_class = self.__class__
+
             new_object = base_class._get_from_url(location, token, **kwargs)
 
             if base_class == self.__class__:
@@ -245,7 +264,7 @@ class FikenObject:
             raise
         self.__dict__.update(fiken_object.__dict__)
 
-    def delete(self, token: AccessToken | str = None, **kwargs: Any) -> bool:
+    def delete(self, token: OptionalAccessToken = None, **kwargs: Any) -> bool:
         attr_name, attr_val = self.id_attr
         if kwargs.get(attr_name) is None:
             kwargs[attr_name] = attr_val
@@ -318,10 +337,12 @@ class FikenObject:
         elif method == RequestMethod.GET_MULTIPLE:
             attr_name = f"_GET_PATH_MULTIPLE"
         else:
-            if type(method) == str:
-                attr_name = f"_{method}_PATH"
+            if isinstance(method, RequestMethod):
+                attr_base = method.name
             else:
-                attr_name = f"_{method.name}_PATH"
+                attr_base = method
+
+            attr_name = f"_{attr_base}_PATH"
 
         if hasattr(cls, attr_name):
             return f"{cls.PATH_BASE}{getattr(cls, attr_name).default}"
@@ -329,10 +350,10 @@ class FikenObject:
 
     @classmethod
     def _execute_method(cls, method: RequestMethod,
-                        url: str = None,
-                        dumped_object: FikenObject | dict | BaseModel = None,
-                        file_data: dict[str, tuple[Any | None, Any]] = None,
-                        token: str | AccessToken = None,
+                        url: Optional[str] = None,
+                        dumped_object: Optional[FikenObject | dict | BaseModel] = None,
+                        file_data: Optional[dict[str, tuple]] = None,
+                        token: OptionalAccessToken = None,
                         trial: int = 0,
                         **kwargs: Any) -> requests.Response:
         """Executes a method on the object
@@ -381,16 +402,20 @@ class FikenObject:
         if method == RequestMethod.GET_MULTIPLE:
             method_name = "GET"
 
-        request_data = None
-        if method in [RequestMethod.POST, RequestMethod.PUT, RequestMethod.PATCH]:
-            if dumped_object is not None:
-                if issubclass(dumped_object.__class__, BaseModel):
-                    dumped_object: BaseModel
-                    request_data = dumped_object.model_dump_json(by_alias=True)
-                elif isinstance(dumped_object, dict):
-                    request_data = dumped_object
-                else:
-                    raise ValueError("instance must be a BaseModel object or dict")
+        request_data: Optional[str | dict] = None
+
+        if dumped_object is not None:
+            print(method) # TODO del
+            print(dumped_object) # TODO del
+            if method not in [RequestMethod.POST, RequestMethod.PUT, RequestMethod.PATCH]:
+                raise ValueError("Only POST, PUT and PATCH requests can have an dumped object")
+
+            if issubclass(dumped_object.__class__, BaseModel):
+                request_data = dumped_object.model_dump_json(by_alias=True)
+            elif isinstance(dumped_object, dict):
+                request_data = dumped_object
+            else:
+                raise ValueError("dumped_object must be a BaseModel, FikenObject or dict")
 
         headers = {
             'Authorization': f'Bearer {token.access_token if isinstance(token, AccessToken) else token}',
@@ -437,8 +462,13 @@ class FikenObject:
             response.raise_for_status()
         except requests.exceptions.HTTPError as e:
             if e.response.status_code == 403 and trial == 0:  # For 403 error - try refreshing token once
-                if cls._refresh_auth_token():
-                    return cls._execute_method(method, url, dumped_object, file_data, trial + 1, **kwargs)
+                if isinstance(token, AccessToken):
+                    try:
+                        token.attempt_refresh()
+                        return cls._execute_method(method, url, dumped_object, file_data, token, trial + 1, **kwargs)
+                    except RequestErrorException as err:
+                        logger.error(f"Failed to refresh token: {err}")
+                        raise
 
             handle_error(e)
             raise
@@ -446,12 +476,12 @@ class FikenObject:
         return response
 
     @property
-    def is_new(self) -> None | bool:
+    def is_new(self) -> bool:
         """
         Returns whether the object is new or not.
         :return: True if new, False if not, None if not applicable to object
         """
-        return None
+        return self.id_attr[1] is None
 
     @property
     def is_auth_token_local(self) -> bool:
@@ -468,8 +498,8 @@ class FikenObject:
         return self._COMPANY_SLUG
 
     @classmethod
-    def _inject_token_and_slug_and_return(cls, obj: object, token: AccessToken | str,
-                                          company_slug: str = None) -> object:
+    def _inject_token_and_slug_and_return(cls, obj: typing.Self, token: OptionalAccessToken,
+                                          company_slug: Optional[str] = None) -> typing.Self:
         """Injects the token and company slug into the object and returns it.
         Takes first the local token and company slug, then the global ones.
         """
@@ -484,7 +514,7 @@ class FikenObjectRequest(FikenObject):
     Base class for all Fiken object requests.
 
     They only support save requests.
-    They create their parent object when saved.
+    They create their BASE_CLASS object when saved.
     """
     BASE_CLASS: ClassVar[FikenObject] = None
 
@@ -496,9 +526,9 @@ class FikenObjectRequest(FikenObject):
     def getAll(**kwargs):
         raise RequestWrongMediaTypeException("Request objects can not be fetched")
 
-    def save(self, token: AccessToken | str = None, **kwargs: Any) -> type[BASE_CLASS] | None:
+    def save(self, token: OptionalAccessToken = None, **kwargs: Any) -> type[BASE_CLASS] | None:
         if self.__class__.BASE_CLASS is None:
-            raise ValueError("BASE_CLASS not set")
+            raise ValueError(f"BASE_CLASS not set for {self.__class__}")
 
         return super().save(token=token, **kwargs)
 
@@ -543,15 +573,19 @@ class FikenObjectAttachable(FikenObject):
             raise ValueError(f"Unsupported file extension {extension}")
 
     @classmethod
-    def get_attachments_cls(cls, instance: FikenObjectAttachable = None, token: AccessToken | str = None, **kwargs) -> \
+    def get_attachments_cls(cls, instance: Optional[FikenObjectAttachable] = None, token: OptionalAccessToken = None,
+                            **kwargs) -> \
             list[Attachment]:
         url = cls._attachment_url()
 
-        if token is None:
+        if token is None and instance is not None:
             token = instance._auth_token
 
+        if kwargs.get(instance.id_attr[0]) is None and instance.id_attr[1] is not None:
+            kwargs[instance.id_attr[0]] = instance.id_attr[1]
+
         try:
-            response = cls._execute_method(RequestMethod.GET, url, instance, token=token, **kwargs)
+            response = cls._execute_method(RequestMethod.GET, url, token=token, **kwargs)
         except RequestErrorException:
             raise
 
@@ -559,16 +593,16 @@ class FikenObjectAttachable(FikenObject):
 
         return [Attachment(**item) for item in data]
 
-    def get_attachments(self, token: AccessToken | str = None, **kwargs) -> list[Attachment]:
+    def get_attachments(self, token: OptionalAccessToken = None, **kwargs) -> list[Attachment]:
         """Gets all attachments for the resource.
 
         """
         return self.__class__.get_attachments_cls(self, token=token, **kwargs)
 
     @classmethod
-    def add_attachment_bytes_cls(cls, filename: str, data: bytes, comment: str = None,
-                                 instance: FikenObjectAttachable = None,
-                                 token: AccessToken | str = None, **kwargs):
+    def add_attachment_bytes_cls(cls, filename: str, data: bytes, comment: Optional[str] = None,
+                                 instance: Optional[FikenObjectAttachable] = None,
+                                 token: OptionalAccessToken = None, **kwargs):
         """Adds an attachment in form of bytes."""
         if filename is None or data is None:
             raise ValueError("Filename and/or data must be provided")
@@ -600,9 +634,9 @@ class FikenObjectAttachable(FikenObject):
         return True
 
     @classmethod
-    def add_attachment_cls(cls, filepath, filename: str = None, comment: str = None,
-                           instance: FikenObjectAttachable = None,
-                           token: AccessToken | str = None, **kwargs):
+    def add_attachment_cls(cls, filepath, filename: Optional[str] = None, comment: Optional[str] = None,
+                           instance: Optional[FikenObjectAttachable] = None,
+                           token: OptionalAccessToken = None, **kwargs):
         """Adds an attachment."""
         if filepath is None:
             raise ValueError("A path to the attachment must be provided")
@@ -618,13 +652,15 @@ class FikenObjectAttachable(FikenObject):
 
         return cls.add_attachment_bytes_cls(filename, file_data, comment, instance, token=token, **kwargs)
 
-    def add_attachment(self, filepath, filename: str = None, comment: str = None, token: AccessToken | str = None,
+    def add_attachment(self, filepath, filename: Optional[str] = None, comment: Optional[str] = None,
+                       token: OptionalAccessToken = None,
                        **kwargs):
         if token is None:
             token = self._auth_token
         return self.add_attachment_cls(filepath, filename, comment, instance=self, token=token, **kwargs)
 
-    def add_attachment_bytes(self, filename: str, data: bytes, comment: str = None, token: AccessToken | str = None,
+    def add_attachment_bytes(self, filename: str, data: bytes, comment: Optional[str] = None,
+                             token: OptionalAccessToken = None,
                              **kwargs):
         if token is None:
             token = self._auth_token
@@ -634,7 +670,7 @@ class FikenObjectAttachable(FikenObject):
 class FikenObjectCountable(FikenObject):
 
     @classmethod
-    def get_counter(cls, token: AccessToken | str = None, **kwargs) -> int:
+    def get_counter(cls, token: OptionalAccessToken = None, **kwargs) -> int:
         url = cls._get_method_base_URL("COUNTER")
 
         try:
@@ -648,17 +684,17 @@ class FikenObjectCountable(FikenObject):
             raise
 
     @classmethod
-    def set_initial_counter(cls, counter: int, token: AccessToken | str = None, **kwargs) -> bool:
+    def set_initial_counter(cls, counter: int, token: OptionalAccessToken | None = None, **kwargs) -> bool:
         """Set the default invoice counter to the given value
         :param token: Token to use for the request
         :param counter: The value to set the counter to
         :return: True if the counter was set successfully, False otherwise"""
         url = cls._get_method_base_URL("COUNTER")
 
-        counter = Counter(value=counter)
+        counter_obj = Counter(value=counter)
 
         try:
-            response = cls._execute_method(RequestMethod.POST, url, token=token, dumped_object=counter, **kwargs)
+            response = cls._execute_method(RequestMethod.POST, url, token=token, dumped_object=counter_obj, **kwargs)
         except RequestErrorException:
             raise
 
@@ -670,7 +706,7 @@ class FikenObjectCountable(FikenObject):
 class FikenObjectDeleteFlagable(FikenObject):
     """Base class for FikenObjects who are deleted by creating a counter-entry and setting a deleted-flag to True"""
 
-    def delete(self, description: str = None, token: AccessToken | str = None, **kwargs):
+    def delete(self, description: Optional[str] = None, token: OptionalAccessToken = None, **kwargs):
         """
         Does not delete the object itself, but creates a counter-entry and sets the deleted flag to True.
         :arg description: The description of the deletion
@@ -699,7 +735,7 @@ class FikenObjectDeleteFlagable(FikenObject):
 
 class FikenObjectPaymentable(FikenObject):
 
-    def add_payment(self, payment: 'Payment', token: AccessToken | str = None, **kwargs) -> 'Payment':
+    def add_payment(self, payment: "Payment", token: OptionalAccessToken = None, **kwargs) -> "Payment":
         """Adds a payment to the object"""
 
         if kwargs.get(self.id_attr[0]) is None:

@@ -7,7 +7,8 @@ from pydantic import BaseModel, Field
 
 from fiken_py.authorization import AccessToken
 from fiken_py.errors import RequestErrorException
-from fiken_py.fiken_object import FikenObjectRequest, FikenObject, RequestMethod, FikenObjectAttachable
+from fiken_py.fiken_object import FikenObjectRequest, FikenObject, RequestMethod, FikenObjectAttachable, \
+    OptionalAccessToken
 from fiken_py.shared_types import Attachment, AccountingAccount, BankAccountNumber, DraftLineInvoiceIsh, DraftLineOrder
 from fiken_py.models.payment import Payment
 from fiken_py.models import Contact, Project
@@ -34,7 +35,7 @@ class DraftObject(FikenObjectAttachable):
                     f"Object {self.__class__.__name__} has PUT path specified, but no is_new method")
 
         if self.is_new:
-            return super.save(**kwargs)
+            return super().save(**kwargs)
 
         try:
             response = self._execute_method(RequestMethod.PUT, dumped_object=self._to_draft_create_request(),
@@ -51,7 +52,7 @@ class DraftObject(FikenObjectAttachable):
     def _to_draft_create_request(self):
         raise NotImplementedError("Method _to_draft_create_request must be implemented in subclass")
 
-    def submit_object(self, companySlug: str = None, token: AccessToken | str = None):
+    def submit_object(self, companySlug: Optional[str] = None, token: OptionalAccessToken = None):
         if self.CREATED_OBJECT_CLASS is None:
             raise NotImplementedError(f"Object {self.__class__.__name__} does not have a TARGET_CLASS specified")
 

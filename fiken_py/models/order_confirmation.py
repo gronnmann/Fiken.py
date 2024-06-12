@@ -5,7 +5,8 @@ from pydantic import BaseModel, Field
 
 from fiken_py.authorization import AccessToken
 from fiken_py.errors import RequestErrorException
-from fiken_py.fiken_object import FikenObjectAttachable, FikenObjectCountable, RequestMethod, FikenObject
+from fiken_py.fiken_object import FikenObjectAttachable, FikenObjectCountable, RequestMethod, FikenObject, \
+    OptionalAccessToken
 from fiken_py.models import InvoiceDraft
 from fiken_py.models.draft import DraftInvoiceIsh, DraftInvoiceIshCreateRequest, DraftTypeInvoiceIsh
 from fiken_py.shared_types import InvoiceLine, Address
@@ -45,7 +46,7 @@ class OrderConfirmation(FikenObjectCountable, FikenObjectAttachable, BaseModel):
         return "confirmationId", self.confirmationId
 
     @classmethod
-    def to_invoice_draft_cls(cls, token: AccessToken | str = None, **kwargs) -> InvoiceDraft:
+    def to_invoice_draft_cls(cls, token: OptionalAccessToken = None, **kwargs) -> InvoiceDraft:
         url = cls._get_method_base_URL("TO_INVOICE")
 
         try:

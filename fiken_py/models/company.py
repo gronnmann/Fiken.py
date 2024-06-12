@@ -35,10 +35,10 @@ class Company(BaseModel, FikenObject):
         return "companySlug", self.slug
 
     # Inbox
-    def get_inbox(self, follow_pages=True, page: int = None, **kwargs) -> List[InboxDocument]:
+    def get_inbox(self, follow_pages: bool = True, page: Optional[int] = None, **kwargs) -> List[InboxDocument]:
         return InboxDocument.getAll(companySlug=self.slug, follow_pages=follow_pages, page=page, token=self._auth_token, **kwargs)
 
-    def get_inbox_document(self, documentId: int, **kwargs) -> InboxDocument:
+    def get_inbox_document(self, documentId: int, **kwargs) -> InboxDocument | None:
         return InboxDocument.get(companySlug=self.slug, documentId=documentId, token=self._auth_token, **kwargs)
 
     def create_inbox_document(self, document_request: InboxDocumentRequest, **kwargs) -> InboxDocument:
@@ -46,20 +46,20 @@ class Company(BaseModel, FikenObject):
 
     # Balance accounts
 
-    def get_balance_accounts(self, follow_pages=True, page: int = None, **kwargs) -> List[BalanceAccount]:
+    def get_balance_accounts(self, follow_pages: bool = True, page: Optional[int] = None, **kwargs) -> List[BalanceAccount]:
         return BalanceAccount.getAll(companySlug=self.slug, follow_pages=follow_pages, page=page, token=self._auth_token, **kwargs)
 
-    def get_balance_account(self, accountCode: AccountingAccount | str, **kwargs) -> BalanceAccount:
+    def get_balance_account(self, accountCode: AccountingAccount | str, **kwargs) -> BalanceAccount | None:
         if isinstance(accountCode, str):
             accountCode = AccountingAccount(accountCode)
         return BalanceAccount.get(companySlug=self.slug, accountCode=accountCode, token=self._auth_token, **kwargs)
 
-    def get_balance_account_balances(self, follow_pages=True, page: int = None, **kwargs) -> (
+    def get_balance_account_balances(self, follow_pages: bool = True, page: Optional[int] = None, **kwargs) -> (
             List)[BalanceAccountBalance]:
         return BalanceAccount.getAll(companySlug=self.slug, follow_pages=follow_pages, page=page, token=self._auth_token, **kwargs)
 
     def get_balance_account_balance(self, accountCode: AccountingAccount | str,
-                                    date: datetime.date = datetime.date.today(), **kwargs) -> BalanceAccountBalance:
+                                    date: datetime.date = datetime.date.today(), **kwargs) -> BalanceAccountBalance | None:
         if isinstance(accountCode, str):
             accountCode = AccountingAccount(accountCode)
 
@@ -67,10 +67,10 @@ class Company(BaseModel, FikenObject):
 
     # Bank accounts
 
-    def get_bank_accounts(self, follow_pages=True, page: int = None, **kwargs) -> List[BankAccount]:
+    def get_bank_accounts(self, follow_pages: bool = True, page: Optional[int] = None, **kwargs) -> List[BankAccount]:
         return BankAccount.getAll(companySlug=self.slug, follow_pages=follow_pages, page=page, token=self._auth_token, **kwargs)
 
-    def get_bank_account(self, bankAccountId: int, **kwargs) -> BankAccount:
+    def get_bank_account(self, bankAccountId: int, **kwargs) -> BankAccount | None:
         return BankAccount.get(companySlug=self.slug, bankAccountId=bankAccountId, token=self._auth_token, **kwargs)
 
     def create_bank_account(self, bank_account_request: BankAccountRequest, **kwargs) -> BankAccount:
@@ -78,10 +78,10 @@ class Company(BaseModel, FikenObject):
 
     # Contacts
 
-    def get_contacts(self, follow_pages=True, page: int = None, **kwargs) -> List[Contact]:
+    def get_contacts(self, follow_pages: bool = True, page: Optional[int] = None, **kwargs) -> List[Contact]:
         return Contact.getAll(companySlug=self.slug, follow_pages=follow_pages, page=page, token=self._auth_token, **kwargs)
 
-    def get_contact(self, contactId: int, **kwargs) -> Contact:
+    def get_contact(self, contactId: int, **kwargs) -> Contact | None:
         return Contact.get(companySlug=self.slug, contactId=contactId, token=self._auth_token, **kwargs)
 
     def create_contact(self, contact: Contact, **kwargs) -> Contact:
@@ -102,10 +102,10 @@ class Company(BaseModel, FikenObject):
 
         return sale_rep.save(companySlug=self.slug, token=self._auth_token, **kwargs)
 
-    def get_products(self, follow_pages=True, page: int = None, **kwargs) -> List[Product]:
+    def get_products(self, follow_pages: bool = True, page: Optional[int] = None, **kwargs) -> List[Product]:
         return Product.getAll(companySlug=self.slug, follow_pages=follow_pages, page=page, token=self._auth_token, **kwargs)
 
-    def get_product(self, productId: int, **kwargs) -> Product:
+    def get_product(self, productId: int, **kwargs) -> Product | None:
         return Product.get(companySlug=self.slug, productId=productId, token=self._auth_token, **kwargs)
 
     def create_product(self, product: Product, **kwargs) -> Product:
@@ -115,10 +115,10 @@ class Company(BaseModel, FikenObject):
 
     # Journal Entries
 
-    def get_journal_entries(self, follow_pages=True, page: int = None, **kwargs) -> List[JournalEntry]:
+    def get_journal_entries(self, follow_pages: bool = True, page: Optional[int] = None, **kwargs) -> List[JournalEntry]:
         return JournalEntry.getAll(companySlug=self.slug, follow_pages=follow_pages, page=page, token=self._auth_token, **kwargs)
 
-    def get_journal_entry(self, journalEntryId: int, **kwargs) -> JournalEntry:
+    def get_journal_entry(self, journalEntryId: int, **kwargs) -> JournalEntry | None:
         return JournalEntry.get(companySlug=self.slug, journalEntryId=journalEntryId, token=self._auth_token, **kwargs)
 
     def create_journal_entry(self, journal_entry_request: JournalEntryRequest, **kwargs) -> Transaction:
@@ -126,7 +126,7 @@ class Company(BaseModel, FikenObject):
 
     # Transactions
 
-    def get_transactions(self, follow_pages=True, page: int = None, **kwargs) -> List[Transaction]:
+    def get_transactions(self, follow_pages: bool = True, page: Optional[int] = None, **kwargs) -> List[Transaction]:
         return Transaction.getAll(companySlug=self.slug, follow_pages=follow_pages, page=page, token=self._auth_token, **kwargs)
 
     def get_transaction(self, transactionId: int, **kwargs) -> Transaction:
@@ -134,19 +134,19 @@ class Company(BaseModel, FikenObject):
 
     # Invoices
 
-    def get_invoices(self, follow_pages=True, page: int = None, **kwargs) -> List[Invoice]:
+    def get_invoices(self, follow_pages: bool = True, page: Optional[int] = None, **kwargs) -> List[Invoice]:
         return Invoice.getAll(companySlug=self.slug, follow_pages=follow_pages, page=page, token=self._auth_token, **kwargs)
 
-    def get_invoice(self, invoiceId: int, **kwargs) -> Invoice:
+    def get_invoice(self, invoiceId: int, **kwargs) -> Invoice | None:
         return Invoice.get(companySlug=self.slug, invoiceId=invoiceId, token=self._auth_token, **kwargs)
 
-    def create_invoice(self, invoice_request: InvoiceRequest, **kwargs) -> Invoice:
+    def create_invoice(self, invoice_request: InvoiceRequest, **kwargs) -> Invoice | None:
         return invoice_request.save(companySlug=self.slug, token=self._auth_token, **kwargs)
 
-    def get_invoice_drafts(self, follow_pages=True, page: int = None, **kwargs) -> List[InvoiceDraft]:
+    def get_invoice_drafts(self, follow_pages: bool = True, page: Optional[int] = None, **kwargs) -> List[InvoiceDraft]:
         return InvoiceDraft.getAll(companySlug=self.slug, follow_pages=follow_pages, page=page, token=self._auth_token, **kwargs)
 
-    def get_invoice_draft(self, draftId: int, **kwargs) -> InvoiceDraft:
+    def get_invoice_draft(self, draftId: int, **kwargs) -> InvoiceDraft | None:
         return InvoiceDraft.get(companySlug=self.slug, draftId=draftId, token=self._auth_token, **kwargs)
 
     def create_invoice_draft(self, invoice_draft_request: InvoiceDraftRequest, **kwargs) -> InvoiceDraft:
@@ -154,20 +154,20 @@ class Company(BaseModel, FikenObject):
 
     # Credit Notes
 
-    def get_credit_notes(self, follow_pages=True, page: int = None, **kwargs) -> List[CreditNote]:
+    def get_credit_notes(self, follow_pages: bool = True, page: Optional[int] = None, **kwargs) -> List[CreditNote]:
         return CreditNote.getAll(companySlug=self.slug, follow_pages=follow_pages, page=page, token=self._auth_token, **kwargs)
 
-    def get_credit_note(self, creditNoteId: int, **kwargs) -> CreditNote:
+    def get_credit_note(self, creditNoteId: int, **kwargs) -> CreditNote | None:
         return CreditNote.get(companySlug=self.slug, creditNoteId=creditNoteId, token=self._auth_token, **kwargs)
 
-    def create_credit_note_from_invoice_full(self, invoiceId, creditNoteText: str = None, issueDate=datetime.date.today(), **kwargs) -> CreditNote:
+    def create_credit_note_from_invoice_full(self, invoiceId: int, creditNoteText: Optional[str] = None, issueDate=datetime.date.today(), **kwargs) -> CreditNote:
         return CreditNote.create_from_invoice_full(invoiceId=invoiceId, issueDate=issueDate,
                                                    creditNoteText=creditNoteText, companySlug=self.slug, token=self._auth_token, **kwargs)
 
-    def get_credit_note_drafts(self, follow_pages=True, page: int = None, **kwargs) -> List[CreditNoteDraft]:
+    def get_credit_note_drafts(self, follow_pages: bool = True, page: Optional[int] = None, **kwargs) -> List[CreditNoteDraft]:
         return CreditNoteDraft.getAll(companySlug=self.slug, follow_pages=follow_pages, page=page, token=self._auth_token, **kwargs)
 
-    def get_credit_note_draft(self, draftId: int, **kwargs) -> CreditNoteDraft:
+    def get_credit_note_draft(self, draftId: int, **kwargs) -> CreditNoteDraft | None:
         return CreditNoteDraft.get(companySlug=self.slug, draftId=draftId, token=self._auth_token, **kwargs)
 
     def create_credit_note_draft(self, credit_note_draft_request: CreditNoteDraftRequest, **kwargs) -> CreditNoteDraft:
@@ -175,10 +175,10 @@ class Company(BaseModel, FikenObject):
 
     # Offers
 
-    def get_offers(self, follow_pages=True, page: int = None, **kwargs) -> List[Offer]:
+    def get_offers(self, follow_pages: bool = True, page: Optional[int] = None, **kwargs) -> List[Offer]:
         return Offer.getAll(companySlug=self.slug, follow_pages=follow_pages, page=page, token=self._auth_token, **kwargs)
 
-    def get_offer(self, offerId: int, **kwargs) -> Offer:
+    def get_offer(self, offerId: int, **kwargs) -> Offer | None:
         return Offer.get(companySlug=self.slug, offerId=offerId, token=self._auth_token, **kwargs)
 
     def get_offer_counter(self, **kwargs) -> int:
@@ -187,10 +187,10 @@ class Company(BaseModel, FikenObject):
     def set_initial_offer_counter(self, counter: int, **kwargs) -> int:
         return Offer.set_initial_counter(companySlug=self.slug, counter=counter, token=self._auth_token, **kwargs)
 
-    def get_offer_drafts(self, follow_pages=True, page: int = None, **kwargs) -> List[OfferDraft]:
+    def get_offer_drafts(self, follow_pages: bool = True, page: Optional[int] = None, **kwargs) -> List[OfferDraft]:
         return OfferDraft.getAll(companySlug=self.slug, follow_pages=follow_pages, page=page, token=self._auth_token, **kwargs)
 
-    def get_offer_draft(self, draftId: int, **kwargs) -> OfferDraft:
+    def get_offer_draft(self, draftId: int, **kwargs) -> OfferDraft | None:
         return OfferDraft.get(companySlug=self.slug, draftId=draftId, token=self._auth_token, **kwargs)
 
     def create_offer_draft(self, offer_draft_request: OfferDraftRequest, **kwargs) -> OfferDraft:
@@ -198,11 +198,11 @@ class Company(BaseModel, FikenObject):
 
     # Order confirmations
 
-    def get_order_confirmations(self, follow_pages=True, page: int = None, **kwargs) -> (
+    def get_order_confirmations(self, follow_pages: bool = True, page: Optional[int] = None, **kwargs) -> (
             List)[OrderConfirmation]:
         return OrderConfirmation.getAll(companySlug=self.slug, follow_pages=follow_pages, page=page, token=self._auth_token, **kwargs)
 
-    def get_order_confirmation(self, orderConfirmationId: int, **kwargs) -> OrderConfirmation:
+    def get_order_confirmation(self, orderConfirmationId: int, **kwargs) -> OrderConfirmation | None:
         return OrderConfirmation.get(companySlug=self.slug, orderConfirmationId=orderConfirmationId, token=self._auth_token, **kwargs)
 
     def get_order_confirmation_counter(self, **kwargs) -> int:
@@ -211,11 +211,11 @@ class Company(BaseModel, FikenObject):
     def set_initial_order_confirmation_counter(self, counter: int, **kwargs) -> int:
         return OrderConfirmation.set_initial_counter(companySlug=self.slug, counter=counter, token=self._auth_token, **kwargs)
 
-    def get_order_confirmation_drafts(self, follow_pages=True, page: int = None, **kwargs) -> (
+    def get_order_confirmation_drafts(self, follow_pages: bool = True, page: Optional[int] = None, **kwargs) -> (
             List)[OrderConfirmationDraft]:
         return OrderConfirmationDraft.getAll(companySlug=self.slug, follow_pages=follow_pages, page=page, token=self._auth_token, **kwargs)
 
-    def get_order_confirmation_draft(self, draftId: int, **kwargs) -> OrderConfirmationDraft:
+    def get_order_confirmation_draft(self, draftId: int, **kwargs) -> OrderConfirmationDraft | None:
         return OrderConfirmationDraft.get(companySlug=self.slug, draftId=draftId, token=self._auth_token, **kwargs)
 
     def create_order_confirmation_draft(self, order_confirmation_draft_request: OrderConfirmationDraftRequest,
@@ -224,19 +224,19 @@ class Company(BaseModel, FikenObject):
 
     # Sales
 
-    def get_sales(self, follow_pages=True, page: int = None, **kwargs) -> List[Sale]:
+    def get_sales(self, follow_pages: bool = True, page: Optional[int] = None, **kwargs) -> List[Sale]:
         return Sale.getAll(companySlug=self.slug, follow_pages=follow_pages, page=page, token=self._auth_token, **kwargs)
 
-    def get_sale(self, saleId: int, **kwargs) -> Sale:
+    def get_sale(self, saleId: int, **kwargs) -> Sale | None:
         return Sale.get(companySlug=self.slug, saleId=saleId, token=self._auth_token, **kwargs)
 
     def create_sale(self, sale_request: SaleRequest, **kwargs) -> Sale:
         return sale_request.save(companySlug=self.slug, token=self._auth_token, **kwargs)
 
-    def get_sale_drafts(self, follow_pages=True, page: int = None, **kwargs) -> List[SaleDraft]:
+    def get_sale_drafts(self, follow_pages: bool = True, page: Optional[int] = None, **kwargs) -> List[SaleDraft]:
         return SaleDraft.getAll(companySlug=self.slug, follow_pages=follow_pages, page=page, token=self._auth_token, **kwargs)
 
-    def get_sale_draft(self, draftId: int, **kwargs) -> SaleDraft:
+    def get_sale_draft(self, draftId: int, **kwargs) -> SaleDraft | None:
         return SaleDraft.get(companySlug=self.slug, draftId=draftId, token=self._auth_token, **kwargs)
 
     def create_sale_draft(self, sale_draft_request: SaleDraftRequest, **kwargs) -> SaleDraft:
@@ -244,19 +244,19 @@ class Company(BaseModel, FikenObject):
 
     # Purchases
 
-    def get_purchases(self, follow_pages=True, page: int = None, **kwargs) -> List[Purchase]:
+    def get_purchases(self, follow_pages: bool = True, page: Optional[int] = None, **kwargs) -> List[Purchase]:
         return Purchase.getAll(companySlug=self.slug, follow_pages=follow_pages, page=page, token=self._auth_token, **kwargs)
 
-    def get_purchase(self, purchaseId: int, **kwargs) -> Purchase:
+    def get_purchase(self, purchaseId: int, **kwargs) -> Purchase | None:
         return Purchase.get(companySlug=self.slug, purchaseId=purchaseId, token=self._auth_token, **kwargs)
 
     def create_purchase(self, purchase_request: PurchaseRequest, **kwargs) -> Purchase:
         return purchase_request.save(companySlug=self.slug, token=self._auth_token, **kwargs)
 
-    def get_purchase_drafts(self, follow_pages=True, page: int = None, **kwargs) -> List[PurchaseDraft]:
+    def get_purchase_drafts(self, follow_pages: bool = True, page: Optional[int] = None, **kwargs) -> List[PurchaseDraft]:
         return PurchaseDraft.getAll(companySlug=self.slug, follow_pages=follow_pages, page=page, token=self._auth_token, **kwargs)
 
-    def get_purchase_draft(self, draftId: int, **kwargs) -> PurchaseDraft:
+    def get_purchase_draft(self, draftId: int, **kwargs) -> PurchaseDraft | None:
         return PurchaseDraft.get(companySlug=self.slug, draftId=draftId, token=self._auth_token, **kwargs)
 
     def create_purchase_draft(self, purchase_draft_request: PurchaseDraftRequest, **kwargs) -> PurchaseDraft:
@@ -264,10 +264,10 @@ class Company(BaseModel, FikenObject):
 
     # Projects
 
-    def get_projects(self, follow_pages=True, page: int = None, **kwargs) -> List[Project]:
+    def get_projects(self, follow_pages: bool = True, page: Optional[int] = None, **kwargs) -> List[Project]:
         return Project.getAll(companySlug=self.slug, follow_pages=follow_pages, page=page, token=self._auth_token, **kwargs)
 
-    def get_project(self, projectId: int, **kwargs) -> Project:
+    def get_project(self, projectId: int, **kwargs) -> Project | None:
         return Project.get(companySlug=self.slug, projectId=projectId, token=self._auth_token, **kwargs)
 
     def create_project(self, project_request: ProjectRequest, **kwargs) -> Project:

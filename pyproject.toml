@@ -19,4 +19,4 @@ authors = [
 ]
 description = "A Python implementation of the Fiken REST API"
 readme = "README.md"
-requires-python = ">=3.10"
+requires-python = ">=3.12"

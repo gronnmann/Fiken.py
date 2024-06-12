@@ -24,10 +24,10 @@ class ProjectUpdateRequest(ProjectBase):
 
 
 class Project(FikenObject, ProjectBase):
-    _GET_PATH_SINGLE = '/companies/{companySlug}/projects/{projectId}'
-    _GET_PATH_MULTIPLE = '/companies/{companySlug}/projects/'
-    _DELETE_PATH = '/companies/{companySlug}/projects/{projectId}'
-    _PATCH_PATH = '/companies/{companySlug}/projects/{projectId}'
+    _GET_PATH_SINGLE = "/companies/{companySlug}/projects/{projectId}"
+    _GET_PATH_MULTIPLE = "/companies/{companySlug}/projects/"
+    _DELETE_PATH = "/companies/{companySlug}/projects/{projectId}"
+    _PATCH_PATH = "/companies/{companySlug}/projects/{projectId}"
 
     projectId: Optional[int] = None
     number: Optional[str] = None
@@ -46,13 +46,19 @@ class Project(FikenObject, ProjectBase):
 
     def save(self, **kwargs: Any) -> typing.Self | None:
         if self._get_method_base_URL(RequestMethod.PATCH) is None:
-            raise RequestWrongMediaTypeException(f"Object {self.__class__.__name__} does not support PATCH")
+            raise RequestWrongMediaTypeException(
+                f"Object {self.__class__.__name__} does not support PATCH"
+            )
 
         payload = ProjectUpdateRequest(**self.model_dump(exclude_unset=True))
 
         try:
-            response = self._execute_method(RequestMethod.PATCH, dumped_object=payload, projectId=self.projectId,
-                                            **kwargs)
+            response = self._execute_method(
+                RequestMethod.PATCH,
+                dumped_object=payload,
+                projectId=self.projectId,
+                **kwargs,
+            )
         except RequestErrorException:
             raise
 
@@ -61,7 +67,7 @@ class Project(FikenObject, ProjectBase):
 
 class ProjectRequest(FikenObjectRequest, ProjectBase):
     BASE_CLASS: ClassVar[FikenObject] = Project
-    _POST_PATH = '/companies/{companySlug}/projects'
+    _POST_PATH = "/companies/{companySlug}/projects"
 
     startDate: date
     contactId: Optional[int] = None

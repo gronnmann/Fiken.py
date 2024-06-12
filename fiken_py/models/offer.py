@@ -3,16 +3,24 @@ from typing import Optional, ClassVar
 
 from pydantic import BaseModel, Field
 
-from fiken_py.fiken_object import FikenObjectCountable, FikenObjectAttachable, FikenObject
-from fiken_py.models.draft import DraftInvoiceIsh, DraftTypeInvoiceIsh, DraftInvoiceIshCreateRequest
+from fiken_py.fiken_object import (
+    FikenObjectCountable,
+    FikenObjectAttachable,
+    FikenObject,
+)
+from fiken_py.models.draft import (
+    DraftInvoiceIsh,
+    DraftTypeInvoiceIsh,
+    DraftInvoiceIshCreateRequest,
+)
 from fiken_py.shared_types import Address, InvoiceLine
 
 
 class Offer(FikenObjectCountable, FikenObjectAttachable, BaseModel):
-    _GET_PATH_SINGLE = '/companies/{companySlug}/offers/{offerId}'
-    _GET_PATH_MULTIPLE = '/companies/{companySlug}/offers/'
+    _GET_PATH_SINGLE = "/companies/{companySlug}/offers/{offerId}"
+    _GET_PATH_MULTIPLE = "/companies/{companySlug}/offers/"
 
-    _COUNTER_PATH = '/companies/{companySlug}/offers/counter'
+    _COUNTER_PATH = "/companies/{companySlug}/offers/counter"
 
     offerId: Optional[int] = None
     offerDraftUuid: Optional[str] = None
@@ -27,7 +35,7 @@ class Offer(FikenObjectCountable, FikenObjectAttachable, BaseModel):
     discount: Optional[int] = None
     address: Optional[Address] = None
     lines: Optional[list[InvoiceLine]] = []
-    currency: Optional[str] = Field(None, pattern='^[A-Z]{3}$')
+    currency: Optional[str] = Field(None, pattern="^[A-Z]{3}$")
     contactId: Optional[int] = None
     contactPersonId: Optional[int] = None
     projectId: Optional[int] = None
@@ -41,18 +49,18 @@ class Offer(FikenObjectCountable, FikenObjectAttachable, BaseModel):
 class OfferDraft(DraftInvoiceIsh):
     CREATED_OBJECT_CLASS: ClassVar[FikenObject] = Offer
 
-    _GET_PATH_SINGLE = '/companies/{companySlug}/offers/drafts/{draftId}'
-    _GET_PATH_MULTIPLE = '/companies/{companySlug}/offers/drafts'
-    _DELETE_PATH = '/companies/{companySlug}/offers/drafts/{draftId}'
-    _PUT_PATH = '/companies/{companySlug}/offers/drafts/{draftId}'
+    _GET_PATH_SINGLE = "/companies/{companySlug}/offers/drafts/{draftId}"
+    _GET_PATH_MULTIPLE = "/companies/{companySlug}/offers/drafts"
+    _DELETE_PATH = "/companies/{companySlug}/offers/drafts/{draftId}"
+    _PUT_PATH = "/companies/{companySlug}/offers/drafts/{draftId}"
 
-    _CREATE_OBJECT_PATH = '/companies/{companySlug}/offers/drafts/{draftId}/createOffer'
+    _CREATE_OBJECT_PATH = "/companies/{companySlug}/offers/drafts/{draftId}/createOffer"
 
     type: DraftTypeInvoiceIsh = DraftTypeInvoiceIsh.OFFER
 
 
 class OfferDraftRequest(DraftInvoiceIshCreateRequest):
     BASE_CLASS: ClassVar[FikenObject] = OfferDraft
-    _POST_PATH = '/companies/{companySlug}/offers/drafts'
+    _POST_PATH = "/companies/{companySlug}/offers/drafts"
 
     type: DraftTypeInvoiceIsh = DraftTypeInvoiceIsh.OFFER

@@ -2,10 +2,24 @@ import pytest
 from pydantic import ValidationError, BaseModel
 
 from fiken_py.shared_enums import VatTypeProductSale, VatTypeProductPurchase
-from fiken_py.shared_types import InvoiceLineRequest, AccountingAccount, AccountingAccountAssets, \
-    AccountingAccountCosts, AccountingAccountIncome, AccountingAccountEquityAndLiabilities, DraftLineOrder, OrderLine
-from fiken_py.models import BankAccount, BankAccountRequest, DraftLineInvoiceIsh, BankAccountType, \
-    PurchaseDraftRequest, SaleDraftRequest
+from fiken_py.shared_types import (
+    InvoiceLineRequest,
+    AccountingAccount,
+    AccountingAccountAssets,
+    AccountingAccountCosts,
+    AccountingAccountIncome,
+    AccountingAccountEquityAndLiabilities,
+    DraftLineOrder,
+    OrderLine,
+)
+from fiken_py.models import (
+    BankAccount,
+    BankAccountRequest,
+    DraftLineInvoiceIsh,
+    BankAccountType,
+    PurchaseDraftRequest,
+    SaleDraftRequest,
+)
 
 
 def test_validate_invoice_line():
@@ -101,60 +115,58 @@ def test_bankaccount_request_foreignservice():
         )
 
 
-@pytest.mark.parametrize("test_input,valid", [
-    ("3020", True),
-    ("1500:10001", True),
-    ("1", False),
-    ("1234", True),
-    ("12345:", False),
-    ("150010001", False),
-    ("9000", False),
-])
+@pytest.mark.parametrize(
+    "test_input,valid",
+    [
+        ("3020", True),
+        ("1500:10001", True),
+        ("1", False),
+        ("1234", True),
+        ("12345:", False),
+        ("150010001", False),
+        ("9000", False),
+    ],
+)
 def test_accounting_account(test_input, valid):
     class AccountCodeTest(BaseModel):
         accountCode: AccountingAccount
 
     if not valid:
         with pytest.raises(ValidationError):
-            acc = AccountCodeTest(
-                accountCode=test_input
-            )
+            acc = AccountCodeTest(accountCode=test_input)
     else:
-        acc = AccountCodeTest(
-            accountCode=test_input
-        )
+        acc = AccountCodeTest(accountCode=test_input)
         assert acc is not None
         assert acc.accountCode == test_input
 
 
-@pytest.mark.parametrize("test_input,valid_assets,valid_equity_and_liabilities,valid_income,valid_costs",
-                         [
-                             ("1500", True, False, False, False),
-                             ("1500:10001", True, False, False, False),
-                             ("2000", False, True, False, False),
-                             ("3000", False, False, True, False),
-                             ("3200", False, False, True, False),
-                             ("4000", False, False, False, True),
-                             ("1", False, False, False, False),
-                             ("1234", True, False, False, False),
-                             ("12345:", False, False, False, False),
-                             ("150010001", False, False, False, False),
-                             ("8123", False, False, True, True),
-                         ])
+@pytest.mark.parametrize(
+    "test_input,valid_assets,valid_equity_and_liabilities,valid_income,valid_costs",
+    [
+        ("1500", True, False, False, False),
+        ("1500:10001", True, False, False, False),
+        ("2000", False, True, False, False),
+        ("3000", False, False, True, False),
+        ("3200", False, False, True, False),
+        ("4000", False, False, False, True),
+        ("1", False, False, False, False),
+        ("1234", True, False, False, False),
+        ("12345:", False, False, False, False),
+        ("150010001", False, False, False, False),
+        ("8123", False, False, True, True),
+    ],
+)
 def test_account_account_classes(
-        test_input, valid_assets, valid_equity_and_liabilities, valid_income, valid_costs):
+    test_input, valid_assets, valid_equity_and_liabilities, valid_income, valid_costs
+):
     class AssetsAccount(BaseModel):
         accountCode: AccountingAccountAssets
 
     if not valid_assets:
         with pytest.raises(ValidationError):
-            acc = AssetsAccount(
-                accountCode=test_input
-            )
+            acc = AssetsAccount(accountCode=test_input)
     else:
-        acc = AssetsAccount(
-            accountCode=test_input
-        )
+        acc = AssetsAccount(accountCode=test_input)
         assert acc is not None
         assert acc.accountCode == test_input
 
@@ -163,14 +175,10 @@ def test_account_account_classes(
 
     if not valid_equity_and_liabilities:
         with pytest.raises(ValidationError):
-            acc = EquityAndLiabilitiesAccount(
-                accountCode=test_input
-            )
+            acc = EquityAndLiabilitiesAccount(accountCode=test_input)
 
     else:
-        acc = EquityAndLiabilitiesAccount(
-            accountCode=test_input
-        )
+        acc = EquityAndLiabilitiesAccount(accountCode=test_input)
         assert acc is not None
         assert acc.accountCode == test_input
 
@@ -179,14 +187,10 @@ def test_account_account_classes(
 
     if not valid_income:
         with pytest.raises(ValidationError):
-            acc = IncomeAccount(
-                accountCode=test_input
-            )
+            acc = IncomeAccount(accountCode=test_input)
 
     else:
-        acc = IncomeAccount(
-            accountCode=test_input
-        )
+        acc = IncomeAccount(accountCode=test_input)
         assert acc is not None
         assert acc.accountCode == test_input
 
@@ -195,10 +199,7 @@ def test_account_account_classes(
 
     if not valid_costs:
         with pytest.raises(ValidationError):
-            acc = CostsAccount(
-                accountCode=test_input
-            )
-
+            acc = CostsAccount(accountCode=test_input)
 
 
 def test_sale_purcahse_draft_vat_types():
@@ -206,41 +207,26 @@ def test_sale_purcahse_draft_vat_types():
         vatType=VatTypeProductPurchase.HIGH_PURCHASE_OF_EMISSIONSTRADING_OR_GOLD_NONDEDUCTIBLE,
     )
 
-    draft_line_sale = DraftLineOrder(
-        vatType=VatTypeProductSale.EXEMPT)
+    draft_line_sale = DraftLineOrder(vatType=VatTypeProductSale.EXEMPT)
 
-    draft_line_both = DraftLineOrder(
-        vatType="HIGH"
-    )
+    draft_line_both = DraftLineOrder(vatType="HIGH")
 
-    correct = PurchaseDraftRequest(
-        cash=True, lines=[draft_line_purchase]
-    )
+    correct = PurchaseDraftRequest(cash=True, lines=[draft_line_purchase])
     assert correct is not None
 
     with pytest.raises(ValidationError):
-        wrong = PurchaseDraftRequest(
-            cash=True, lines=[draft_line_sale]
-        )
+        wrong = PurchaseDraftRequest(cash=True, lines=[draft_line_sale])
 
-    correct = PurchaseDraftRequest(
-        cash=True, lines=[draft_line_both]
-    )
+    correct = PurchaseDraftRequest(cash=True, lines=[draft_line_both])
     assert correct is not None
 
-    correct = SaleDraftRequest(
-        cash=True, lines=[draft_line_sale]
-    )
+    correct = SaleDraftRequest(cash=True, lines=[draft_line_sale])
     assert correct is not None
 
     with pytest.raises(ValidationError):
-        wrong = SaleDraftRequest(
-            cash=True, lines=[draft_line_purchase]
-        )
+        wrong = SaleDraftRequest(cash=True, lines=[draft_line_purchase])
 
-    correct = SaleDraftRequest(
-        cash=True, lines=[draft_line_both]
-    )
+    correct = SaleDraftRequest(cash=True, lines=[draft_line_both])
 
     assert correct is not None
 

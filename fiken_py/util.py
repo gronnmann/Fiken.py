@@ -3,9 +3,15 @@ from urllib import response
 
 from requests import HTTPError
 
-from fiken_py.errors import RequestBadRequestException, RequestUserUnauthenticatedException, RequestForbiddenException, \
-    RequestContentNotFoundException, RequestUnsupportedMethodException, RequestWrongMediaTypeException, \
-    RequestErrorException
+from fiken_py.errors import (
+    RequestBadRequestException,
+    RequestUserUnauthenticatedException,
+    RequestForbiddenException,
+    RequestContentNotFoundException,
+    RequestUnsupportedMethodException,
+    RequestWrongMediaTypeException,
+    RequestErrorException,
+)
 
 
 def handle_error(e: HTTPError):
@@ -20,7 +26,11 @@ def handle_error(e: HTTPError):
         if json.get("error_description") is not None:
             err_description = json["error_description"]
         elif json.get("message") is not None:
-            err_description = json["message"] if err_description is None else f"{err_description}: {json['message']}"
+            err_description = (
+                json["message"]
+                if err_description is None
+                else f"{err_description}: {json['message']}"
+            )
         else:
             err = "Unparsed error"
             err_description = e.response.text

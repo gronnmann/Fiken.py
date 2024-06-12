@@ -2,7 +2,10 @@ def test_extract_placeholders_kwargs_no_placeholders():
     path = "/api/v2/user"
     kwargs = {"id": 1}
     result = FikenObject._extract_placeholders_kwargs(path, **kwargs)
-    assert result == (path, kwargs), "The path and kwargs should remain unchanged when there are no placeholders"
+    assert result == (
+        path,
+        kwargs,
+    ), "The path and kwargs should remain unchanged when there are no placeholders"
 
 
 def test_extract_placeholders_kwargs_with_placeholders():
@@ -10,13 +13,17 @@ def test_extract_placeholders_kwargs_with_placeholders():
     kwargs = {"id": 1}
     result = FikenObject._extract_placeholders_kwargs(path, **kwargs)
     assert result == (
-        "/api/v2/user/1", {}), "The path should be formatted with the kwargs and the kwargs should be empty"
+        "/api/v2/user/1",
+        {},
+    ), "The path should be formatted with the kwargs and the kwargs should be empty"
 
 
 def test_extract_placeholders_kwargs_missing_placeholder():
     path = "/api/v2/user/{id}"
     kwargs = {}
-    with pytest.raises(ValueError, match="Missing placeholder value for id in /api/v2/user/{id}"):
+    with pytest.raises(
+        ValueError, match="Missing placeholder value for id in /api/v2/user/{id}"
+    ):
         FikenObject._extract_placeholders_kwargs(path, **kwargs)
 
 
@@ -25,7 +32,9 @@ def test_extract_placeholders_kwargs_multiple_placeholders():
     kwargs = {"id": 1, "post_id": 2}
     result = FikenObject._extract_placeholders_kwargs(path, **kwargs)
     assert result == (
-        "/api/v2/user/1/post/2", {}), "The path should be formatted with the kwargs and the kwargs should be empty"
+        "/api/v2/user/1/post/2",
+        {},
+    ), "The path should be formatted with the kwargs and the kwargs should be empty"
 
 
 import pytest
@@ -43,7 +52,9 @@ def test_extract_placeholders_basemodel_with_placeholder():
     obj = FikenObject()
     obj.attribute = "value"
     path = "/api/v2/object/{attribute}"
-    assert FikenObject._extract_placeholders_basemodel(path, obj) == "/api/v2/object/value"
+    assert (
+        FikenObject._extract_placeholders_basemodel(path, obj) == "/api/v2/object/value"
+    )
 
 
 def test_extract_placeholders_basemodel_with_nonexistent_placeholder():
@@ -58,7 +69,10 @@ def test_extract_placeholders_basemodel_with_multiple_placeholders():
     obj.attribute1 = "value1"
     obj.attribute2 = "value2"
     path = "/api/v2/object/{attribute1}/{attribute2}"
-    assert FikenObject._extract_placeholders_basemodel(path, obj) == "/api/v2/object/value1/value2"
+    assert (
+        FikenObject._extract_placeholders_basemodel(path, obj)
+        == "/api/v2/object/value1/value2"
+    )
 
 
 def test_combined_no_placeholder():
@@ -87,7 +101,10 @@ def test_combined_with_nonexistent_placeholder():
     path = "/api/v2/object/{nonexistent}"
     kwargs = {}
     preprocessed_path = FikenObject._extract_placeholders_basemodel(path, obj)
-    with pytest.raises(ValueError, match="Missing placeholder value for nonexistent in /api/v2/object/{nonexistent}"):
+    with pytest.raises(
+        ValueError,
+        match="Missing placeholder value for nonexistent in /api/v2/object/{nonexistent}",
+    ):
         FikenObject._extract_placeholders_kwargs(preprocessed_path, **kwargs)
 
 

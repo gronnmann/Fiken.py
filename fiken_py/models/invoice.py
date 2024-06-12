@@ -6,9 +6,18 @@ import requests
 from pydantic import BaseModel, Field
 
 from fiken_py.errors import RequestWrongMediaTypeException, RequestErrorException
-from fiken_py.fiken_object import FikenObject, FikenObjectRequest, RequestMethod, FikenObjectCountable, \
-    FikenObjectAttachable
-from fiken_py.models.draft import DraftInvoiceIsh, DraftTypeInvoiceIsh, DraftInvoiceIshCreateRequest
+from fiken_py.fiken_object import (
+    FikenObject,
+    FikenObjectRequest,
+    RequestMethod,
+    FikenObjectCountable,
+    FikenObjectAttachable,
+)
+from fiken_py.models.draft import (
+    DraftInvoiceIsh,
+    DraftTypeInvoiceIsh,
+    DraftInvoiceIshCreateRequest,
+)
 from fiken_py.shared_types import Address, Attachment, InvoiceLineRequest, InvoiceLine
 from fiken_py.shared_enums import SendMethod, SendEmailOption, VatTypeProduct
 from fiken_py.models import Contact, Project, Sale
@@ -22,7 +31,9 @@ class InvoiceSendRequest(BaseModel):
     recipientName: Optional[str] = None
     recipientEmail: Optional[str] = None
     message: Optional[str] = None
-    emailSendOption: Optional[SendEmailOption] = None  # TODO - requuire this when method is email
+    emailSendOption: Optional[SendEmailOption] = (
+        None  # TODO - requuire this when method is email
+    )
     mergeInvoiceAndAttachments: Optional[bool] = None
     organizationNumber: Optional[str] = None
     mobileNumber: Optional[str] = None
@@ -34,11 +45,11 @@ class InvoiceUpdateRequest(BaseModel):
 
 
 class Invoice(FikenObjectCountable, FikenObjectAttachable, BaseModel):
-    _GET_PATH_SINGLE = '/companies/{companySlug}/invoices/{invoiceId}'
-    _GET_PATH_MULTIPLE = '/companies/{companySlug}/invoices'
-    _PATCH_PATH = '/companies/{companySlug}/invoices/{invoiceId}'
+    _GET_PATH_SINGLE = "/companies/{companySlug}/invoices/{invoiceId}"
+    _GET_PATH_MULTIPLE = "/companies/{companySlug}/invoices"
+    _PATCH_PATH = "/companies/{companySlug}/invoices/{invoiceId}"
 
-    _COUNTER_PATH = '/companies/{companySlug}/invoices/counter'
+    _COUNTER_PATH = "/companies/{companySlug}/invoices/counter"
 
     invoiceId: Optional[int] = None
     createdDate: Optional[datetime.date] = None
@@ -69,7 +80,7 @@ class Invoice(FikenObjectCountable, FikenObjectAttachable, BaseModel):
     associatedCreditNotes: Optional[list[int]] = []
     attachments: Optional[list[Attachment]] = []
     customer: Optional[Contact] = None
-    sale: Optional[Sale] = None,
+    sale: Optional[Sale] = (None,)
     project: Optional[Project] = None
 
     @property
@@ -78,16 +89,21 @@ class Invoice(FikenObjectCountable, FikenObjectAttachable, BaseModel):
 
     def save(self, **kwargs: Any) -> typing.Self:
         if self._get_method_base_URL(RequestMethod.PATCH) is None:
-            raise RequestWrongMediaTypeException(f"Object {self.__class__.__name__} does not support PATCH")
+            raise RequestWrongMediaTypeException(
+                f"Object {self.__class__.__name__} does not support PATCH"
+            )
 
         payload = InvoiceUpdateRequest(
-            newDueDate=self.dueDate,
-            sentManually=self.sentManually
+            newDueDate=self.dueDate, sentManually=self.sentManually
         )
 
         try:
-            response = self._execute_method(RequestMethod.PATCH, dumped_object=payload,
-                                            invoiceId=self.invoiceId, **kwargs)
+            response = self._execute_method(
+                RequestMethod.PATCH,
+                dumped_object=payload,
+                invoiceId=self.invoiceId,
+                **kwargs,
+            )
         except RequestErrorException:
             raise
 
@@ -95,15 +111,24 @@ class Invoice(FikenObjectCountable, FikenObjectAttachable, BaseModel):
 
     @classmethod
     def send_to_customer(cls, invoice_request: InvoiceSendRequest, companySlug=None):
-        url_base = cls._get_method_base_URL(cls._get_method_base_URL(RequestMethod.GET_MULTIPLE))
+        url_base = cls._get_method_base_URL(
+            cls._get_method_base_URL(RequestMethod.GET_MULTIPLE)
+        )
 
         if url_base is None:
-            raise RequestWrongMediaTypeException(f"Object {cls.__name__} does not support GET_MULTIPLE = used for infering 'send' URL")
+            raise RequestWrongMediaTypeException(
+                f"Object {cls.__name__} does not support GET_MULTIPLE = used for infering 'send' URL"
+            )
 
         url = url_base + "/send"
 
         try:
-            response = cls._execute_method(RequestMethod.POST, url, dumped_object=invoice_request, companySlug=companySlug,)
+            response = cls._execute_method(
+                RequestMethod.POST,
+                url,
+                dumped_object=invoice_request,
+                companySlug=companySlug,
+            )
         except RequestErrorException:
             raise
 
@@ -113,7 +138,7 @@ class Invoice(FikenObjectCountable, FikenObjectAttachable, BaseModel):
 
 
 class InvoiceRequest(FikenObjectRequest, BaseModel):
-    _POST_PATH = '/companies/{companySlug}/invoices/'
+    _POST_PATH = "/companies/{companySlug}/invoices/"
     BASE_CLASS: ClassVar[FikenObject] = Invoice
 
     issueDate: datetime.date
@@ -135,12 +160,14 @@ class InvoiceRequest(FikenObjectRequest, BaseModel):
 
 
 class InvoiceDraft(DraftInvoiceIsh):
-    _GET_PATH_SINGLE = '/companies/{companySlug}/invoices/drafts/{draftId}'
-    _GET_PATH_MULTIPLE = '/companies/{companySlug}/invoices/drafts'
-    _DELETE_PATH = '/companies/{companySlug}/invoices/drafts/{draftId}'
-    _PUT_PATH = '/companies/{companySlug}/invoices/drafts/{draftId}'
+    _GET_PATH_SINGLE = "/companies/{companySlug}/invoices/drafts/{draftId}"
+    _GET_PATH_MULTIPLE = "/companies/{companySlug}/invoices/drafts"
+    _DELETE_PATH = "/companies/{companySlug}/invoices/drafts/{draftId}"
+    _PUT_PATH = "/companies/{companySlug}/invoices/drafts/{draftId}"
 
-    _CREATE_OBJECT_PATH = '/companies/{companySlug}/invoices/drafts/{draftId}/createInvoice'
+    _CREATE_OBJECT_PATH = (
+        "/companies/{companySlug}/invoices/drafts/{draftId}/createInvoice"
+    )
     CREATED_OBJECT_CLASS: ClassVar[FikenObject] = Invoice
 
     type: DraftTypeInvoiceIsh = DraftTypeInvoiceIsh.INVOICE
@@ -148,6 +175,6 @@ class InvoiceDraft(DraftInvoiceIsh):
 
 class InvoiceDraftRequest(DraftInvoiceIshCreateRequest):
     BASE_CLASS: ClassVar[FikenObject] = InvoiceDraft
-    _POST_PATH = '/companies/{companySlug}/invoices/drafts'
+    _POST_PATH = "/companies/{companySlug}/invoices/drafts"
 
     type: DraftTypeInvoiceIsh = DraftTypeInvoiceIsh.INVOICE

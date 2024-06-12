@@ -25,12 +25,14 @@ class Payment(FikenObject, BaseModel):
 
 
 class PaymentPurchase(Payment):
-    _GET_PATH_MULTIPLE = '/companies/{companySlug}/purchases/{purchaseId}/payments'
-    _GET_PATH_SINGLE = '/companies/{companySlug}/purchases/{purchaseId}/payments/{paymentId}'
-    _POST_PATH = '/companies/{companySlug}/purchases/{purchaseId}/payments'
+    _GET_PATH_MULTIPLE = "/companies/{companySlug}/purchases/{purchaseId}/payments"
+    _GET_PATH_SINGLE = (
+        "/companies/{companySlug}/purchases/{purchaseId}/payments/{paymentId}"
+    )
+    _POST_PATH = "/companies/{companySlug}/purchases/{purchaseId}/payments"
 
 
 class PaymentSale(Payment):
-    _GET_PATH_MULTIPLE = '/companies/{companySlug}/sales/{saleId}/payments'
-    _GET_PATH_SINGLE = '/companies/{companySlug}/sales/{saleId}/payments/{paymentId}'
-    _POST_PATH = '/companies/{companySlug}/sales/{saleId}/payments'
+    _GET_PATH_MULTIPLE = "/companies/{companySlug}/sales/{saleId}/payments"
+    _GET_PATH_SINGLE = "/companies/{companySlug}/sales/{saleId}/payments/{paymentId}"
+    _POST_PATH = "/companies/{companySlug}/sales/{saleId}/payments"

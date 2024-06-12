@@ -13,9 +13,28 @@ from fiken_py.models.credit_note import CreditNote
 from sample_data_reader import get_sample_from_json
 
 from fiken_py.fiken_object import FikenObject
-from fiken_py.models import UserInfo, BalanceAccount, BankAccount, Company, Contact, ContactPerson, Product, \
-    ProductSalesReport, ProductSalesReportRequest, Transaction, JournalEntry, InboxDocument, Sale, Project, Invoice, \
-    InvoiceDraft, Offer, Purchase, OrderConfirmation, BalanceAccountBalance
+from fiken_py.models import (
+    UserInfo,
+    BalanceAccount,
+    BankAccount,
+    Company,
+    Contact,
+    ContactPerson,
+    Product,
+    ProductSalesReport,
+    ProductSalesReportRequest,
+    Transaction,
+    JournalEntry,
+    InboxDocument,
+    Sale,
+    Project,
+    Invoice,
+    InvoiceDraft,
+    Offer,
+    Purchase,
+    OrderConfirmation,
+    BalanceAccountBalance,
+)
 
 
 @pytest.fixture(autouse=True, scope="session")
@@ -35,37 +54,46 @@ def m():
         yield m
 
 
-@pytest.mark.parametrize("object", [
-    UserInfo,
-    BalanceAccount,
-    BalanceAccountBalance,
-    BankAccount,
-    Company,
-    Contact,
-    ContactPerson,
-    Product,
-    ProductSalesReportRequest,
-    ProductSalesReport,
-    JournalEntry,
-    Transaction,
-    InboxDocument,
-    Project,
-    Sale,
-    Invoice,
-    InvoiceDraft,
-    CreditNote,
-    OrderConfirmation,
-    Offer,
-    Purchase
-])
+@pytest.mark.parametrize(
+    "object",
+    [
+        UserInfo,
+        BalanceAccount,
+        BalanceAccountBalance,
+        BankAccount,
+        Company,
+        Contact,
+        ContactPerson,
+        Product,
+        ProductSalesReportRequest,
+        ProductSalesReport,
+        JournalEntry,
+        Transaction,
+        InboxDocument,
+        Project,
+        Sale,
+        Invoice,
+        InvoiceDraft,
+        CreditNote,
+        OrderConfirmation,
+        Offer,
+        Purchase,
+    ],
+)
 def test_object_methods(object: FikenObject, m: requests_mock.Mocker):
     print(f"---- TESTING {object.__name__} ----")
 
-    if hasattr(object, '_GET_PATH_SINGLE') and object._GET_PATH_SINGLE.default is not None:
+    if (
+        hasattr(object, "_GET_PATH_SINGLE")
+        and object._GET_PATH_SINGLE.default is not None
+    ):
         print("Testing GET one")
         get_one(object, m)
 
-    if hasattr(object, '_GET_PATH_MULTIPLE') and object._GET_PATH_MULTIPLE.default is not None:
+    if (
+        hasattr(object, "_GET_PATH_MULTIPLE")
+        and object._GET_PATH_MULTIPLE.default is not None
+    ):
         print("Testing GET multiple")
         get_multiple(object, m)
 
@@ -81,10 +109,12 @@ def get_one(object: FikenObject, m: requests_mock.Mocker):
 
     m.get(url, json=sample_data)
 
-    print(f"""Test: GET one
+    print(
+        f"""Test: GET one
     URL: {url}
     Sample data: {sample_data}
-    Sample data path: {sample_data_path}""")
+    Sample data path: {sample_data_path}"""
+    )
 
     # check if no exception on get
     obj = object.get(**kwargs)
@@ -110,11 +140,13 @@ def get_multiple(object: FikenObject, m: requests_mock.Mocker):
 
     m.get(url, json=sample_data)
 
-    print(f"""Test: GET multiple
+    print(
+        f"""Test: GET multiple
     URL: {url}
     Sample data: {sample_data}
     Sample data path: {sample_data_path}
-    n = {n}""")
+    n = {n}"""
+    )
 
     # check if no exception on get all
     objs = object.getAll(**kwargs)
@@ -130,7 +162,9 @@ def _class_to_snake_case(obj):
     """Converts a python class to snake case"""
     # For example, UserInfo to user_info
 
-    return ''.join(['_' + i.lower() if i.isupper() else i for i in obj.__name__]).lstrip('_')
+    return "".join(
+        ["_" + i.lower() if i.isupper() else i for i in obj.__name__]
+    ).lstrip("_")
 
 
 def _generate_kwargs_and_url(obj, url) -> tuple[dict, str]:
@@ -163,14 +197,18 @@ def _compare_object_to_sample_data(obj, sample_data):
             assert val.isoformat() == sample_data.get(attr)
 
         elif isinstance(val, CaseInsensitiveEnum):
-            assert val == sample_data.get(attr).upper()  # CaseInsensitiveEnum matches on upper
+            assert (
+                val == sample_data.get(attr).upper()
+            )  # CaseInsensitiveEnum matches on upper
 
         elif isinstance(val, list) and all(isinstance(i, BaseModel) for i in val):
             for i, item in enumerate(val):
                 _compare_object_to_sample_data(item, sample_data[attr][i])
         else:
             # if the attribute is not a model, check if the attribute is in the sample data
-            if obj.model_fields.get(attr) is not None: # Dont check FikenObject attributes
+            if (
+                obj.model_fields.get(attr) is not None
+            ):  # Dont check FikenObject attributes
                 if obj.model_fields[attr].default_factory is not None:
                     assert attr in sample_data
 

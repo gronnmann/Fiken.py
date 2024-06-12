@@ -8,8 +8,8 @@ from fiken_py.models.journal_entry import JournalEntry
 
 
 class Transaction(BaseModel, FikenObject):
-    _GET_PATH_SINGLE = '/companies/{companySlug}/transactions/{transactionId}'
-    _GET_PATH_MULTIPLE = '/companies/{companySlug}/transactions/'
+    _GET_PATH_SINGLE = "/companies/{companySlug}/transactions/{transactionId}"
+    _GET_PATH_MULTIPLE = "/companies/{companySlug}/transactions/"
 
     transactionId: Optional[int] = None
     createdDate: Optional[date] = None
@@ -26,7 +26,7 @@ class Transaction(BaseModel, FikenObject):
 class JournalEntryRequest(BaseModel, FikenObjectRequest):
     # TODO - move this to own class?
     BASE_CLASS: ClassVar[FikenObject] = Transaction
-    _POST_PATH = '/companies/{companySlug}/generalJournalEntries'
+    _POST_PATH = "/companies/{companySlug}/generalJournalEntries"
 
     description: Optional[str] = None
     open: Optional[bool] = False

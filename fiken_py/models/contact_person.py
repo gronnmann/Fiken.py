@@ -10,11 +10,17 @@ from fiken_py.shared_types import Address
 
 
 class ContactPerson(BaseModel, FikenObject):
-    _GET_PATH_SINGLE = '/companies/{companySlug}/contacts/{contactId}/contactPerson/{contactPersonId}'
-    _GET_PATH_MULTIPLE = '/companies/{companySlug}/contacts/{contactId}/contactPerson/'
-    _POST_PATH = '/companies/{companySlug}/contacts/{contactId}/contactPerson/'
-    _PUT_PATH = '/companies/{companySlug}/contacts/{contactId}/contactPerson/{contactPersonId}'
-    _DELETE_PATH = '/companies/{companySlug}/contacts/{contactId}/contactPerson/{contactPersonId}'
+    _GET_PATH_SINGLE = (
+        "/companies/{companySlug}/contacts/{contactId}/contactPerson/{contactPersonId}"
+    )
+    _GET_PATH_MULTIPLE = "/companies/{companySlug}/contacts/{contactId}/contactPerson/"
+    _POST_PATH = "/companies/{companySlug}/contacts/{contactId}/contactPerson/"
+    _PUT_PATH = (
+        "/companies/{companySlug}/contacts/{contactId}/contactPerson/{contactPersonId}"
+    )
+    _DELETE_PATH = (
+        "/companies/{companySlug}/contacts/{contactId}/contactPerson/{contactPersonId}"
+    )
 
     contactPersonId: Optional[int] = None
     name: str

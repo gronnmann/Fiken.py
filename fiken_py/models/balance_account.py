@@ -7,8 +7,8 @@ from fiken_py.fiken_object import FikenObject
 
 
 class BalanceAccount(BaseModel, FikenObject):
-    _GET_PATH_SINGLE = '/companies/{companySlug}/accounts/{accountCode}'
-    _GET_PATH_MULTIPLE = '/companies/{companySlug}/accounts/'
+    _GET_PATH_SINGLE = "/companies/{companySlug}/accounts/{accountCode}"
+    _GET_PATH_MULTIPLE = "/companies/{companySlug}/accounts/"
 
     code: Optional[str] = None
     name: Optional[str] = None
@@ -22,7 +22,7 @@ class BalanceAccount(BaseModel, FikenObject):
 
 
 class BalanceAccountBalance(BalanceAccount):
-    _GET_PATH_SINGLE = '/companies/{companySlug}/accountBalances/{accountCode}/'
-    _GET_PATH_MULTIPLE = '/companies/{companySlug}/accountBalances/'
+    _GET_PATH_SINGLE = "/companies/{companySlug}/accountBalances/{accountCode}/"
+    _GET_PATH_MULTIPLE = "/companies/{companySlug}/accountBalances/"
 
     balance: Optional[int] = None

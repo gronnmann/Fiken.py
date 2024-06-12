@@ -9,11 +9,11 @@ from fiken_py.shared_enums import VatTypeProduct
 
 
 class Product(BaseModel, FikenObject):
-    _GET_PATH_SINGLE = '/companies/{companySlug}/products/{productId}'
-    _GET_PATH_MULTIPLE = '/companies/{companySlug}/products/'
-    _POST_PATH = '/companies/{companySlug}/products/'
-    _PUT_PATH = '/companies/{companySlug}/products/{productId}'
-    _DELETE_PATH = '/companies/{companySlug}/products/{productId}'
+    _GET_PATH_SINGLE = "/companies/{companySlug}/products/{productId}"
+    _GET_PATH_MULTIPLE = "/companies/{companySlug}/products/"
+    _POST_PATH = "/companies/{companySlug}/products/"
+    _PUT_PATH = "/companies/{companySlug}/products/{productId}"
+    _DELETE_PATH = "/companies/{companySlug}/products/{productId}"
 
     productId: Optional[int] = None
     name: str

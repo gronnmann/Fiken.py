@@ -20,7 +20,9 @@ def test_sale_high():
     assert VATValidator.validate_vat_type_sale(vat_high, percentage=22) is False
 
     with pytest.raises(ValueError):
-        VATValidator.validate_vat_type_sale(vat_high, percentage=25, account_code="3000")
+        VATValidator.validate_vat_type_sale(
+            vat_high, percentage=25, account_code="3000"
+        )
 
     assert VATValidator.validate_vat_type_sale(vat_high, account_code="3000")
     assert VATValidator.validate_vat_type_sale(vat_high, account_code="3030") is False
@@ -32,4 +34,6 @@ def test_sale_high_forbidden():
     assert VATValidator.validate_vat_type_sale(vat_outside, percentage=0)
 
     assert VATValidator.validate_vat_type_sale(vat_outside, account_code="3200")
-    assert VATValidator.validate_vat_type_sale(vat_outside, account_code="3210") is False
+    assert (
+        VATValidator.validate_vat_type_sale(vat_outside, account_code="3210") is False
+    )

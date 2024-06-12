@@ -1,11 +1,35 @@
 import datetime
 from typing import Type
 
-from fiken_py.models import BankAccount, BankAccountRequest, BankAccountType, Contact, ContactPerson, Product, \
-    JournalEntryRequest, JournalEntry, InvoiceRequest, SaleRequest, Project, PurchaseRequest, ProjectRequest
+from fiken_py.models import (
+    BankAccount,
+    BankAccountRequest,
+    BankAccountType,
+    Contact,
+    ContactPerson,
+    Product,
+    JournalEntryRequest,
+    JournalEntry,
+    InvoiceRequest,
+    SaleRequest,
+    Project,
+    PurchaseRequest,
+    ProjectRequest,
+)
 from fiken_py.models.draft import DraftInvoiceIshCreateRequest, DraftOrderCreateRequest
-from fiken_py.shared_enums import VatTypeProduct, VatTypeProductSale, SaleKind, PurchaseKind
-from fiken_py.shared_types import JournalEntryLine, InvoiceLineRequest, DraftLineInvoiceIsh, OrderLine, DraftLineOrder
+from fiken_py.shared_enums import (
+    VatTypeProduct,
+    VatTypeProductSale,
+    SaleKind,
+    PurchaseKind,
+)
+from fiken_py.shared_types import (
+    JournalEntryLine,
+    InvoiceLineRequest,
+    DraftLineInvoiceIsh,
+    OrderLine,
+    DraftLineOrder,
+)
 
 
 def bank_account_request(unique_id: str) -> BankAccountRequest:
@@ -29,13 +53,17 @@ def contact_person(unique_id) -> ContactPerson:
 
 
 def product(unique_id) -> Product:
-    return Product(name=f"En knekt stol (testprodukt {unique_id})",
-                   vatType=VatTypeProduct.HIGH,
-                   incomeAccount="3000",
-                   unitPrice=1000)
+    return Product(
+        name=f"En knekt stol (testprodukt {unique_id})",
+        vatType=VatTypeProduct.HIGH,
+        incomeAccount="3000",
+        unitPrice=1000,
+    )
 
 
-def journal_entry_request(unique_id, bank_account_1: BankAccount, bank_account_2: BankAccount) -> JournalEntryRequest:
+def journal_entry_request(
+    unique_id, bank_account_1: BankAccount, bank_account_2: BankAccount
+) -> JournalEntryRequest:
     """Returns sample Journal Entry with 10 kr flowing from bank_account_1 to bank_account_2."""
 
     entry_line = JournalEntryLine(
@@ -52,12 +80,12 @@ def journal_entry_request(unique_id, bank_account_1: BankAccount, bank_account_2
         date=datetime.date.today(),
     )
 
-    return JournalEntryRequest(
-        journalEntries=[entry]
-    )
+    return JournalEntryRequest(journalEntries=[entry])
 
 
-def invoice_request(unique_id, product: Product, contact: Contact, bank_account: BankAccount) -> InvoiceRequest:
+def invoice_request(
+    unique_id, product: Product, contact: Contact, bank_account: BankAccount
+) -> InvoiceRequest:
     invoice_line: InvoiceLineRequest = InvoiceLineRequest(
         productId=product.productId,
         quantity=1,
@@ -76,11 +104,11 @@ def invoice_request(unique_id, product: Product, contact: Contact, bank_account:
 
 
 def draft_invoiceish_request(
-        unique_id: str,
-        DraftCreateRequestObject: Type[DraftInvoiceIshCreateRequest],
-        product: Product,
-        contact: Contact,
-        bank_account: BankAccount
+    unique_id: str,
+    DraftCreateRequestObject: Type[DraftInvoiceIshCreateRequest],
+    product: Product,
+    contact: Contact,
+    bank_account: BankAccount,
 ) -> DraftInvoiceIshCreateRequest:
     draft_line = DraftLineInvoiceIsh(
         productId=product.productId,
@@ -98,11 +126,11 @@ def draft_invoiceish_request(
 
 
 def draft_order_request(
-        unique_id: str,
-        DraftCreateRequestObject: Type[DraftOrderCreateRequest],
-        accounting_account: str,
-        customer: Contact,
-        bank_account: BankAccount
+    unique_id: str,
+    DraftCreateRequestObject: Type[DraftOrderCreateRequest],
+    accounting_account: str,
+    customer: Contact,
+    bank_account: BankAccount,
 ) -> DraftOrderCreateRequest:
     order_line = DraftLineOrder(
         text=f"En billig yacht (testprodukt {unique_id})",
@@ -161,5 +189,8 @@ def purchase_request(unique_id: str, contact: Contact) -> PurchaseRequest:
 
 
 def project(unique_id) -> ProjectRequest:
-    return ProjectRequest(name=f"Prosjekt {unique_id}", number=unique_id + "_sample",
-                          startDate=datetime.date.today())
+    return ProjectRequest(
+        name=f"Prosjekt {unique_id}",
+        number=unique_id + "_sample",
+        startDate=datetime.date.today(),
+    )

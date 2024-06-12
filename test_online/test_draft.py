@@ -1,13 +1,26 @@
 import datetime
 
 from fiken_py.shared_enums import VatTypeProduct, VatTypeProductSale
-from fiken_py.models import BankAccount, Contact, Product, InvoiceDraftRequest, InvoiceDraft, Invoice, \
-    DraftLineInvoiceIsh, CreditNoteDraft, CreditNoteDraftRequest
+from fiken_py.models import (
+    BankAccount,
+    Contact,
+    Product,
+    InvoiceDraftRequest,
+    InvoiceDraft,
+    Invoice,
+    DraftLineInvoiceIsh,
+    CreditNoteDraft,
+    CreditNoteDraftRequest,
+)
 from fiken_py.models.credit_note import CreditNote
 
 
-def test_all_invoice_draft(unique_id: str, generic_product: Product, generic_contact: Contact,
-                           generic_bank_account: BankAccount):
+def test_all_invoice_draft(
+    unique_id: str,
+    generic_product: Product,
+    generic_contact: Contact,
+    generic_bank_account: BankAccount,
+):
     draft_line = DraftLineInvoiceIsh(
         productId=generic_product.productId,
         quantity=1,
@@ -72,8 +85,12 @@ def test_all_invoice_draft(unique_id: str, generic_product: Product, generic_con
     assert InvoiceDraft.get(draftId=id) is None
 
 
-def test_all_credit_note(unique_id: str, generic_product: Product, generic_contact: Contact,
-                         generic_bank_account: BankAccount):
+def test_all_credit_note(
+    unique_id: str,
+    generic_product: Product,
+    generic_contact: Contact,
+    generic_bank_account: BankAccount,
+):
     draft_line = DraftLineInvoiceIsh(
         productId=generic_product.productId,
         quantity=1,
@@ -116,4 +133,3 @@ def test_all_credit_note(unique_id: str, generic_product: Product, generic_conta
     credit_note: CreditNote = new_draft.submit_object()
     assert credit_note is not None
     assert credit_note.creditNoteId is not None
-

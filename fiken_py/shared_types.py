@@ -6,16 +6,30 @@ from typing import Optional, Annotated, ClassVar
 from pydantic import BaseModel, Field, model_validator
 
 
-from fiken_py.shared_enums import AttachmentType, VatTypeProductSale, VatTypeProductPurchase
+from fiken_py.shared_enums import (
+    AttachmentType,
+    VatTypeProductSale,
+    VatTypeProductPurchase,
+)
 from fiken_py.vat_validation import VATValidator
 
-AccountingAccount = Annotated[str, Field(pattern=r"^[1-8]\d{3}(:\d{5})?$")]  # All kontoklasser
+AccountingAccount = Annotated[
+    str, Field(pattern=r"^[1-8]\d{3}(:\d{5})?$")
+]  # All kontoklasser
 
-AccountingAccountAssets = Annotated[str, Field(pattern=r"^1\d{3}(:\d{5})?$")]  # Kontoklasse 1
-AccountingAccountEquityAndLiabilities = Annotated[str, Field(pattern=r"^2\d{3}(:\d{5})?$")]  # Kontoklasse 2
+AccountingAccountAssets = Annotated[
+    str, Field(pattern=r"^1\d{3}(:\d{5})?$")
+]  # Kontoklasse 1
+AccountingAccountEquityAndLiabilities = Annotated[
+    str, Field(pattern=r"^2\d{3}(:\d{5})?$")
+]  # Kontoklasse 2
 
-AccountingAccountIncome = Annotated[str, Field(pattern=r"^[3|8]\d{3}$")]  # Kontoklasse 3
-AccountingAccountCosts = Annotated[str, Field(pattern=r"^[4-8]\d{3}$")]  # Kontoklasse 4-7
+AccountingAccountIncome = Annotated[
+    str, Field(pattern=r"^[3|8]\d{3}$")
+]  # Kontoklasse 3
+AccountingAccountCosts = Annotated[
+    str, Field(pattern=r"^[4-8]\d{3}$")
+]  # Kontoklasse 4-7
 
 BankAccountNumber = Annotated[str, Field(pattern=r"^\d{11}$")]
 
@@ -75,8 +89,9 @@ class OrderLine(BaseModel):
     @model_validator(mode="after")
     @classmethod
     def validate_netPrice_or_netPriceInCurrency(cls, value):
-        assert (value.netPrice is not None) or (value.netPriceInCurrency is not None), \
-            "Either netPrice or netPriceInCurrency must be provided"
+        assert (value.netPrice is not None) or (
+            value.netPriceInCurrency is not None
+        ), "Either netPrice or netPriceInCurrency must be provided"
         return value
 
 
@@ -99,10 +114,16 @@ class InvoiceIshLineBase(BaseModel):
             return value  # Only validate requests
 
         product_provided = value.productId is not None
-        line_provided = ((value.unitPrice is not None) and (value.vatType is not None) and
-                         (value.description is not None) and (value.incomeAccount is not None))
+        line_provided = (
+            (value.unitPrice is not None)
+            and (value.vatType is not None)
+            and (value.description is not None)
+            and (value.incomeAccount is not None)
+        )
 
-        assert product_provided or line_provided, "Either productId or unitPRice, description, vatType and incomeAccount must be provided"
+        assert (
+            product_provided or line_provided
+        ), "Either productId or unitPRice, description, vatType and incomeAccount must be provided"
 
         return value
 
@@ -112,7 +133,9 @@ class InvoiceIshLineBase(BaseModel):
         incomeAccount: AccountingAccount = value.incomeAccount
 
         if incomeAccount is not None:
-            assert VATValidator.validate_vat_type_sale(vat, incomeAccount), "Vat type is not valid for income account"
+            assert VATValidator.validate_vat_type_sale(
+                vat, incomeAccount
+            ), "Vat type is not valid for income account"
 
         return value  # TODO - own validation class
 
@@ -161,7 +184,7 @@ class DraftLineOrderBase(BaseModel):
 
 
 class DraftLineOrder(DraftLineOrderBase):
-    project: Optional['Project'] = None
+    project: Optional["Project"] = None
 
 
 class DraftLineOrderRequest(DraftLineOrderBase):

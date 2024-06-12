@@ -5,14 +5,18 @@ from typing import Optional, ClassVar
 from pydantic import BaseModel, model_validator, Field
 
 from fiken_py.fiken_object import FikenObject, FikenObjectRequest
-from fiken_py.shared_types import AccountingAccount, AccountingAccountAssets, BankAccountNumber
+from fiken_py.shared_types import (
+    AccountingAccount,
+    AccountingAccountAssets,
+    BankAccountNumber,
+)
 
 
 class BankAccountType(str, Enum):
-    NORMAL = 'normal'
-    TAX_DEDUCTION = 'tax_deduction'
-    FOREIGN = 'foreign'
-    CREDIT_CARD = 'credit_card'
+    NORMAL = "normal"
+    TAX_DEDUCTION = "tax_deduction"
+    FOREIGN = "foreign"
+    CREDIT_CARD = "credit_card"
 
 
 class BankAccountBase(BaseModel):
@@ -26,8 +30,8 @@ class BankAccountBase(BaseModel):
 
 
 class BankAccount(BankAccountBase, FikenObject):
-    _GET_PATH_SINGLE = '/companies/{companySlug}/bankAccounts/{bankAccountId}'
-    _GET_PATH_MULTIPLE = '/companies/{companySlug}/bankAccounts/'
+    _GET_PATH_SINGLE = "/companies/{companySlug}/bankAccounts/{bankAccountId}"
+    _GET_PATH_MULTIPLE = "/companies/{companySlug}/bankAccounts/"
 
     name: Optional[str] = None
     bankAccountNumber: Optional[BankAccountNumber] = None
@@ -45,7 +49,7 @@ class BankAccount(BankAccountBase, FikenObject):
 class BankAccountRequest(BankAccountBase, FikenObjectRequest):
     BASE_CLASS: ClassVar[FikenObject] = BankAccount
 
-    _POST_PATH = '/companies/{companySlug}/bankAccounts/'
+    _POST_PATH = "/companies/{companySlug}/bankAccounts/"
 
     @model_validator(mode="after")
     @classmethod
@@ -55,6 +59,8 @@ class BankAccountRequest(BankAccountBase, FikenObjectRequest):
                 raise ValueError("foreignService must be set for foreign bank accounts")
         else:
             if value.foreignService is not None:
-                raise ValueError("foreignService is only applicable for foreign bank accounts")
+                raise ValueError(
+                    "foreignService is only applicable for foreign bank accounts"
+                )
 
         return value

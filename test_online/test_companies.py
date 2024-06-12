@@ -9,6 +9,7 @@ def test_find_company_slug():
     company: Company = Company.get(company_slug=company_slug)
     assert company is not None
 
+
 def test_get_all():
     companies: list[Company] = Company.getAll()
     assert companies is not None

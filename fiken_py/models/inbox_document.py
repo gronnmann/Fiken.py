@@ -6,12 +6,17 @@ import requests
 from pydantic import BaseModel
 
 from fiken_py.authorization import AccessToken
-from fiken_py.fiken_object import FikenObject, FikenObjectRequest, RequestMethod, OptionalAccessToken
+from fiken_py.fiken_object import (
+    FikenObject,
+    FikenObjectRequest,
+    RequestMethod,
+    OptionalAccessToken,
+)
 
 
 class InboxDocument(BaseModel, FikenObject):
-    _GET_PATH_SINGLE = '/companies/{companySlug}/inbox/{inboxDocumentId}'
-    _GET_PATH_MULTIPLE = '/companies/{companySlug}/inbox/'
+    _GET_PATH_SINGLE = "/companies/{companySlug}/inbox/{inboxDocumentId}"
+    _GET_PATH_MULTIPLE = "/companies/{companySlug}/inbox/"
 
     documentId: Optional[int] = None
     name: Optional[str] = None
@@ -27,7 +32,7 @@ class InboxDocument(BaseModel, FikenObject):
 
 class InboxDocumentRequest(FikenObjectRequest, BaseModel):
     BASE_CLASS: ClassVar[FikenObject] = InboxDocument
-    _POST_PATH = '/companies/{companySlug}/inbox/'
+    _POST_PATH = "/companies/{companySlug}/inbox/"
 
     name: str
     filename: str
@@ -39,17 +44,23 @@ class InboxDocumentRequest(FikenObjectRequest, BaseModel):
         if not os.path.exists(filepath):
             raise FileNotFoundError(f"File {filepath} does not exist")
 
-        with open(filepath, 'rb') as f:
-            return cls(name=name, filename=filepath, description=description, file=f.read())
+        with open(filepath, "rb") as f:
+            return cls(
+                name=name, filename=filepath, description=description, file=f.read()
+            )
 
     def save(self, token: OptionalAccessToken = None, **kwargs):
         file_data = {
-            'file': (self.filename, self.file),
-            'filename': (None, self.filename),
-            'description': (None, self.description),
-            'name': (None, self.name)
+            "file": (self.filename, self.file),
+            "filename": (None, self.filename),
+            "description": (None, self.description),
+            "name": (None, self.name),
         }
 
-        response = self._execute_method(RequestMethod.POST, file_data=file_data, token=token, **kwargs)
+        response = self._execute_method(
+            RequestMethod.POST, file_data=file_data, token=token, **kwargs
+        )
 
-        return self._follow_location_and_update_class(response, token=token, companySlug=self._company_slug)
+        return self._follow_location_and_update_class(
+            response, token=token, companySlug=self._company_slug
+        )

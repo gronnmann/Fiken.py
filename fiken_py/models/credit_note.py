@@ -8,10 +8,24 @@ from pydantic import BaseModel, Field
 
 from fiken_py.authorization import AccessToken
 from fiken_py.errors import RequestContentNotFoundException, RequestErrorException
-from fiken_py.fiken_object import FikenObjectAttachable, RequestMethod, FikenObjectCountable, FikenObject, \
-    OptionalAccessToken
-from fiken_py.models.draft import DraftInvoiceIsh, DraftTypeInvoiceIsh, DraftInvoiceIshCreateRequest
-from fiken_py.shared_types import Address, InvoiceLine, Attachment, CreditNotePartialRequestLine
+from fiken_py.fiken_object import (
+    FikenObjectAttachable,
+    RequestMethod,
+    FikenObjectCountable,
+    FikenObject,
+    OptionalAccessToken,
+)
+from fiken_py.models.draft import (
+    DraftInvoiceIsh,
+    DraftTypeInvoiceIsh,
+    DraftInvoiceIshCreateRequest,
+)
+from fiken_py.shared_types import (
+    Address,
+    InvoiceLine,
+    Attachment,
+    CreditNotePartialRequestLine,
+)
 from fiken_py.models import Contact, Project, Sale, Invoice
 
 
@@ -37,13 +51,13 @@ class PartialCreditNoteRequest(BaseModel):
 
 
 class CreditNote(FikenObjectCountable, BaseModel):
-    _GET_PATH_SINGLE = '/companies/{companySlug}/creditNotes/{creditNoteId}'
-    _GET_PATH_MULTIPLE = '/companies/{companySlug}/creditNotes/'
+    _GET_PATH_SINGLE = "/companies/{companySlug}/creditNotes/{creditNoteId}"
+    _GET_PATH_MULTIPLE = "/companies/{companySlug}/creditNotes/"
 
-    _POST_FULL_PATH = '/companies/{companySlug}/creditNotes/full'
-    _POST_PARTIAL_PATH = '/companies/{companySlug}/creditNotes/partial'
+    _POST_FULL_PATH = "/companies/{companySlug}/creditNotes/full"
+    _POST_PARTIAL_PATH = "/companies/{companySlug}/creditNotes/partial"
 
-    _COUNTER_PATH = '/companies/{companySlug}/creditNotes/counter'
+    _COUNTER_PATH = "/companies/{companySlug}/creditNotes/counter"
 
     creditNoteId: int
     creditNoteNumber: int
@@ -77,31 +91,45 @@ class CreditNote(FikenObjectCountable, BaseModel):
         return "creditNoteId", self.creditNoteId
 
     @classmethod
-    def create_from_invoice_full(cls, invoiceId: int, issueDate: Optional[datetime.date | str] = None,
-                                 creditNoteText: Optional[str] = None, companySlug: Optional[str] = None,
-                                 token: OptionalAccessToken = None) -> typing.Self:
+    def create_from_invoice_full(
+        cls,
+        invoiceId: int,
+        issueDate: Optional[datetime.date | str] = None,
+        creditNoteText: Optional[str] = None,
+        companySlug: Optional[str] = None,
+        token: OptionalAccessToken = None,
+    ) -> typing.Self:
 
         try:
-            invoice = Invoice.get(invoiceId=invoiceId, companySlug=companySlug, token=token)
+            invoice = Invoice.get(
+                invoiceId=invoiceId, companySlug=companySlug, token=token
+            )
         except RequestErrorException:
             raise
 
         if invoice is None:
-            raise RequestContentNotFoundException(f"Invoice with id {invoiceId} not found.")
+            raise RequestContentNotFoundException(
+                f"Invoice with id {invoiceId} not found."
+            )
 
         credit_note_request = FullCreditNoteRequest(
             issueDate=issueDate if issueDate is not None else datetime.date.today(),
             invoiceId=invoiceId,
-            creditNoteText=creditNoteText
+            creditNoteText=creditNoteText,
         )
 
         try:
-            response = cls._execute_method(RequestMethod.POST, url=cls._get_method_base_URL("POST_FULL"),
-                                           dumped_object=credit_note_request, token=token, companySlug=companySlug)
+            response = cls._execute_method(
+                RequestMethod.POST,
+                url=cls._get_method_base_URL("POST_FULL"),
+                dumped_object=credit_note_request,
+                token=token,
+                companySlug=companySlug,
+            )
         except RequestErrorException:
             raise
 
-        loc = response.headers.get('Location')
+        loc = response.headers.get("Location")
         if loc is None:
             raise RequestErrorException("No Location header in response")
 
@@ -111,18 +139,20 @@ class CreditNote(FikenObjectCountable, BaseModel):
 class CreditNoteDraft(DraftInvoiceIsh):
     CREATED_OBJECT_CLASS: ClassVar[FikenObject] = CreditNote
 
-    _GET_PATH_SINGLE = '/companies/{companySlug}/creditNotes/drafts/{draftId}'
-    _GET_PATH_MULTIPLE = '/companies/{companySlug}/creditNotes/drafts'
-    _DELETE_PATH = '/companies/{companySlug}/creditNotes/drafts/{draftId}'
-    _PUT_PATH = '/companies/{companySlug}/creditNotes/drafts/{draftId}'
+    _GET_PATH_SINGLE = "/companies/{companySlug}/creditNotes/drafts/{draftId}"
+    _GET_PATH_MULTIPLE = "/companies/{companySlug}/creditNotes/drafts"
+    _DELETE_PATH = "/companies/{companySlug}/creditNotes/drafts/{draftId}"
+    _PUT_PATH = "/companies/{companySlug}/creditNotes/drafts/{draftId}"
 
-    _CREATE_OBJECT_PATH = '/companies/{companySlug}/creditNotes/drafts/{draftId}/createCreditNote'
+    _CREATE_OBJECT_PATH = (
+        "/companies/{companySlug}/creditNotes/drafts/{draftId}/createCreditNote"
+    )
 
     type: DraftTypeInvoiceIsh = DraftTypeInvoiceIsh.CREDIT_NOTE
 
 
 class CreditNoteDraftRequest(DraftInvoiceIshCreateRequest):
     BASE_CLASS: ClassVar[FikenObject] = CreditNoteDraft
-    _POST_PATH = '/companies/{companySlug}/creditNotes/drafts'
+    _POST_PATH = "/companies/{companySlug}/creditNotes/drafts"
 
     type: DraftTypeInvoiceIsh = DraftTypeInvoiceIsh.CREDIT_NOTE

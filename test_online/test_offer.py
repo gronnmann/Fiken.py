@@ -3,8 +3,12 @@ from fiken_py.models import Product, Contact, Offer, OfferDraft, OfferDraftReque
 import test_online.shared_tests as shared_tests
 
 
-def test_create_offer_full(unique_id: str, generic_product: Product,
-                           generic_contact: Contact, generic_bank_account):
+def test_create_offer_full(
+    unique_id: str,
+    generic_product: Product,
+    generic_contact: Contact,
+    generic_bank_account,
+):
     draft_from_test: Offer = shared_tests.draftable_invoiceish_object_tests(
         DraftObject=OfferDraft,
         DraftCreateRequestObject=OfferDraftRequest,

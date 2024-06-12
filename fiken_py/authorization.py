@@ -32,7 +32,9 @@ class AccessToken(BaseModel):
         if self.client_id is None or self.client_secret is None:
             raise ValueError("Client id or secret not set")
 
-        new_token =  Authorization.get_access_token_refresh(self.client_id, self.client_secret, self.refresh_token)
+        new_token = Authorization.get_access_token_refresh(
+            self.client_id, self.client_secret, self.refresh_token
+        )
 
         self.access_token = new_token.access_token
         self.refresh_token = new_token.refresh_token
@@ -57,11 +59,14 @@ class Authorization:
 
     4. When the access token expires, use the refresh token to get a new access token (get_access_token_refresh)
     """
+
     _AUTHORIZATION_URL = "https://fiken.no/oauth/authorize"
     _TOKEN_ENDPOINT_URL = "https://fiken.no/oauth/token"
 
     @classmethod
-    def generate_auth_url(cls, client_id: str, redirect_uri: str) -> Tuple[str, uuid.UUID]:
+    def generate_auth_url(
+        cls, client_id: str, redirect_uri: str
+    ) -> Tuple[str, uuid.UUID]:
         """
         Generates the URL for the authorization process.
         :param client_id: The client id provided by Fiken for the application
@@ -81,12 +86,13 @@ class Authorization:
         return p.url, state
 
     @classmethod
-    def _get_token_from_endpoint(cls, client_id: str, client_secret: str, data: dict) -> AccessToken:
+    def _get_token_from_endpoint(
+        cls, client_id: str, client_secret: str, data: dict
+    ) -> AccessToken:
 
         basic_auth = HTTPBasicAuth(client_id, client_secret)
 
-        response = requests.post(cls._TOKEN_ENDPOINT_URL, data=data,
-                                 auth=basic_auth)
+        response = requests.post(cls._TOKEN_ENDPOINT_URL, data=data, auth=basic_auth)
 
         try:
             response.raise_for_status()
@@ -97,19 +103,26 @@ class Authorization:
         response_data = response.json()
 
         # get out response date
-        date_header = response.headers.get('Date')
+        date_header = response.headers.get("Date")
         date_parsed = None
         if date_header is not None:
             date_parsed = email.utils.parsedate_to_datetime(date_header)
 
-        token = AccessToken(**response_data, request_timestamp=date_parsed if date_header is not None else datetime.datetime.now())
+        token = AccessToken(
+            **response_data,
+            request_timestamp=(
+                date_parsed if date_header is not None else datetime.datetime.now()
+            )
+        )
         token.client_id = client_id
         token.client_secret = client_secret
 
         return token
 
     @classmethod
-    def get_access_token_authcode(cls, client_id: str, client_secret: str, code: str, redirect_uri: str) -> AccessToken:
+    def get_access_token_authcode(
+        cls, client_id: str, client_secret: str, code: str, redirect_uri: str
+    ) -> AccessToken:
         """
         Gets the access and refresh token from Fiken.
         :param client_id: The client id provided by Fiken for the application
@@ -132,7 +145,9 @@ class Authorization:
             raise
 
     @classmethod
-    def get_access_token_refresh(cls, client_id: str, client_secret: str, refresh_token: str) -> AccessToken:
+    def get_access_token_refresh(
+        cls, client_id: str, client_secret: str, refresh_token: str
+    ) -> AccessToken:
         """
         Gets the access token from the refresh token.
         :param client_id: The client id provided by Fiken for the application

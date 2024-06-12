@@ -19,7 +19,9 @@ def test_contact(unique_id):
     assert actual_contact_person.contactPersonId is not None
     assert actual_contact_person.name == contact_person.name
 
-    assert actual_contact_person.contactPersonId in [cp.contactPersonId for cp in contact.contactPerson]
+    assert actual_contact_person.contactPersonId in [
+        cp.contactPersonId for cp in contact.contactPerson
+    ]
 
     actual_contact_person.delete()
 

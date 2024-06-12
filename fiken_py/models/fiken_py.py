@@ -12,8 +12,10 @@ class FikenPy:
 
     def __init__(self, auth_token: str | AccessToken):
         if FikenObject._AUTH_TOKEN is not None:
-            raise ValueError("Global auth token already set (FikenObject.set_auth_token). "
-                             "Please clear it before setting individual tokens.")
+            raise ValueError(
+                "Global auth token already set (FikenObject.set_auth_token). "
+                "Please clear it before setting individual tokens."
+            )
 
         self.access_token = auth_token
 

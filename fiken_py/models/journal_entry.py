@@ -8,8 +8,8 @@ from datetime import date
 
 
 class JournalEntry(BaseModel, FikenObjectAttachable):
-    _GET_PATH_SINGLE = '/companies/{companySlug}/journalEntries/{journalEntryId}'
-    _GET_PATH_MULTIPLE = '/companies/{companySlug}/journalEntries/'
+    _GET_PATH_SINGLE = "/companies/{companySlug}/journalEntries/{journalEntryId}"
+    _GET_PATH_MULTIPLE = "/companies/{companySlug}/journalEntries/"
 
     journalEntryId: Optional[int] = None
     createdDate: Optional[date] = None

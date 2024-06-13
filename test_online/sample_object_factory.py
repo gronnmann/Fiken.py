@@ -3,20 +3,18 @@ from typing import Type
 
 from fiken_py.models import (
     BankAccount,
-    BankAccountRequest,
     BankAccountType,
     Contact,
     ContactPerson,
     Product,
-    JournalEntryRequest,
     JournalEntry,
-    InvoiceRequest,
-    SaleRequest,
     Project,
-    PurchaseRequest,
-    ProjectRequest,
+    Transaction,
+    Invoice,
+    Sale,
+    Purchase,
 )
-from fiken_py.models.draft import DraftInvoiceIshCreateRequest, DraftOrderCreateRequest
+from fiken_py.models.draft import DraftInvoiceIsh, DraftOrder
 from fiken_py.shared_enums import (
     VatTypeProduct,
     VatTypeProductSale,
@@ -25,15 +23,15 @@ from fiken_py.shared_enums import (
 )
 from fiken_py.shared_types import (
     JournalEntryLine,
-    InvoiceLineRequest,
     DraftLineInvoiceIsh,
     OrderLine,
     DraftLineOrder,
+    InvoiceLine,
 )
 
 
-def bank_account_request(unique_id: str) -> BankAccountRequest:
-    return BankAccountRequest(
+def bank_account(unique_id: str) -> BankAccount:
+    return BankAccount(
         name=f"Onkel Skrues safe ({unique_id})",
         bankAccountNumber="11112233334",
         type=BankAccountType.NORMAL,
@@ -61,9 +59,9 @@ def product(unique_id) -> Product:
     )
 
 
-def journal_entry_request(
+def transaction(
     unique_id, bank_account_1: BankAccount, bank_account_2: BankAccount
-) -> JournalEntryRequest:
+) -> Transaction:
     """Returns sample Journal Entry with 10 kr flowing from bank_account_1 to bank_account_2."""
 
     entry_line = JournalEntryLine(
@@ -80,21 +78,25 @@ def journal_entry_request(
         date=datetime.date.today(),
     )
 
-    return JournalEntryRequest(journalEntries=[entry])
+    transaction = Transaction(
+        entries=[entry],
+    )
+
+    return transaction
 
 
-def invoice_request(
+def invoice(
     unique_id, product: Product, contact: Contact, bank_account: BankAccount
-) -> InvoiceRequest:
-    invoice_line: InvoiceLineRequest = InvoiceLineRequest(
+) -> Invoice:
+    invoice_line: InvoiceLine = InvoiceLine(
         productId=product.productId,
         quantity=1,
     )
 
-    return InvoiceRequest(
+    return Invoice(
         issueDate=datetime.date.today(),
         dueDate=datetime.date.today() + datetime.timedelta(days=14),
-        customerId=contact.contactId,
+        customer=contact,
         lines=[invoice_line],
         bankAccountCode=bank_account.accountCode,
         cash=False,
@@ -103,21 +105,21 @@ def invoice_request(
     )
 
 
-def draft_invoiceish_request(
+def draft_invoiceish(
     unique_id: str,
-    DraftCreateRequestObject: Type[DraftInvoiceIshCreateRequest],
+    DraftInvoiceIshType: Type[DraftInvoiceIsh],
     product: Product,
     contact: Contact,
     bank_account: BankAccount,
-) -> DraftInvoiceIshCreateRequest:
+) -> DraftInvoiceIsh:
     draft_line = DraftLineInvoiceIsh(
         productId=product.productId,
         quantity=1,
         vatType=VatTypeProductSale.HIGH,
     )
 
-    return DraftCreateRequestObject(
-        customerId=contact.contactId,
+    return DraftInvoiceIshType(
+        customers=[contact],
         lines=[draft_line],
         daysUntilDueDate=7,
         bankAccountNumber=bank_account.bankAccountNumber,
@@ -125,13 +127,13 @@ def draft_invoiceish_request(
     )
 
 
-def draft_order_request(
+def draft_order(
     unique_id: str,
-    DraftCreateRequestObject: Type[DraftOrderCreateRequest],
+    DraftOrderType: Type[DraftOrder],
     accounting_account: str,
     customer: Contact,
     bank_account: BankAccount,
-) -> DraftOrderCreateRequest:
+) -> DraftOrder:
     order_line = DraftLineOrder(
         text=f"En billig yacht (testprodukt {unique_id})",
         vatType="HIGH",
@@ -140,18 +142,18 @@ def draft_order_request(
         incomeAccount=accounting_account,
     )
 
-    return DraftCreateRequestObject(
+    return DraftOrderType(
         customerId=customer.contactId,
         lines=[order_line],
         bankAccountCode=bank_account.accountCode,
         cash=False,
         paid=False,
         invoiceIssueDate=datetime.date.today(),
-        contactId=customer.contactId,
+        contact=customer,
     )
 
 
-def sale_request(unique_id: str, contact: Contact) -> SaleRequest:
+def sale(unique_id: str, contact: Contact) -> Sale:
     sale_line = OrderLine(
         description=f"En tilfeldig fjernkontroll (testprodukt {unique_id})",
         vatType=VatTypeProductSale.HIGH,
@@ -160,16 +162,16 @@ def sale_request(unique_id: str, contact: Contact) -> SaleRequest:
         vat=250,
     )
 
-    return SaleRequest(
+    return Sale(
         date=datetime.date.today(),
         lines=[sale_line],
         kind=SaleKind.EXTERNAL_INVOICE,
-        customerId=contact.contactId,
+        customer=contact,
         currency="NOK",
     )
 
 
-def purchase_request(unique_id: str, contact: Contact) -> PurchaseRequest:
+def purchase(unique_id: str, contact: Contact) -> Purchase:
     purchase_line = OrderLine(
         description=f"En veldig billig AK (testprodukt {unique_id})",
         vatType="HIGH",
@@ -178,18 +180,18 @@ def purchase_request(unique_id: str, contact: Contact) -> PurchaseRequest:
         vat="25000",
     )
 
-    return PurchaseRequest(
+    return Purchase(
         date=datetime.date.today(),
         kind=PurchaseKind.SUPPLIER,
         currency="NOK",
         lines=[purchase_line],
         paid=True,
-        supplierId=contact.contactId,
+        supplier=contact,
     )
 
 
-def project(unique_id) -> ProjectRequest:
-    return ProjectRequest(
+def project(unique_id) -> Project:
+    return Project(
         name=f"Prosjekt {unique_id}",
         number=unique_id + "_sample",
         startDate=datetime.date.today(),

@@ -19,11 +19,11 @@ class FikenPy:
 
         self.access_token = auth_token
 
-    def get_user_info(self) -> UserInfo:
+    def get_user_info(self) -> UserInfo | None:
         return UserInfo.get(token=self.access_token)
 
     def get_companies(self) -> List[Company]:
         return Company.getAll(token=self.access_token)
 
-    def get_company(self, company_slug: str) -> Company:
+    def get_company(self, company_slug: str) -> Company | None:
         return Company.get(companySlug=company_slug, token=self.access_token)

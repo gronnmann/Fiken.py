@@ -1,4 +1,5 @@
 import datetime
+import typing
 from typing import Optional, ClassVar
 
 from pydantic import BaseModel, Field
@@ -11,15 +12,15 @@ from fiken_py.fiken_object import (
     RequestMethod,
     FikenObject,
     OptionalAccessToken,
+    FikenObjectRequiringRequest,
 )
 from fiken_py.models import InvoiceDraft
 from fiken_py.models.draft import (
     DraftInvoiceIsh,
-    DraftInvoiceIshCreateRequest,
+    DraftInvoiceIshRequest,
     DraftTypeInvoiceIsh,
 )
 from fiken_py.shared_types import InvoiceLine, Address
-import test_online.shared_tests as shared_tests
 
 
 class OrderConfirmation(FikenObjectCountable, FikenObjectAttachable, BaseModel):
@@ -72,18 +73,44 @@ class OrderConfirmation(FikenObjectCountable, FikenObjectAttachable, BaseModel):
 
 
 class OrderConfirmationDraft(DraftInvoiceIsh):
-    CREATED_OBJECT_CLASS: ClassVar[FikenObject] = OrderConfirmation
+    CREATED_OBJECT_CLASS: ClassVar[typing.Type[FikenObject]] = OrderConfirmation
 
     _GET_PATH_SINGLE = "/companies/{companySlug}/orderConfirmations/drafts/{draftId}"
     _GET_PATH_MULTIPLE = "/companies/{companySlug}/orderConfirmations/drafts"
     _DELETE_PATH = "/companies/{companySlug}/orderConfirmations/drafts/{draftId}"
     _PUT_PATH = "/companies/{companySlug}/orderConfirmations/drafts/{draftId}"
+    _POST_PATH = "/companies/{companySlug}/orderConfirmations/drafts"
 
     _CREATE_OBJECT_PATH = "/companies/{companySlug}/orderConfirmations/drafts/{draftId}/createOrderConfirmation"
 
+    type: DraftTypeInvoiceIsh = DraftTypeInvoiceIsh.ORDER_CONFIRMATION
 
-class OrderConfirmationDraftRequest(DraftInvoiceIshCreateRequest):
-    BASE_CLASS: ClassVar[FikenObject] = OrderConfirmationDraft
-    _POST_PATH = "/companies/{companySlug}/orderConfirmations/drafts"
+    def _to_request_object(
+        self,
+        contactId: Optional[int] = None,
+        contactPersonId: Optional[int] = None,
+        **kwargs
+    ) -> BaseModel:
+        if contactId is None:
+            if self.customers is not None and len(self.customers) > 0:
+                contactId = self.customers[0].contactId
 
+        if contactPersonId is None:
+            if self.customers is not None and len(self.customers) > 0:
+                if (
+                    self.customers[0] is not None
+                    and len(self.customers[0].contactPerson) > 0
+                ):
+                    contactPersonId = self.customers[0].contactPerson[0].contactPersonId
+
+        return OrderConfirmationDraftRequest(
+            customerId=contactId,
+            contactPersonId=contactPersonId,
+            **FikenObjectRequiringRequest._pack_common_fields(
+                self, OrderConfirmationDraftRequest
+            )
+        )
+
+
+class OrderConfirmationDraftRequest(DraftInvoiceIshRequest):
     type: DraftTypeInvoiceIsh = DraftTypeInvoiceIsh.ORDER_CONFIRMATION

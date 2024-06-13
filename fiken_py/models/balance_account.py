@@ -1,9 +1,10 @@
 import datetime
-from typing import Optional
+import typing
+from typing import Optional, Any
 
 from pydantic import BaseModel
 
-from fiken_py.fiken_object import FikenObject
+from fiken_py.fiken_object import FikenObject, OptionalAccessToken
 
 
 class BalanceAccount(BaseModel, FikenObject):
@@ -26,3 +27,16 @@ class BalanceAccountBalance(BalanceAccount):
     _GET_PATH_MULTIPLE = "/companies/{companySlug}/accountBalances/"
 
     balance: Optional[int] = None
+
+    @classmethod
+    def getAll(
+        cls,
+        token: OptionalAccessToken = None,
+        follow_pages: bool = True,
+        page: Optional[int] = None,
+        date: datetime.date = datetime.date.today(),
+        **kwargs: Any,
+    ) -> list[typing.Self]:
+        return super().getAll(
+            token=token, follow_pages=follow_pages, page=page, date=date, **kwargs
+        )

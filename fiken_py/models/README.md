@@ -23,36 +23,46 @@ _PUT_PATH = 'updates an object'
 _DELETE_PATH = 'deletes an object'
 ```
 
-If you wish to support `PUT`, you also need a `@property` method called `is_new` which decides
-when to use `POST` and when to use `PUT`.
-Check out `contact.py` for an example.
+You also need to specify the id-attribute by overriding the property `id_attr`
+and specifying the name and value of the attribute.
 
+Example (from `models/bank_account.py`):
 ```python
 @property
-def is_new(self) -> bool:
-    return self.id is None
+def id_attr(self):
+    return "bankAccountId", self.bankAccountId
 ```
 
 ### Request classes
-If you are using a method that requires a different request and response class, you can
-create the Response class as normal, then create a request class that extends `FikenObjectRequest` instead of
-`FikenObject`. You then need to set up `BASE_CLASS` to point to the response class.
+If you are using a method that requires a different request and response class, you need to make the response class
+extend the `FikenObjectRequiringRequest`, and then overriding the `_to_request_object` method.
+The application will then automatically convert into the request class when using `POST` or `PUT` methods.
 
 ```python
-from fiken_py.models import BaseModel, FikenObject, FikenObjectRequest
+from fiken_py.models import BaseModel, FikenObjectRequiringRequest
 
-class MyModel(BaseModel, FikenObject):
+class MyModel(BaseModel, FikenObjectRequiringRequest):
+    _POST_PATH = '{post path here}'
+    
     model_required_property: str
     model_optional_property: Optional[str] = None
     pass
 
-class MyModelRequest(BaseModel, FikenObjectRequest):
-    _POST_PATH = '{post path here}'
+    def _to_request_object(self, **kwargs) -> 'MyModelRequest':
+        return MyModelRequest(
+            model_required_property=self.model_required_property
+        )
+        
+        # or - using the built-in method which will automatically embed all common properties
+        return BankAccountRequest(
+            **FikenObjectRequiringRequest._pack_common_fields(self, MyModelRequest)
+        )
     
-    BASE_CLASS: ClassVar[FikenObject] = MyModel
+class MyModelRequest(BaseModel):
+    model_required_property: str
+    
     pass
 ```
-The `BASE_CLASS` is used to determine the response class when calling the `post` method.
 
 ### Adding tests
 When adding a new model, you should also add tests for the model.

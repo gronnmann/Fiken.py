@@ -69,10 +69,6 @@ class FikenObject:
 
     _COMPANY_SLUG: Optional[str] = None
 
-    BASE_CLASS: ClassVar[Optional[type[FikenObject]]] = (
-        None  # For FikenObjectRequest and save not to give AttributeError
-    )
-
     _RATE_LIMIT_ENABLED: ClassVar[bool] = True
     _MAX_REQUESTS_PER_SECOND: ClassVar[int] = 4
     _REQUESTS_COUNTER: ClassVar[int] = 0
@@ -217,7 +213,6 @@ class FikenObject:
         :param kwargs: arguments to replace placeholders in the path
         :return: None or the new object
         """
-
         if token is None:
             token = self._auth_token
 
@@ -232,10 +227,13 @@ class FikenObject:
 
         use_post = self.is_new if self.is_new is not None else True
         used_method = RequestMethod.POST if use_post else RequestMethod.PUT
+        dumped_object = self
+        if issubclass(self.__class__, FikenObjectRequiringRequest):
+            dumped_object = self._to_request_object(**kwargs)
 
         try:
             response = self._execute_method(
-                used_method, token=token, dumped_object=self, **kwargs
+                used_method, token=token, dumped_object=dumped_object, **kwargs
             )
         except RequestErrorException:
             raise
@@ -252,7 +250,7 @@ class FikenObject:
         response: requests.Response,
         token: OptionalAccessToken = None,
         **kwargs,
-    ) -> None | typing.Self:
+    ) -> typing.Self:
         """Follows the location header in the response and returns the new object.
         If new object is of the same class, updates the current object with the new one.
         """
@@ -260,26 +258,14 @@ class FikenObject:
         if location:
             logger.debug(f"Location of new object: {location}")
 
-            if issubclass(self.__class__, FikenObjectRequest):
-                base_class = self.__class__.BASE_CLASS
+            new_object = self.__class__._get_from_url(location, token, **kwargs)
+            self.__dict__.update(new_object.__dict__)
 
-                if base_class is None:
-                    raise ValueError(
-                        f"BASE_CLASS for request class {self.__class__} not set"
-                    )
-
-            else:
-                base_class = self.__class__
-
-            new_object = base_class._get_from_url(location, token, **kwargs)
-
-            if base_class == self.__class__:
-                # Override the current object with the new one
-                self.__dict__.update(new_object.__dict__)
-                return self
-            return new_object
-
-        return None
+            return self
+        else:
+            raise RequestContentNotFoundException(
+                f"Location header not found in response for {self.__class__.__name__}"
+            )
 
     def _refresh_object(self, **kwargs):
         try:
@@ -461,8 +447,6 @@ class FikenObject:
         request_data: Optional[str | dict] = None
 
         if dumped_object is not None:
-            print(method)  # TODO del
-            print(dumped_object)  # TODO del
             if method not in [
                 RequestMethod.POST,
                 RequestMethod.PUT,
@@ -598,31 +582,29 @@ class FikenObject:
         return obj
 
 
-class FikenObjectRequest(FikenObject):
-    """
-    Base class for all Fiken object requests.
+class FikenObjectRequiringRequest(FikenObject):
 
-    They only support save requests.
-    They create their BASE_CLASS object when saved.
-    """
+    @abc.abstractmethod
+    def _to_request_object(self, **kwargs) -> BaseModel:
+        """Converts the object to a request object"""
 
-    BASE_CLASS: ClassVar[FikenObject] = None
+        raise NotImplementedError("Method not implemented")
 
-    @classmethod
-    def get(**kwargs):
-        raise RequestWrongMediaTypeException("Request objects can not be fetched")
+    @staticmethod
+    def _pack_common_fields(
+        base_object: BaseModel, request_object_type: type[BaseModel]
+    ) -> dict:
+        """Returns the common field and values between the base and request objects"""
 
-    @classmethod
-    def getAll(**kwargs):
-        raise RequestWrongMediaTypeException("Request objects can not be fetched")
-
-    def save(
-        self, token: OptionalAccessToken = None, **kwargs: Any
-    ) -> type[BASE_CLASS] | None:
-        if self.__class__.BASE_CLASS is None:
-            raise ValueError(f"BASE_CLASS not set for {self.__class__}")
-
-        return super().save(token=token, **kwargs)
+        common_fields = {}
+        for base_field in request_object_type.model_fields:
+            if base_field in base_object.__class__.model_fields:
+                common_fields[base_field] = getattr(base_object, base_field)
+            else:
+                logger.warning(
+                    f"Field {base_field} not present in {base_object.__class__.__name__}"
+                )
+        return common_fields
 
 
 class FikenObjectAttachable(FikenObject):
@@ -667,7 +649,7 @@ class FikenObjectAttachable(FikenObject):
     @classmethod
     def get_attachments_cls(
         cls,
-        instance: Optional[FikenObjectAttachable] = None,
+        instance: Optional[typing.Self] = None,
         token: OptionalAccessToken = None,
         **kwargs,
     ) -> list[Attachment]:
@@ -676,8 +658,12 @@ class FikenObjectAttachable(FikenObject):
         if token is None and instance is not None:
             token = instance._auth_token
 
-        if kwargs.get(instance.id_attr[0]) is None and instance.id_attr[1] is not None:
-            kwargs[instance.id_attr[0]] = instance.id_attr[1]
+        if instance is not None:
+            if (
+                kwargs.get(instance.id_attr[0]) is None
+                and instance.id_attr[1] is not None
+            ):
+                kwargs[instance.id_attr[0]] = instance.id_attr[1]
 
         try:
             response = cls._execute_method(
@@ -702,7 +688,7 @@ class FikenObjectAttachable(FikenObject):
         filename: str,
         data: bytes,
         comment: Optional[str] = None,
-        instance: Optional[FikenObjectAttachable] = None,
+        instance: Optional[typing.Self] = None,
         token: OptionalAccessToken = None,
         **kwargs,
     ):
@@ -747,7 +733,7 @@ class FikenObjectAttachable(FikenObject):
         filepath,
         filename: Optional[str] = None,
         comment: Optional[str] = None,
-        instance: Optional[FikenObjectAttachable] = None,
+        instance: Optional[typing.Self] = None,
         token: OptionalAccessToken = None,
         **kwargs,
     ):

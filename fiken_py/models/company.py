@@ -8,41 +8,27 @@ from fiken_py.models import (
     BalanceAccount,
     BankAccount,
     Contact,
-    ProductSalesReportRequest,
     ProductSalesReport,
     Product,
     JournalEntry,
-    JournalEntryRequest,
     Transaction,
     InboxDocument,
-    InboxDocumentRequest,
     Invoice,
-    InvoiceRequest,
     InvoiceDraft,
-    InvoiceDraftRequest,
     CreditNote,
     CreditNoteDraft,
-    CreditNoteDraftRequest,
     Offer,
     OfferDraft,
-    OfferDraftRequest,
     OrderConfirmation,
     OrderConfirmationDraft,
-    OrderConfirmationDraftRequest,
     Sale,
-    SaleRequest,
     SaleDraft,
-    SaleDraftRequest,
     Purchase,
     PurchaseDraft,
-    PurchaseRequest,
     Project,
-    ProjectRequest,
-    BankAccountRequest,
     BalanceAccountBalance,
-    PurchaseDraftRequest,
 )
-from fiken_py.shared_types import Address, AccountingAccount
+from fiken_py.shared_types import Address, AccountingAccount, AccountingAccountAssets
 from fiken_py.shared_enums import CompanyVatType
 
 
@@ -86,11 +72,32 @@ class Company(BaseModel, FikenObject):
             **kwargs
         )
 
-    def create_inbox_document(
-        self, document_request: InboxDocumentRequest, **kwargs
+    def create_inbox_document_bytes(
+        self, file: bytes, name: str, description: str, filename: str, **kwargs
     ) -> InboxDocument:
-        return document_request.save(
-            companySlug=self.slug, token=self._auth_token, **kwargs
+        return InboxDocument.upload_from_bytes(
+            file=file,
+            name=name,
+            description=description,
+            filename=filename,
+            companySlug=self.slug,
+            token=self._auth_token,
+        )
+
+    def create_inbox_document_filepath(
+        self,
+        filepath: str,
+        name: str,
+        description: str,
+        filename: Optional[str] = None,
+    ):
+        return InboxDocument.upload_from_filepath(
+            filepath=filepath,
+            name=name,
+            description=description,
+            filename=filename,
+            companySlug=self.slug,
+            token=self._auth_token,
         )
 
     # Balance accounts
@@ -119,12 +126,17 @@ class Company(BaseModel, FikenObject):
         )
 
     def get_balance_account_balances(
-        self, follow_pages: bool = True, page: Optional[int] = None, **kwargs
-    ) -> (List)[BalanceAccountBalance]:
-        return BalanceAccount.getAll(
+        self,
+        date: datetime.date = datetime.date.today(),
+        follow_pages: bool = True,
+        page: Optional[int] = None,
+        **kwargs
+    ) -> List[BalanceAccountBalance]:
+        return BalanceAccountBalance.getAll(
             companySlug=self.slug,
             follow_pages=follow_pages,
             page=page,
+            date=date,
             token=self._auth_token,
             **kwargs
         )
@@ -167,10 +179,8 @@ class Company(BaseModel, FikenObject):
             **kwargs
         )
 
-    def create_bank_account(
-        self, bank_account_request: BankAccountRequest, **kwargs
-    ) -> BankAccount:
-        return bank_account_request.save(
+    def create_bank_account(self, bank_account: BankAccount, **kwargs) -> BankAccount:
+        return bank_account.save(
             companySlug=self.slug, token=self._auth_token, **kwargs
         )
 
@@ -204,11 +214,11 @@ class Company(BaseModel, FikenObject):
     # Product Sale Report
 
     def get_product_sale_report(
-        self, to_date: datetime.date, from_date: datetime.date, **kwargs
+        self, from_date: datetime.date, to_date: datetime.date, **kwargs
     ) -> list[ProductSalesReport]:
-        sale_rep = ProductSalesReportRequest(to=to_date, from_=from_date)
-
-        return sale_rep.save(companySlug=self.slug, token=self._auth_token, **kwargs)
+        return ProductSalesReport.get_report_for_timeframe(
+            from_date, to_date, token=self._auth_token, companySlug=self._company_slug, **kwargs
+        )
 
     def get_products(
         self, follow_pages: bool = True, page: Optional[int] = None, **kwargs
@@ -254,11 +264,11 @@ class Company(BaseModel, FikenObject):
             **kwargs
         )
 
-    def create_journal_entry(
-        self, journal_entry_request: JournalEntryRequest, **kwargs
+    def create_transaction(
+        self, transaction: Transaction, open: Optional[bool] = False, **kwargs
     ) -> Transaction:
-        return journal_entry_request.save(
-            companySlug=self.slug, token=self._auth_token, **kwargs
+        return transaction.save(
+            companySlug=self.slug, token=self._auth_token, open=open, **kwargs
         )
 
     # Transactions
@@ -274,7 +284,7 @@ class Company(BaseModel, FikenObject):
             **kwargs
         )
 
-    def get_transaction(self, transactionId: int, **kwargs) -> Transaction:
+    def get_transaction(self, transactionId: int, **kwargs) -> Transaction | None:
         return Transaction.get(
             companySlug=self.slug,
             transactionId=transactionId,
@@ -301,10 +311,22 @@ class Company(BaseModel, FikenObject):
         )
 
     def create_invoice(
-        self, invoice_request: InvoiceRequest, **kwargs
+        self,
+        invoice: Invoice,
+        bankAccountCode: AccountingAccountAssets | str,
+        paymentAccount: Optional[AccountingAccount | str] = None,
+        contactPersonId: Optional[int] = None,
+        uuid: Optional[str] = None,
+        **kwargs
     ) -> Invoice | None:
-        return invoice_request.save(
-            companySlug=self.slug, token=self._auth_token, **kwargs
+        return invoice.save(
+            companySlug=self.slug,
+            token=self._auth_token,
+            bankAccountCode=bankAccountCode,
+            uuid=uuid,
+            paymentAccount=paymentAccount,
+            contactPersonId=contactPersonId,
+            **kwargs,
         )
 
     def get_invoice_drafts(
@@ -324,10 +346,18 @@ class Company(BaseModel, FikenObject):
         )
 
     def create_invoice_draft(
-        self, invoice_draft_request: InvoiceDraftRequest, **kwargs
+        self,
+        invoice_draft: InvoiceDraft,
+        contactId: Optional[int] = None,
+        contactPersonId: Optional[int] = None,
+        **kwargs
     ) -> InvoiceDraft:
-        return invoice_draft_request.save(
-            companySlug=self.slug, token=self._auth_token, **kwargs
+        return invoice_draft.save(
+            companySlug=self.slug,
+            token=self._auth_token,
+            contactId=contactId,
+            contactPersonId=contactPersonId,
+            **kwargs
         )
 
     # Credit Notes
@@ -384,10 +414,18 @@ class Company(BaseModel, FikenObject):
         )
 
     def create_credit_note_draft(
-        self, credit_note_draft_request: CreditNoteDraftRequest, **kwargs
+        self,
+        credit_note_draft: CreditNoteDraft,
+        contactId: Optional[int] = None,
+        contactPersonId: Optional[int] = None,
+        **kwargs
     ) -> CreditNoteDraft:
-        return credit_note_draft_request.save(
-            companySlug=self.slug, token=self._auth_token, **kwargs
+        return credit_note_draft.save(
+            companySlug=self.slug,
+            token=self._auth_token,
+            contactId=contactId,
+            contactPersonId=contactPersonId,
+            **kwargs
         )
 
     # Offers
@@ -435,10 +473,18 @@ class Company(BaseModel, FikenObject):
         )
 
     def create_offer_draft(
-        self, offer_draft_request: OfferDraftRequest, **kwargs
+        self,
+        offer_draft: OfferDraft,
+        contactId: Optional[int] = None,
+        contactPersonId: Optional[int] = None,
+        **kwargs
     ) -> OfferDraft:
-        return offer_draft_request.save(
-            companySlug=self.slug, token=self._auth_token, **kwargs
+        return offer_draft.save(
+            companySlug=self.slug,
+            token=self._auth_token,
+            contactId=contactId,
+            contactPersonId=contactPersonId,
+            **kwargs
         )
 
     # Order confirmations
@@ -493,9 +539,9 @@ class Company(BaseModel, FikenObject):
         )
 
     def create_order_confirmation_draft(
-        self, order_confirmation_draft_request: OrderConfirmationDraftRequest, **kwargs
+        self, order_confirmation_draft: OrderConfirmationDraft, **kwargs
     ) -> OrderConfirmationDraft:
-        return order_confirmation_draft_request.save(
+        return order_confirmation_draft.save(
             companySlug=self.slug, token=self._auth_token, **kwargs
         )
 
@@ -517,9 +563,14 @@ class Company(BaseModel, FikenObject):
             companySlug=self.slug, saleId=saleId, token=self._auth_token, **kwargs
         )
 
-    def create_sale(self, sale_request: SaleRequest, **kwargs) -> Sale:
-        return sale_request.save(
-            companySlug=self.slug, token=self._auth_token, **kwargs
+    def create_sale(
+        self, sale: Sale, paymentFee: Optional[int] = None, **kwargs
+    ) -> Sale:
+        return sale.save(
+            companySlug=self.slug,
+            token=self._auth_token,
+            paymentFee=paymentFee,
+            **kwargs
         )
 
     def get_sale_drafts(
@@ -538,12 +589,8 @@ class Company(BaseModel, FikenObject):
             companySlug=self.slug, draftId=draftId, token=self._auth_token, **kwargs
         )
 
-    def create_sale_draft(
-        self, sale_draft_request: SaleDraftRequest, **kwargs
-    ) -> SaleDraft:
-        return sale_draft_request.save(
-            companySlug=self.slug, token=self._auth_token, **kwargs
-        )
+    def create_sale_draft(self, sale_draft: SaleDraft, **kwargs) -> SaleDraft:
+        return sale_draft.save(companySlug=self.slug, token=self._auth_token, **kwargs)
 
     # Purchases
 
@@ -566,9 +613,11 @@ class Company(BaseModel, FikenObject):
             **kwargs
         )
 
-    def create_purchase(self, purchase_request: PurchaseRequest, **kwargs) -> Purchase:
-        return purchase_request.save(
-            companySlug=self.slug, token=self._auth_token, **kwargs
+    def create_purchase(
+        self, purchase: Purchase, projectId: Optional[int] = None, **kwargs
+    ) -> Purchase:
+        return purchase.save(
+            companySlug=self.slug, token=self._auth_token, projectId=projectId, **kwargs
         )
 
     def get_purchase_drafts(
@@ -588,9 +637,9 @@ class Company(BaseModel, FikenObject):
         )
 
     def create_purchase_draft(
-        self, purchase_draft_request: PurchaseDraftRequest, **kwargs
+        self, purchase_draft: PurchaseDraft, **kwargs
     ) -> PurchaseDraft:
-        return purchase_draft_request.save(
+        return purchase_draft.save(
             companySlug=self.slug, token=self._auth_token, **kwargs
         )
 
@@ -612,7 +661,5 @@ class Company(BaseModel, FikenObject):
             companySlug=self.slug, projectId=projectId, token=self._auth_token, **kwargs
         )
 
-    def create_project(self, project_request: ProjectRequest, **kwargs) -> Project:
-        return project_request.save(
-            companySlug=self.slug, token=self._auth_token, **kwargs
-        )
+    def create_project(self, project: Project, **kwargs) -> Project:
+        return project.save(companySlug=self.slug, token=self._auth_token, **kwargs)

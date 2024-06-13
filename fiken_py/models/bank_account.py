@@ -1,12 +1,11 @@
 from datetime import date
 from enum import Enum
-from typing import Optional, ClassVar
+from typing import Optional
 
-from pydantic import BaseModel, model_validator, Field
+from pydantic import BaseModel, model_validator
 
-from fiken_py.fiken_object import FikenObject, FikenObjectRequest
+from fiken_py.fiken_object import FikenObjectRequiringRequest
 from fiken_py.shared_types import (
-    AccountingAccount,
     AccountingAccountAssets,
     BankAccountNumber,
 )
@@ -19,19 +18,10 @@ class BankAccountType(str, Enum):
     CREDIT_CARD = "credit_card"
 
 
-class BankAccountBase(BaseModel):
-    name: str
-    bankAccountNumber: BankAccountNumber
-    bic: Optional[str] = None
-    iban: Optional[str] = None
-    foreignService: Optional[str] = None
-    type: BankAccountType
-    inactive: bool = False
-
-
-class BankAccount(BankAccountBase, FikenObject):
+class BankAccount(BaseModel, FikenObjectRequiringRequest):
     _GET_PATH_SINGLE = "/companies/{companySlug}/bankAccounts/{bankAccountId}"
     _GET_PATH_MULTIPLE = "/companies/{companySlug}/bankAccounts/"
+    _POST_PATH = "/companies/{companySlug}/bankAccounts/"
 
     name: Optional[str] = None
     bankAccountNumber: Optional[BankAccountNumber] = None
@@ -39,17 +29,30 @@ class BankAccount(BankAccountBase, FikenObject):
     bankAccountId: Optional[int] = None
     accountCode: Optional[AccountingAccountAssets] = None
     reconciledBalance: Optional[int] = None
-    reconciledDate: Optional[date] = None  # TODO - new date type
+    reconciledDate: Optional[date] = None
+    bic: Optional[str] = None
+    iban: Optional[str] = None
+    foreignService: Optional[str] = None
+    inactive: Optional[bool] = False
 
     @property
     def id_attr(self):
         return "bankAccountId", self.bankAccountId
 
+    def _to_request_object(self, **kwargs) -> BaseModel:
+        return BankAccountRequest(
+            **FikenObjectRequiringRequest._pack_common_fields(self, BankAccountRequest)
+        )
 
-class BankAccountRequest(BankAccountBase, FikenObjectRequest):
-    BASE_CLASS: ClassVar[FikenObject] = BankAccount
 
-    _POST_PATH = "/companies/{companySlug}/bankAccounts/"
+class BankAccountRequest(BaseModel):
+    name: str
+    bankAccountNumber: BankAccountNumber
+    bic: Optional[str] = None
+    iban: Optional[str] = None
+    foreignService: Optional[str] = None
+    type: BankAccountType
+    inactive: bool = False
 
     @model_validator(mode="after")
     @classmethod

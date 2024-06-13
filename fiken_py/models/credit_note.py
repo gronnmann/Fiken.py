@@ -14,11 +14,12 @@ from fiken_py.fiken_object import (
     FikenObjectCountable,
     FikenObject,
     OptionalAccessToken,
+    FikenObjectRequiringRequest,
 )
 from fiken_py.models.draft import (
     DraftInvoiceIsh,
     DraftTypeInvoiceIsh,
-    DraftInvoiceIshCreateRequest,
+    DraftInvoiceIshRequest,
 )
 from fiken_py.shared_types import (
     Address,
@@ -133,16 +134,17 @@ class CreditNote(FikenObjectCountable, BaseModel):
         if loc is None:
             raise RequestErrorException("No Location header in response")
 
-        return CreditNote._get_from_url(loc, token=token, companySlug=companySlug)
+        return cls._get_from_url(loc, token=token, companySlug=companySlug)
 
 
 class CreditNoteDraft(DraftInvoiceIsh):
-    CREATED_OBJECT_CLASS: ClassVar[FikenObject] = CreditNote
+    CREATED_OBJECT_CLASS: ClassVar[typing.Type[FikenObject]] = CreditNote
 
     _GET_PATH_SINGLE = "/companies/{companySlug}/creditNotes/drafts/{draftId}"
     _GET_PATH_MULTIPLE = "/companies/{companySlug}/creditNotes/drafts"
     _DELETE_PATH = "/companies/{companySlug}/creditNotes/drafts/{draftId}"
     _PUT_PATH = "/companies/{companySlug}/creditNotes/drafts/{draftId}"
+    _POST_PATH = "/companies/{companySlug}/creditNotes/drafts"
 
     _CREATE_OBJECT_PATH = (
         "/companies/{companySlug}/creditNotes/drafts/{draftId}/createCreditNote"
@@ -150,9 +152,32 @@ class CreditNoteDraft(DraftInvoiceIsh):
 
     type: DraftTypeInvoiceIsh = DraftTypeInvoiceIsh.CREDIT_NOTE
 
+    def _to_request_object(
+        self,
+        contactId: Optional[int] = None,
+        contactPersonId: Optional[int] = None,
+        **kwargs,
+    ) -> BaseModel:
+        if contactId is None:
+            if self.customers is not None and len(self.customers) > 0:
+                contactId = self.customers[0].contactId
 
-class CreditNoteDraftRequest(DraftInvoiceIshCreateRequest):
-    BASE_CLASS: ClassVar[FikenObject] = CreditNoteDraft
-    _POST_PATH = "/companies/{companySlug}/creditNotes/drafts"
+        if contactPersonId is None:
+            if self.customers is not None and len(self.customers) > 0:
+                if (
+                    self.customers[0] is not None
+                    and len(self.customers[0].contactPerson) > 0
+                ):
+                    contactPersonId = self.customers[0].contactPerson[0].contactPersonId
 
+        return CreditNoteDraftRequest(
+            customerId=contactId,
+            contactPersonId=contactPersonId,
+            **FikenObjectRequiringRequest._pack_common_fields(
+                self, CreditNoteDraftRequest
+            ),
+        )
+
+
+class CreditNoteDraftRequest(DraftInvoiceIshRequest):
     type: DraftTypeInvoiceIsh = DraftTypeInvoiceIsh.CREDIT_NOTE

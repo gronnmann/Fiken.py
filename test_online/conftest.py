@@ -12,7 +12,6 @@ from fiken_py.models import (
     Product,
     Contact,
     BankAccount,
-    BankAccountRequest,
     BankAccountType,
 )
 
@@ -75,7 +74,7 @@ def generic_bank_account(set_auth_token) -> BankAccount:
             if bank_account.name == name:
                 return bank_account
 
-    bank_account = BankAccountRequest(
+    bank_account = BankAccount(
         name=name, bankAccountNumber="11112233334", type=BankAccountType.NORMAL
     )
     bank_account: BankAccount = bank_account.save()

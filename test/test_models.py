@@ -12,7 +12,7 @@ from fiken_py.shared_enums import CaseInsensitiveEnum
 from fiken_py.models.credit_note import CreditNote
 from sample_data_reader import get_sample_from_json
 
-from fiken_py.fiken_object import FikenObject
+from fiken_py.fiken_object import FikenObject, FikenObjectRequiringRequest
 from fiken_py.models import (
     UserInfo,
     BalanceAccount,
@@ -22,7 +22,6 @@ from fiken_py.models import (
     ContactPerson,
     Product,
     ProductSalesReport,
-    ProductSalesReportRequest,
     Transaction,
     JournalEntry,
     InboxDocument,
@@ -65,7 +64,6 @@ def m():
         Contact,
         ContactPerson,
         Product,
-        ProductSalesReportRequest,
         ProductSalesReport,
         JournalEntry,
         Transaction,
@@ -96,6 +94,10 @@ def test_object_methods(object: FikenObject, m: requests_mock.Mocker):
     ):
         print("Testing GET multiple")
         get_multiple(object, m)
+
+    if issubclass(object.__class__, FikenObjectRequiringRequest):
+        print("Testing to_request_object")
+        request_object_conv_test(object)
 
     print("-----------------------------------")
 
@@ -214,3 +216,11 @@ def _compare_object_to_sample_data(obj, sample_data):
 
                 # check if the attribute is the same as the sample data
                 assert val == sample_data.get(attr)
+
+
+def request_object_conv_test(obj: FikenObjectRequiringRequest):
+    req = obj._to_request_object()
+
+    for attr, val in obj.__dict__.items():
+        if attr in obj.__dict__:
+            assert getattr(req, attr) == val

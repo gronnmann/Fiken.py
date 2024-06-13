@@ -6,14 +6,14 @@ from fiken_py.models import (
     Contact,
     Product,
     BankAccount,
-    InvoiceDraftRequest,
-    CreditNoteDraftRequest,
-    OfferDraftRequest,
-    OrderConfirmationDraftRequest,
-    SaleDraftRequest,
     PaymentSale,
-    PurchaseDraftRequest,
     PaymentPurchase,
+    InvoiceDraft,
+    CreditNoteDraft,
+    OfferDraft,
+    OrderConfirmationDraft,
+    SaleDraft,
+    PurchaseDraft,
 )
 from test_online import sample_object_factory
 
@@ -35,15 +35,19 @@ def test_company_methods(
     assert FikenObject._COMPANY_SLUG is None
 
     # Step 2) Do the OOP tests
-
-    company_method_tests(
-        unique_id,
-        AUTH_TOKEN,
-        COMPANY_SLUG,
-        generic_bank_account,
-        generic_product,
-        generic_contact,
-    )
+    try:
+        company_method_tests(
+            unique_id,
+            AUTH_TOKEN,
+            COMPANY_SLUG,
+            generic_bank_account,
+            generic_product,
+            generic_contact,
+        )
+    except Exception:
+        FikenObject.set_auth_token(AUTH_TOKEN)
+        FikenObject.set_company_slug(COMPANY_SLUG)
+        raise
 
     # Step 3) Restore global settings
     FikenObject.set_auth_token(AUTH_TOKEN)
@@ -87,7 +91,7 @@ def company_method_tests(
 
     # Bank accounts
 
-    bank_acc_req = sample_object_factory.bank_account_request(unique_id)
+    bank_acc_req = sample_object_factory.bank_account(unique_id)
     bank_acc = company.create_bank_account(bank_acc_req)
     assert bank_acc.bankAccountId is not None
 
@@ -114,10 +118,10 @@ def company_method_tests(
     assert company.get_product(prod_id) is None
 
     # Journal entry and transactions
-    journal_entry_req = sample_object_factory.journal_entry_request(
+    journal_entry_req = sample_object_factory.transaction(
         unique_id, generic_bank_account, bank_acc
     )
-    transaction = company.create_journal_entry(journal_entry_req)
+    transaction = company.create_transaction(journal_entry_req)
     assert transaction.transactionId is not None
     assert transaction.entries[0].journalEntryId is not None
 
@@ -128,10 +132,12 @@ def company_method_tests(
     assert company.get_transaction(transaction.transactionId) is not None
 
     # Invoice
-    invoice_req = sample_object_factory.invoice_request(
+    invoice_req = sample_object_factory.invoice(
         unique_id, generic_product, generic_contact, bank_acc
     )
-    invoice = company.create_invoice(invoice_req)
+    invoice = company.create_invoice(
+        invoice_req, bankAccountCode=generic_bank_account.accountCode
+    )
     assert invoice.invoiceId is not None
 
     assert len(company.get_invoices(follow_pages=False)) > 0
@@ -152,30 +158,30 @@ def company_method_tests(
     assert company.get_order_confirmations(follow_pages=False) is not None
 
     # Draft -> Invoice, Credit Note, Offer, Order
-    draft_invoice_req = sample_object_factory.draft_invoiceish_request(
-        unique_id, InvoiceDraftRequest, generic_product, generic_contact, bank_acc
+    draft_invoice_req = sample_object_factory.draft_invoiceish(
+        unique_id, InvoiceDraft, generic_product, generic_contact, bank_acc
     )
     draft_invoice_req = company.create_invoice_draft(draft_invoice_req)
     assert draft_invoice_req.draftId is not None
     assert draft_invoice_req.submit_object().invoiceId is not None
 
-    draft_credit_note_req = sample_object_factory.draft_invoiceish_request(
-        unique_id, CreditNoteDraftRequest, generic_product, generic_contact, bank_acc
+    draft_credit_note_req = sample_object_factory.draft_invoiceish(
+        unique_id, CreditNoteDraft, generic_product, generic_contact, bank_acc
     )
     draft_credit_note_req = company.create_credit_note_draft(draft_credit_note_req)
     assert draft_credit_note_req.draftId is not None
     assert draft_credit_note_req.submit_object().creditNoteId is not None
 
-    draft_offer_req = sample_object_factory.draft_invoiceish_request(
-        unique_id, OfferDraftRequest, generic_product, generic_contact, bank_acc
+    draft_offer_req = sample_object_factory.draft_invoiceish(
+        unique_id, OfferDraft, generic_product, generic_contact, bank_acc
     )
     draft_offer_req = company.create_offer_draft(draft_offer_req)
     assert draft_offer_req.draftId is not None
     assert draft_offer_req.submit_object().offerId is not None
 
-    draft_order_confirmation_req = sample_object_factory.draft_invoiceish_request(
+    draft_order_confirmation_req = sample_object_factory.draft_invoiceish(
         unique_id,
-        OrderConfirmationDraftRequest,
+        OrderConfirmationDraft,
         generic_product,
         generic_contact,
         bank_acc,
@@ -187,16 +193,26 @@ def company_method_tests(
     assert draft_order_confirmation_req.submit_object().confirmationId is not None
 
     # Sale
-    sale_req = sample_object_factory.sale_request(unique_id, generic_contact)
+    sale_req = sample_object_factory.sale(unique_id, generic_contact)
     sale = company.create_sale(sale_req)
     assert sale.saleId is not None
 
     assert len(company.get_sales(follow_pages=False)) > 0
     assert company.get_sale(sale.saleId) is not None
 
+    # Sale report
+    assert (
+        len(
+            company.get_product_sale_report(
+                datetime.date.today(), datetime.date.today()
+            )
+        )
+        > 0
+    )
+
     # Sale draft
-    sale_draft_req = sample_object_factory.draft_order_request(
-        unique_id, SaleDraftRequest, "3000", generic_contact, bank_acc
+    sale_draft_req = sample_object_factory.draft_order(
+        unique_id, SaleDraft, "3000", generic_contact, bank_acc
     )
     sale_draft_req = company.create_sale_draft(sale_draft_req)
     assert sale_draft_req.draftId is not None
@@ -214,7 +230,7 @@ def company_method_tests(
     assert sale.deleted
 
     # Purchase
-    purchase_req = sample_object_factory.purchase_request(unique_id, generic_contact)
+    purchase_req = sample_object_factory.purchase(unique_id, generic_contact)
     purchase = company.create_purchase(purchase_req)
     assert purchase.purchaseId is not None
 
@@ -222,8 +238,8 @@ def company_method_tests(
     assert company.get_purchase(purchase.purchaseId) is not None
 
     # Purchase draft
-    purchase_draft_req = sample_object_factory.draft_order_request(
-        unique_id, PurchaseDraftRequest, "3000", generic_contact, bank_acc
+    purchase_draft_req = sample_object_factory.draft_order(
+        unique_id, PurchaseDraft, "3000", generic_contact, bank_acc
     )
     purchase_draft_req = company.create_purchase_draft(purchase_draft_req)
     assert purchase_draft_req.draftId is not None

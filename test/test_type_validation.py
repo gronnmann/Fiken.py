@@ -11,14 +11,15 @@ from fiken_py.shared_types import (
     AccountingAccountEquityAndLiabilities,
     DraftLineOrder,
     OrderLine,
+    DraftLineInvoiceIsh,
 )
 from fiken_py.models import (
     BankAccount,
-    BankAccountRequest,
-    DraftLineInvoiceIsh,
     BankAccountType,
-    PurchaseDraftRequest,
-    SaleDraftRequest,
+    Purchase,
+    Sale,
+    PurchaseDraft,
+    SaleDraft,
 )
 
 
@@ -80,39 +81,44 @@ def test_validate_draft_line():
 
 
 def test_bankaccount_request_foreignservice():
-    bank_account = BankAccountRequest(
+    bank_account = BankAccount(
         name="Test Bank Account",
         bankAccountNumber="12345678901",
         type=BankAccountType.FOREIGN,
         foreignService="Test Service",
     )
+    req = bank_account._to_request_object()
 
-    assert bank_account is not None
+    assert req is not None
 
-    bank_account = BankAccountRequest(
+    bank_account = BankAccount(
         name="Test Bank Account",
         bankAccountNumber="12345678901",
         type=BankAccountType.NORMAL,
     )
+    bank_account._to_request_object()
+    req = bank_account._to_request_object()
 
-    assert bank_account is not None
+    assert req is not None
 
     # type normal, but foreignService
     with pytest.raises(ValidationError):
-        bank_account = BankAccountRequest(
+        bank_account = BankAccount(
             name="Test Bank Account",
             bankAccountNumber="12345678901",
             type=BankAccountType.NORMAL,
             foreignService="Test Service",
         )
+        bank_account._to_request_object()
 
     # type foreign, but no foreignService
     with pytest.raises(ValidationError):
-        bank_account = BankAccountRequest(
+        bank_account = BankAccount(
             name="Test Bank Account",
             bankAccountNumber="12345678901",
             type=BankAccountType.FOREIGN,
         )
+        req = bank_account._to_request_object()
 
 
 @pytest.mark.parametrize(
@@ -211,22 +217,29 @@ def test_sale_purcahse_draft_vat_types():
 
     draft_line_both = DraftLineOrder(vatType="HIGH")
 
-    correct = PurchaseDraftRequest(cash=True, lines=[draft_line_purchase])
+    correct = PurchaseDraft(cash=True, lines=[draft_line_purchase])
+    correct = correct._to_request_object()
     assert correct is not None
 
     with pytest.raises(ValidationError):
-        wrong = PurchaseDraftRequest(cash=True, lines=[draft_line_sale])
+        wrong = PurchaseDraft(cash=True, lines=[draft_line_sale])
+        wrong = wrong._to_request_object()
+        print(wrong)
 
-    correct = PurchaseDraftRequest(cash=True, lines=[draft_line_both])
+    correct = PurchaseDraft(cash=True, lines=[draft_line_both])
+    correct = correct._to_request_object()
     assert correct is not None
 
-    correct = SaleDraftRequest(cash=True, lines=[draft_line_sale])
+    correct = SaleDraft(cash=True, lines=[draft_line_sale])
+    correct = correct._to_request_object()
     assert correct is not None
 
     with pytest.raises(ValidationError):
-        wrong = SaleDraftRequest(cash=True, lines=[draft_line_purchase])
+        wrong = SaleDraft(cash=True, lines=[draft_line_purchase])
+        wrong = wrong._to_request_object()
 
-    correct = SaleDraftRequest(cash=True, lines=[draft_line_both])
+    correct = SaleDraft(cash=True, lines=[draft_line_both])
+    correct = correct._to_request_object()
 
     assert correct is not None
 

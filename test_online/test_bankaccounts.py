@@ -1,9 +1,9 @@
-from fiken_py.models import BankAccount, BankAccountRequest, BankAccountType
+from fiken_py.models import BankAccount
 from test_online import sample_object_factory
 
 
 def test_create_bankaccount(unique_id):
-    bank_account_request = sample_object_factory.bank_account_request(unique_id)
+    bank_account_request = sample_object_factory.bank_account(unique_id)
 
     bank_account: BankAccount = bank_account_request.save()
 

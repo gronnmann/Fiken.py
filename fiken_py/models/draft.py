@@ -1,5 +1,7 @@
+import abc
 import datetime
 import typing
+from abc import ABC
 from enum import Enum
 from typing import Optional, ClassVar, Any
 
@@ -8,11 +10,11 @@ from pydantic import BaseModel, Field
 from fiken_py.authorization import AccessToken
 from fiken_py.errors import RequestErrorException
 from fiken_py.fiken_object import (
-    FikenObjectRequest,
     FikenObject,
     RequestMethod,
     FikenObjectAttachable,
     OptionalAccessToken,
+    FikenObjectRequiringRequest,
 )
 from fiken_py.shared_types import (
     Attachment,
@@ -25,52 +27,22 @@ from fiken_py.models.payment import Payment
 from fiken_py.models import Contact, Project
 
 
-class DraftObject(FikenObjectAttachable):
+class DraftObject(FikenObjectAttachable, FikenObjectRequiringRequest, ABC):
     """Generic draft object.
     Supports attachments, saving, and submitting to create a real object.
 
     In practice this class should not be used directly, but rather one of the subclasses.
     """
 
-    CREATED_OBJECT_CLASS: ClassVar[FikenObject] = (
-        None  # Which class to use when making into a real object
-    )
+    CREATED_OBJECT_CLASS: ClassVar[typing.Type[FikenObject]]
 
     @property
     def id_attr(self):
         return "draftId", self.draftId
 
-    def save(self, **kwargs: Any) -> typing.Self | None:
+    def save(self, token: OptionalAccessToken = None, **kwargs: Any) -> typing.Self:
 
-        if self._get_method_base_URL(RequestMethod.PUT) is not None:
-            if self.is_new is None:
-                raise NotImplementedError(
-                    f"Object {self.__class__.__name__} has PUT path specified, but no is_new method"
-                )
-
-        if self.is_new:
-            return super().save(**kwargs)
-
-        try:
-            response = self._execute_method(
-                RequestMethod.PUT,
-                dumped_object=self._to_draft_create_request(),
-                draftId=self.draftId,
-                **kwargs,
-            )
-        except RequestErrorException:
-            raise
-
-        return self._follow_location_and_update_class(response)
-
-    @property
-    def is_new(self):
-        return self.draftId is None
-
-    def _to_draft_create_request(self):
-        raise NotImplementedError(
-            "Method _to_draft_create_request must be implemented in subclass"
-        )
+        return super().save(token=token, draftId=self.draftId, **kwargs)
 
     def submit_object(
         self, companySlug: Optional[str] = None, token: OptionalAccessToken = None
@@ -120,7 +92,8 @@ class DraftTypeInvoiceIsh(str, Enum):
     ORDER_CONFIRMATION = "order_confirmation"
 
 
-class DraftInvoiceIshBase(BaseModel):
+class DraftInvoiceIsh(DraftObject, BaseModel, ABC):
+    # For example, InvoiceDraft -> Invoice
     uuid: Optional[str] = None
     projectId: Optional[int] = None
     lastModifiedDate: Optional[datetime.date] = None
@@ -137,11 +110,6 @@ class DraftInvoiceIshBase(BaseModel):
     iban: Optional[str] = None
     bic: Optional[str] = None
     paymentAccount: Optional[AccountingAccount] = None
-
-
-class DraftInvoiceIsh(DraftObject, DraftInvoiceIshBase):
-    # For example, InvoiceDraft -> Invoice
-
     draftId: Optional[int] = None
     type: Optional[DraftTypeInvoiceIsh] = None
     daysUntilDueDate: Optional[int] = None
@@ -149,23 +117,29 @@ class DraftInvoiceIsh(DraftObject, DraftInvoiceIshBase):
     attachments: Optional[list[Attachment]] = []
     createdFromInvoiceId: Optional[int] = None
 
-    def _to_draft_create_request(self):
-        dumped = self.model_dump(exclude_unset=True)
-        dumped["customerId"] = self.customers[0].contactId
-        # TODO - is this really the best way to do this?
 
-        return DraftInvoiceIshCreateRequest(**dumped)
-
-
-class DraftInvoiceIshCreateRequest(FikenObjectRequest, DraftInvoiceIshBase):
-    BASE_CLASS: ClassVar[FikenObject] = DraftInvoiceIsh
-
+class DraftInvoiceIshRequest(BaseModel):
     type: DraftTypeInvoiceIsh
     daysUntilDueDate: int
     customerId: int
+    bankAccountNumber: BankAccountNumber
 
     contactPersonId: Optional[int] = None
-    bankAccountNumber: BankAccountNumber  # TODO - maybe optional if set for user?
+    uuid: Optional[str] = None
+    projectId: Optional[int] = None
+    lastModifiedDate: Optional[datetime.date] = None
+    issueDate: Optional[datetime.date] = None
+    invoiceText: Optional[str] = None
+    currency: Optional[str] = Field(None, pattern="^[A-Z]{3}$")
+    yourReference: Optional[str] = None
+    ourReference: Optional[str] = None
+    orderReference: Optional[str] = None
+    lines: Optional[list[DraftLineInvoiceIsh]] = []
+    net: Optional[int] = None
+    gross: Optional[int] = None
+    iban: Optional[str] = None
+    bic: Optional[str] = None
+    paymentAccount: Optional[AccountingAccount] = None
 
 
 class DraftOrderBase(BaseModel):
@@ -183,7 +157,7 @@ class DraftOrderBase(BaseModel):
     lines: Optional[list[DraftLineOrder]] = []
 
 
-class DraftOrder(DraftObject, DraftOrderBase):
+class DraftOrder(DraftObject, DraftOrderBase, ABC):
     contact: Optional[Contact] = None
     project: Optional[Project] = None
 
@@ -194,9 +168,7 @@ class DraftOrder(DraftObject, DraftOrderBase):
         return DraftOrderCreateRequest(**dumped)
 
 
-class DraftOrderCreateRequest(FikenObjectRequest, DraftOrderBase):
-    BASE_CLASS: ClassVar[FikenObject] = DraftOrder
-
+class DraftOrderCreateRequest(DraftOrderBase):
     cash: bool
 
     contactId: Optional[int] = None

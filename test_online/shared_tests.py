@@ -5,7 +5,7 @@ from fiken_py.fiken_object import FikenObjectAttachable, FikenObjectCountable
 from fiken_py.models import Contact, Product, BankAccount
 from fiken_py.models.draft import (
     DraftInvoiceIsh,
-    DraftInvoiceIshCreateRequest,
+    DraftInvoiceIshRequest,
     DraftOrder,
     DraftOrderCreateRequest,
 )
@@ -21,7 +21,6 @@ from test_online import sample_object_factory
 
 def draftable_invoiceish_object_tests(
     DraftObject: Type[DraftInvoiceIsh],
-    DraftCreateRequestObject: Type[DraftInvoiceIshCreateRequest],
     unique_id: str,
     generic_product: Product,
     generic_customer: Contact,
@@ -30,9 +29,9 @@ def draftable_invoiceish_object_tests(
     """Tests for Draft objects, such as OfferDraft, InvoiceDraft, CreditNoteDraft.
     Returns the object created from the draft.
     """
-    draft = sample_object_factory.draft_invoiceish_request(
+    draft = sample_object_factory.draft_invoiceish(
         unique_id,
-        DraftCreateRequestObject,
+        DraftObject,
         generic_product,
         generic_customer,
         generic_bank_account,
@@ -67,15 +66,14 @@ def draftable_invoiceish_object_tests(
 
 def draftable_order_object_tests(
     DraftObject: Type[DraftOrder],
-    DraftCreateRequestObject: Type[DraftOrderCreateRequest],
     product_account: str,
     unique_id: str,
     generic_customer: Contact,
     generic_bank_account: BankAccount,
 ):
-    draft = sample_object_factory.draft_order_request(
+    draft = sample_object_factory.draft_order(
         unique_id,
-        DraftCreateRequestObject,
+        DraftObject,
         product_account,
         generic_customer,
         generic_bank_account,

@@ -1,4 +1,5 @@
 import datetime
+import typing
 from typing import Optional, ClassVar
 
 from pydantic import BaseModel, Field, model_validator
@@ -6,11 +7,11 @@ from pydantic import BaseModel, Field, model_validator
 from fiken_py.errors import RequestErrorException
 from fiken_py.fiken_object import (
     FikenObject,
-    FikenObjectRequest,
     FikenObjectAttachable,
     FikenObjectDeleteFlagable,
     RequestMethod,
     FikenObjectPaymentable,
+    FikenObjectRequiringRequest,
 )
 from fiken_py.models.draft import DraftOrder, DraftOrderCreateRequest
 
@@ -20,7 +21,20 @@ from fiken_py.shared_enums import SaleKind, VatTypeProductSale
 from fiken_py.models import Contact, Project
 
 
-class SaleBase(BaseModel):
+class Sale(
+    FikenObjectRequiringRequest,
+    FikenObjectAttachable,
+    FikenObjectDeleteFlagable,
+    FikenObjectPaymentable,
+    BaseModel,
+):
+    _GET_PATH_SINGLE = "/companies/{companySlug}/sales/{saleId}"
+    _GET_PATH_MULTIPLE = "/companies/{companySlug}/sales"
+    _DELETE_PATH = "/companies/{companySlug}/sales/{saleId}/delete"
+    _SET_SETTLED_PATH = "/companies/{companySlug}/sales/{saleId}/settled"
+    _POST_PATH = "/companies/{companySlug}/sales/"
+    saleId: Optional[int] = None
+
     saleNumber: Optional[str] = None
     totalPaid: Optional[int] = None
     totalPaidInCurrency: Optional[int] = None
@@ -29,16 +43,6 @@ class SaleBase(BaseModel):
     paymentAccount: Optional[AccountingAccountAssets] = None
     paymentDate: Optional[datetime.date] = None
 
-
-class Sale(
-    FikenObjectAttachable, FikenObjectDeleteFlagable, FikenObjectPaymentable, SaleBase
-):
-    _GET_PATH_SINGLE = "/companies/{companySlug}/sales/{saleId}"
-    _GET_PATH_MULTIPLE = "/companies/{companySlug}/sales"
-    _DELETE_PATH = "/companies/{companySlug}/sales/{saleId}/delete"
-    _SET_SETTLED_PATH = "/companies/{companySlug}/sales/{saleId}/settled"
-
-    saleId: Optional[int] = None
     lastModifiedDate: Optional[datetime.date] = None
     transactionId: Optional[int] = None
     date: Optional[datetime.date] = None
@@ -73,20 +77,27 @@ class Sale(
                 saleId=self.saleId,
                 settledDate=settledDate,
             )
-        except RequestErrorException as e:
+        except RequestErrorException:
             raise
         if response.status_code != 200:
-            return False
+            raise RequestErrorException(
+                f"Failed to set sale as settled. Response: {response.status_code} {response.text}"
+            )
 
         self._refresh_object()
 
-        return True
+    def _to_request_object(
+        self, paymentFee: Optional[int] = None, **kwargs
+    ) -> BaseModel:
+        return SaleRequest(
+            customerId=self.customer.contactId if self.customer is not None else None,
+            projectId=self.project.projectId if self.project is not None else None,
+            paymentFee=paymentFee,
+            **FikenObjectRequiringRequest._pack_common_fields(self, SaleRequest),
+        )
 
 
-class SaleRequest(FikenObjectRequest, SaleBase):
-    BASE_CLASS: ClassVar[FikenObject] = Sale
-    _POST_PATH = "/companies/{companySlug}/sales/"
-
+class SaleRequest(BaseModel):
     date: datetime.date
     kind: SaleKind
     currency: str = Field(pattern=r"^[A-Z]{3}$")
@@ -94,7 +105,14 @@ class SaleRequest(FikenObjectRequest, SaleBase):
 
     customerId: Optional[int] = None
     paymentFee: Optional[int] = None
-    projectId: Optional[str] = None
+    projectId: Optional[int] = None
+    saleNumber: Optional[str] = None
+    totalPaid: Optional[int] = None
+    totalPaidInCurrency: Optional[int] = None
+    dueDate: Optional[datetime.date] = None
+    kid: Optional[str] = Field(None, min_length=2, max_length=25)
+    paymentAccount: Optional[AccountingAccountAssets] = None
+    paymentDate: Optional[datetime.date] = None
 
     @model_validator(mode="after")
     @classmethod
@@ -142,15 +160,22 @@ class SaleDraft(DraftOrder):
     _GET_PATH_MULTIPLE = "/companies/{companySlug}/sales/drafts"
     _DELETE_PATH = "/companies/{companySlug}/sales/drafts/{draftId}"
     _PUT_PATH = "/companies/{companySlug}/sales/drafts/{draftId}"
+    _POST_PATH = "/companies/{companySlug}/sales/drafts"
 
     _CREATE_OBJECT_PATH = "/companies/{companySlug}/sales/drafts/{draftId}/createSale"
-    CREATED_OBJECT_CLASS: ClassVar[FikenObject] = Sale
+    CREATED_OBJECT_CLASS: ClassVar[typing.Type[FikenObject]] = Sale
+
+    def _to_request_object(self, **kwargs) -> BaseModel:
+        return SaleDraftRequest(
+            projectId=self.project.projectId if self.project is not None else None,
+            contactId=self.contact.contactId if self.contact is not None else None,
+            **FikenObjectRequiringRequest._pack_common_fields(
+                self, DraftOrderCreateRequest
+            ),
+        )
 
 
 class SaleDraftRequest(DraftOrderCreateRequest):
-    BASE_CLASS: ClassVar[FikenObject] = SaleDraft
-    _POST_PATH = "/companies/{companySlug}/sales/drafts"
-
     @model_validator(mode="after")
     @classmethod
     def correct_vat_type(cls, value):

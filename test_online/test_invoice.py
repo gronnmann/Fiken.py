@@ -1,13 +1,11 @@
 import datetime
 
-from fiken_py.shared_types import InvoiceLineRequest
+from fiken_py.shared_types import InvoiceLineRequest, InvoiceLine
 from fiken_py.shared_enums import VatTypeProduct, VatTypeProductSale
 from fiken_py.models import (
     Product,
     Contact,
-    InvoiceRequest,
     Invoice,
-    InvoiceDraftRequest,
     InvoiceDraft,
 )
 import test_online.shared_tests as shared_tests
@@ -20,11 +18,11 @@ def test_create_get_patch_invoice_product(
     generic_contact: Contact,
     generic_bank_account,
 ):
-    invoice = sample_object_factory.invoice_request(
+    invoice = sample_object_factory.invoice(
         unique_id, generic_product, generic_contact, generic_bank_account
     )
 
-    invoice: Invoice = invoice.save()
+    invoice: Invoice = invoice.save(bankAccountCode=generic_bank_account.accountCode)
 
     assert invoice is not None
     assert invoice.invoiceId is not None
@@ -48,7 +46,7 @@ def test_create_get_patch_invoice_product(
 def test_create_invoice_product_freetext_and_invoice_counter(
     unique_id: str, generic_contact: Contact, generic_bank_account
 ):
-    invoice_line: InvoiceLineRequest = InvoiceLineRequest(
+    invoice_line = InvoiceLine(
         quantity=1,
         description="En banankasse fra Bendit (testprodukt fritekst)",
         unitPrice=10000,
@@ -56,10 +54,10 @@ def test_create_invoice_product_freetext_and_invoice_counter(
         incomeAccount="3100",
     )
 
-    invoice: InvoiceRequest = InvoiceRequest(
+    invoice = Invoice(
         issueDate=datetime.date.today(),
         dueDate=datetime.date.today() + datetime.timedelta(days=14),
-        customerId=generic_contact.contactId,
+        customer=generic_contact,
         lines=[invoice_line],
         bankAccountCode=generic_bank_account.accountCode,
         cash=False,
@@ -69,7 +67,7 @@ def test_create_invoice_product_freetext_and_invoice_counter(
 
     counter: int = Invoice.get_counter()
 
-    invoice: Invoice = invoice.save()
+    invoice: Invoice = invoice.save(bankAccountCode=generic_bank_account.accountCode)
 
     assert Invoice.get_counter() == counter + 1
 
@@ -89,7 +87,6 @@ def test_create_through_draft(
 ):
     shared_tests.draftable_invoiceish_object_tests(
         InvoiceDraft,
-        InvoiceDraftRequest,
         unique_id,
         generic_product,
         generic_contact,

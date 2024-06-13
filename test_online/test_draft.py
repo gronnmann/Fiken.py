@@ -5,14 +5,12 @@ from fiken_py.models import (
     BankAccount,
     Contact,
     Product,
-    InvoiceDraftRequest,
     InvoiceDraft,
     Invoice,
-    DraftLineInvoiceIsh,
     CreditNoteDraft,
-    CreditNoteDraftRequest,
 )
 from fiken_py.models.credit_note import CreditNote
+from fiken_py.shared_types import DraftLineInvoiceIsh
 
 
 def test_all_invoice_draft(
@@ -35,10 +33,10 @@ def test_all_invoice_draft(
         quantity=2,
     )
 
-    draft: InvoiceDraftRequest = InvoiceDraftRequest(
+    draft = InvoiceDraft(
         issueDate=datetime.date.today(),
         daysUntilDueDate=7,
-        customerId=generic_contact.contactId,
+        customers=[generic_contact],
         lines=[draft_line, draft_line_non_product],
         ourReference=f"Test draft ({unique_id}#product)",
         invoiceText="This is a test draft sent by FikenPy",
@@ -97,10 +95,10 @@ def test_all_credit_note(
         vatType=VatTypeProductSale.HIGH,
     )
 
-    draft: CreditNoteDraftRequest = CreditNoteDraftRequest(
+    draft = CreditNoteDraft(
         issueDate=datetime.date.today(),
         daysUntilDueDate=7,
-        customerId=generic_contact.contactId,
+        customers=[generic_contact],
         lines=[draft_line],
         ourReference=f"Test credit note ({unique_id}#product)",
         invoiceText="This is a test credit note sent by FikenPy",

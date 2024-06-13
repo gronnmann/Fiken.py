@@ -28,9 +28,5 @@ class Product(BaseModel, FikenObject):
     notes: Optional[str] = None
 
     @property
-    def is_new(self) -> None | bool:
-        return self.productId is None
-
-    @property
     def id_attr(self):
         return "productId", self.productId

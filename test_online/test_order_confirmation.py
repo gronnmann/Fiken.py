@@ -1,7 +1,6 @@
 from fiken_py.models import (
     OrderConfirmation,
     OrderConfirmationDraft,
-    OrderConfirmationDraftRequest,
     Contact,
     Product,
 )
@@ -17,7 +16,6 @@ def test_create_order_confirmation_full(
 
     draft_from_test: OrderConfirmation = shared_tests.draftable_invoiceish_object_tests(
         DraftObject=OrderConfirmationDraft,
-        DraftCreateRequestObject=OrderConfirmationDraftRequest,
         unique_id=unique_id,
         generic_product=generic_product,
         generic_customer=generic_contact,

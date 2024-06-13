@@ -164,7 +164,6 @@ class InvoiceLineBase(InvoiceIshLineBase):
 
 class InvoiceLineRequest(InvoiceLineBase):
     validate_product_or_line: ClassVar[bool] = True
-
     quantity: int
 
 

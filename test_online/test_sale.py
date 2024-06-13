@@ -1,12 +1,10 @@
 import datetime
 
 from fiken_py.models import (
-    SaleDraftRequest,
     SaleDraft,
     Contact,
     BankAccount,
     Sale,
-    SaleRequest,
     PaymentSale,
 )
 from fiken_py.shared_enums import SaleKind
@@ -17,7 +15,7 @@ from test_online import shared_tests, sample_object_factory
 def test_sale_manual(
     unique_id: str, generic_contact: Contact, generic_bank_account: BankAccount
 ):
-    sale_request = sample_object_factory.sale_request(unique_id, generic_contact)
+    sale_request = sample_object_factory.sale(unique_id, generic_contact)
 
     sale: Sale = sale_request.save()
 
@@ -44,7 +42,6 @@ def test_sale_draft(
 ):
     sale: Sale = shared_tests.draftable_order_object_tests(
         SaleDraft,
-        SaleDraftRequest,
         "4000",
         unique_id,
         generic_contact,
@@ -55,7 +52,7 @@ def test_sale_draft(
 
     assert sale.settled is False
 
-    assert sale.set_settled() is True
+    sale.set_settled()
 
     assert sale.settled
 

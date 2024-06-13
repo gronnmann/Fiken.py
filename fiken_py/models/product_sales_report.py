@@ -1,9 +1,15 @@
+import typing
 from datetime import date
 from typing import ClassVar, Optional, List, Any
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ConfigDict
 
-from fiken_py.fiken_object import FikenObject, FikenObjectRequest
+from fiken_py.fiken_object import (
+    FikenObject,
+    FikenObjectRequiringRequest,
+    RequestMethod,
+    OptionalAccessToken,
+)
 from fiken_py.shared_types import ProductSalesLine
 from fiken_py.models import Product
 
@@ -14,18 +20,32 @@ class ProductSalesReport(BaseModel, FikenObject):
     credited: Optional[ProductSalesLine] = None
     sum: Optional[ProductSalesLine] = None
 
-    pass
-    # TODO - handle weird getting of this class
+    _POST_PATH = "/companies/{companySlug}/products/salesReport"
 
+    @classmethod
+    def get_report_for_timeframe(
+        cls, from_: date, to: date, token: OptionalAccessToken = None, **kwargs
+    ) -> List[typing.Self]:
+        req = ProductSalesReportRequest(
+            from_=from_,
+            to=to,
+        )
 
-class ProductSalesReportRequest(BaseModel, FikenObjectRequest):
-    BASE_CLASS: ClassVar[List[FikenObject]] = [ProductSalesReport]
+        response = cls._execute_method(
+            RequestMethod.POST, dumped_object=req, token=token, **kwargs
+        )
 
-    from_: date = Field(..., alias="from")
-    to: date
+        return [cls(**report) for report in response.json()]
 
     @property
-    def id_attr(self) -> tuple[str, Any]:
+    def id_attr(self) -> tuple[str, str | None]:
         return "NONE", None
 
-    _POST_PATH = "/companies/{companySlug}/products/salesReport"
+
+class ProductSalesReportRequest(BaseModel):
+    from_: date = Field(alias="from")
+    to: date
+
+    model_config = ConfigDict(
+        populate_by_name=True,
+    )

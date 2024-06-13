@@ -9,3 +9,5 @@
 - credit note partial?
 - auto go from PAyment->SalePayment|PurchasePayment
 - remove is_new where implemented?
+- make PartialCreditNoteRequest do something.
+- fix the weird InvoiceRequest quirk with bacnk account (find bank account)

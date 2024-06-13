@@ -83,6 +83,7 @@ class Authorization:
         }
 
         p = Request("GET", cls._AUTHORIZATION_URL, params=auth_data).prepare()
+
         return p.url, state
 
     @classmethod

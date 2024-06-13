@@ -84,7 +84,7 @@ They mostly correspond to the objects in the Fiken API.
 Generally, all objects have the following methods:
 - `get` - Fetches a single object (class method)
 - `getAll` - Fetches all objects (class method)
-- `save` - Saves the object to Fiken
+- `save` - Saves the object to Fiken. Might need some kwargs to work properly.
 - `delete` - Deletes the object from Fiken
 
 Not all methods are available for all objects, please check the Fiken API documentation for more information.
@@ -103,13 +103,6 @@ Arguments passed to kwargs, but not used as placeholders, are passed as query pa
 
 When doing `save` or `delete`, some of those (for example `contactId`) are fetched from
 the object itself, and should not be passed as kwargs (unless you wish to override them).
-
-### Objects using Request classes
-Some objects use different classes for create operations (POST).
-For example `POST bankAccounts` uses `BankAccountRequest` instead of `BankAccount`.  
-  
-In those cases, create a new object of the `Request` (for example `BankAccountRequest`) class and pass it to the `save` method.
-The `save` method will then respond with the actual `BankAccount` object.
 
 ### Examples - Using methods directly
 #### Getting all contacts
@@ -132,15 +125,6 @@ contact.save(companySlug='your_company_slug')
 ```python
 contact = Contact.get(contactId='contact_id', companySlug='your_company_slug')
 contact.delete(companySlug='your_company_slug')
-```
-
-Creating objects using Request classes:
-```python
-new_account_request = BankAccountCreateRequest(name='test_account', bankAccountNumber="11122233334 "
-                                           , type=BankAccountType.NORMAL)
-# new_account_request is <class 'fiken_py.models.bank_account.BankAccountCreateRequest'>
-new_account = new_account_request.save(companySlug='fiken-demo-drage-og-elefant-as')
-# new_account is <class 'fiken_py.models.bank_account.BankAccount'>
 ```
 
 ### Examples - Using OOP-style
@@ -171,18 +155,6 @@ contact = company.create_contact(contact)
 # Notes
 Some objects do behave weirdly or not as expected.
 This is a list of known quirks you might encounter:
-### JournalEntryRequest maps to Transaction
-The `JournalEntryRequest` object maps, when saved, returns the 
-`Transaction` object in Fiken (and not `JournalEntry`).
-
-```python
-journal_entry: JournalEntryRequest
-
-journal_entry = request.save(companySlug='fiken-demo-drage-og-elefant-as')
-# returns header Location: https://api.fiken.no/api/v2/companies/fiken-demo-drage-og-elefant-as/transactions/{some id}
-
-print(type(journal_entry)) # <class 'fiken_py.models.transaction.Transaction'>
-```
 
 ### CreditNotePartialRequestLine and CreditNoteLine
 When accessing credit notes, the lines are of type `InvoiceLine` as in the API.
@@ -205,6 +177,19 @@ the common method `draft.to_object()`.
 They both have their own class `BalanceAccount` and `BalanceAccountBalance` respectively.
 The balance itself can also be fetched calling upon `balance_account_instance.get_balance()`
 
+### Drafts and customerId/contactPersonId
+Some of the POST and PUT endpoints for drafts require setting a contactId and/or contactPersonId,
+while there may be multiple of those in a GET for the same field.
+
+When saving a draft, the `contactId` and `contactPersonId` are fetched from the `customerId` and `contactPersonId` can 
+either be supplised in the `kwargs`, or will be taken from the first contact in the `customerId` list
+(and their first contact person).
+
+### Saving new `Invoice` requires provoding `bankAccountCode`
+
+When saving a new `Invoice`, you need to provide the `bankAccountCode` in the `kwargs` argument.
+This is because the Invoice class itself just gives `bankAccountNumber` in the API, and we can't infer
+the `bankAccountCode` from that.
 
 ## Rate limiting
 From the [Fiken API documentation](https://api.fiken.no/api/v2/docs/):

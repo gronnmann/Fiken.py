@@ -1,6 +1,6 @@
 import datetime
 
-from fiken_py.models import BalanceAccount, SaleRequest
+from fiken_py.models import BalanceAccount, Sale
 from fiken_py.shared_enums import SaleKind
 from fiken_py.shared_types import OrderLine
 
@@ -14,7 +14,7 @@ def test_with_sale(unique_id, generic_product, generic_bank_account):
 
     assert old_balance is not None
 
-    sale = SaleRequest(
+    sale = Sale(
         date=datetime.date.today(),
         paymentDate=datetime.date.today(),
         paymentAccount=generic_bank_account.accountCode,
@@ -32,7 +32,7 @@ def test_with_sale(unique_id, generic_product, generic_bank_account):
         currency="NOK",
     )
 
-    sale: SaleRequest = sale.save()
+    sale = sale.save()
 
     new_balance = acc_sales.get_balance()
 

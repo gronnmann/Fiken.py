@@ -1,14 +1,15 @@
 import datetime
+import typing
 from typing import Optional, List, ClassVar
 
 from pydantic import BaseModel, Field, model_validator
 
 from fiken_py.fiken_object import (
     FikenObjectAttachable,
-    FikenObjectRequest,
     FikenObject,
     FikenObjectDeleteFlagable,
     FikenObjectPaymentable,
+    FikenObjectRequiringRequest,
 )
 from fiken_py.models import Contact, Project
 from fiken_py.models.draft import DraftOrder, DraftOrderCreateRequest
@@ -37,10 +38,12 @@ class Purchase(
     FikenObjectDeleteFlagable,
     FikenObjectPaymentable,
     PurchaseBase,
+    FikenObjectRequiringRequest,
 ):
     _GET_PATH_SINGLE = "/companies/{companySlug}/purchases/{purchaseId}"
     _GET_PATH_MULTIPLE = "/companies/{companySlug}/purchases"
     _DELETE_PATH = "/companies/{companySlug}/purchases/{purchaseId}/delete"
+    _POST_PATH = "/companies/{companySlug}/purchases/"
 
     _PAYMENTS_PATH = "/companies/{companySlug}/purchases/{purchaseId}/payments"
     _PAYMENTS_SINGLE_PATH = (
@@ -51,18 +54,29 @@ class Purchase(
     supplier: Optional[Contact] = None
     payments: Optional[list[Payment]] = []
     purchaseAttachments: Optional[list[Attachment]] = None
-    project: Optional[List[Project]] = None
+    project: List[Project] = []
     deleted: Optional[bool] = None
 
     @property
     def id_attr(self):
         return "purchaseId", self.purchaseId
 
+    def _to_request_object(
+        self, projectId: Optional[int] = None, **kwargs
+    ) -> BaseModel:
 
-class PurchaseRequest(FikenObjectRequest, PurchaseBase):
-    _POST_PATH = "/companies/{companySlug}/purchases/"
-    BASE_CLASS: ClassVar[FikenObject] = Purchase
+        if projectId is None:
+            if self.project is not None and len(self.project) > 0:
+                projectId = self.project[0].projectId
 
+        return PurchaseRequest(
+            supplierId=self.supplier.contactId if self.supplier is not None else None,
+            projectId=projectId,
+            **FikenObjectRequiringRequest._pack_common_fields(self, PurchaseRequest)
+        )
+
+
+class PurchaseRequest(PurchaseBase):
     supplierId: Optional[int] = None
     projectId: Optional[int] = None
 
@@ -95,17 +109,24 @@ class PurchaseDraft(DraftOrder):
     _GET_PATH_MULTIPLE = "/companies/{companySlug}/purchases/drafts"
     _DELETE_PATH = "/companies/{companySlug}/purchases/drafts/{draftId}"
     _PUT_PATH = "/companies/{companySlug}/purchases/drafts/{draftId}"
+    _POST_PATH = "/companies/{companySlug}/purchases/drafts"
 
     _CREATE_OBJECT_PATH = (
         "/companies/{companySlug}/purchases/drafts/{draftId}/createPurchase"
     )
-    CREATED_OBJECT_CLASS: ClassVar[FikenObject] = Purchase
+    CREATED_OBJECT_CLASS: ClassVar[typing.Type[FikenObject]] = Purchase
+
+    def _to_request_object(self, **kwargs) -> BaseModel:
+        return PurchaseDraftRequest(
+            projectId=self.project.projectId if self.project is not None else None,
+            contactId=self.contact.contactId if self.contact is not None else None,
+            **FikenObjectRequiringRequest._pack_common_fields(
+                self, DraftOrderCreateRequest
+            )
+        )
 
 
 class PurchaseDraftRequest(DraftOrderCreateRequest):
-    BASE_CLASS: ClassVar[FikenObject] = PurchaseDraft
-    _POST_PATH = "/companies/{companySlug}/purchases/drafts"
-
     @model_validator(mode="after")
     @classmethod
     def correct_vat_type(cls, value):

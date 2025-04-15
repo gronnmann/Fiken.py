@@ -31,7 +31,6 @@ AccountingAccountCosts = Annotated[
     str, Field(pattern=r"^[4-8]\d{3}$")
 ]  # Kontoklasse 4-7
 
-BankAccountNumber = Annotated[str, Field(pattern=r"^\d{11}$")]
 
 
 class Address(BaseModel):

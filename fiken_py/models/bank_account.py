@@ -24,7 +24,7 @@ class BankAccount(BaseModel, FikenObjectRequiringRequest):
     _POST_PATH = "/companies/{companySlug}/bankAccounts/"
 
     name: Optional[str] = None
-    bankAccountNumber: Optional[BankAccountNumber] = None
+    bankAccountNumber: str = None
     type: Optional[BankAccountType] = None
     bankAccountId: Optional[int] = None
     accountCode: Optional[AccountingAccountAssets] = None

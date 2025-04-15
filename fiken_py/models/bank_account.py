@@ -7,7 +7,6 @@ from pydantic import BaseModel, model_validator
 from fiken_py.fiken_object import FikenObjectRequiringRequest
 from fiken_py.shared_types import (
     AccountingAccountAssets,
-    BankAccountNumber,
 )
 
 

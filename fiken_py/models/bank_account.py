@@ -46,7 +46,7 @@ class BankAccount(BaseModel, FikenObjectRequiringRequest):
 
 class BankAccountRequest(BaseModel):
     name: str
-    bankAccountNumber: BankAccountNumber
+    bankAccountNumber: str
     bic: Optional[str] = None
     iban: Optional[str] = None
     foreignService: Optional[str] = None

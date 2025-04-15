@@ -24,7 +24,6 @@ from fiken_py.shared_types import (
     Attachment,
     InvoiceLineRequest,
     InvoiceLine,
-    BankAccountNumber,
     AccountingAccountAssets,
     AccountingAccount,
 )

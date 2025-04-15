@@ -19,7 +19,6 @@ from fiken_py.fiken_object import (
 from fiken_py.shared_types import (
     Attachment,
     AccountingAccount,
-    BankAccountNumber,
     DraftLineInvoiceIsh,
     DraftLineOrder,
 )
@@ -106,7 +105,7 @@ class DraftInvoiceIsh(DraftObject, BaseModel, ABC):
     lines: Optional[list[DraftLineInvoiceIsh]] = []
     net: Optional[int] = None
     gross: Optional[int] = None
-    bankAccountNumber: Optional[BankAccountNumber] = None
+    bankAccountNumber: Optional[str] = None
     iban: Optional[str] = None
     bic: Optional[str] = None
     paymentAccount: Optional[AccountingAccount] = None
@@ -122,7 +121,7 @@ class DraftInvoiceIshRequest(BaseModel):
     type: DraftTypeInvoiceIsh
     daysUntilDueDate: int
     customerId: int
-    bankAccountNumber: BankAccountNumber
+    bankAccountNumber: str
 
     contactPersonId: Optional[int] = None
     uuid: Optional[str] = None

@@ -16,14 +16,9 @@ import platform
 from importlib.metadata import version
 
 from pydantic import BaseModel, ValidationError
+from requests import HTTPError
 
 from fiken_py.authorization import AccessToken, Authorization
-from fiken_py.errors import (
-    RequestConnectionException,
-    RequestContentNotFoundException,
-    RequestWrongMediaTypeException,
-    RequestErrorException,
-)
 from fiken_py.shared_types import Attachment, Counter
 from fiken_py.util import handle_error
 
@@ -121,8 +116,9 @@ class FikenObject:
 
         try:
             response = cls._execute_method(RequestMethod.GET, token=token, **kwargs)
-        except RequestContentNotFoundException as e:
-            return None
+        except HTTPError as e:
+            if e.response.status_code == 404:
+                return None
         except Exception as e:
             raise e
 
@@ -143,12 +139,10 @@ class FikenObject:
     ) -> list[typing.Self]:
 
         logger.debug(f"GETting many objects for {cls.__name__}")
-        try:
-            response = cls._execute_method(
-                RequestMethod.GET_MULTIPLE, token=token, **kwargs
-            )
-        except RequestErrorException as e:
-            raise
+
+        response = cls._execute_method(
+            RequestMethod.GET_MULTIPLE, token=token, **kwargs
+        )
 
         if page is not None:
             if follow_pages:
@@ -163,12 +157,9 @@ class FikenObject:
             if page_count is not None and page_count > 1:
                 logger.debug(f"Multiple pages found. Fetching {page_count} pages")
                 for i in range(1, page_count):
-                    try:
-                        response = cls._execute_method(
-                            RequestMethod.GET_MULTIPLE, page=i, token=token, **kwargs
-                        )
-                    except RequestErrorException as e:
-                        raise
+                    response = cls._execute_method(
+                        RequestMethod.GET_MULTIPLE, page=i, token=token, **kwargs
+                    )
 
                     fetched_pages.append(response.json())
 
@@ -187,12 +178,9 @@ class FikenObject:
     def _get_from_url(
         cls, url: str, token: OptionalAccessToken = None, **kwargs
     ) -> typing.Self:
-        try:
-            response = cls._execute_method(
-                RequestMethod.GET, url=url, token=token, **kwargs
-            )
-        except RequestErrorException:
-            raise
+        response = cls._execute_method(
+            RequestMethod.GET, url=url, token=token, **kwargs
+        )
 
         logger.debug(f"GETting single object from URL {url}")
 
@@ -231,17 +219,14 @@ class FikenObject:
         if issubclass(self.__class__, FikenObjectRequiringRequest):
             dumped_object = self._to_request_object(**kwargs)
 
-        try:
-            response = self._execute_method(
-                used_method, token=token, dumped_object=dumped_object, **kwargs
-            )
-        except RequestErrorException:
-            raise
+        response = self._execute_method(
+            used_method, token=token, dumped_object=dumped_object, **kwargs
+        )
 
         ret = self._follow_location_and_update_class(response, token, **kwargs)
 
         if ret is None:
-            raise RequestContentNotFoundException("Saved object not found in response")
+            raise ValueError("Saved object not found in response")
 
         return ret
 
@@ -263,26 +248,23 @@ class FikenObject:
 
             return self
         else:
-            raise RequestContentNotFoundException(
+            raise ValueError(
                 f"Location header not found in response for {self.__class__.__name__}"
             )
 
     def _refresh_object(self, **kwargs):
-        try:
-            id_attr, id_attr_val = self.id_attr
+        id_attr, id_attr_val = self.id_attr
 
-            if kwargs.get(id_attr) is None:
-                kwargs[id_attr] = id_attr_val
+        if kwargs.get(id_attr) is None:
+            kwargs[id_attr] = id_attr_val
 
-            if kwargs.get("companySlug") is None:
-                kwargs["companySlug"] = self._company_slug
+        if kwargs.get("companySlug") is None:
+            kwargs["companySlug"] = self._company_slug
 
-            if kwargs.get("token") is None:
-                kwargs["token"] = self._auth_token
+        if kwargs.get("token") is None:
+            kwargs["token"] = self._auth_token
 
-            fiken_object = self.get(**kwargs)
-        except RequestErrorException as e:
-            raise
+        fiken_object = self.get(**kwargs)
         self.__dict__.update(fiken_object.__dict__)
 
     def delete(self, token: OptionalAccessToken = None, **kwargs: Any) -> bool:
@@ -296,10 +278,7 @@ class FikenObject:
         if token is None:
             token = self._auth_token
 
-        try:
-            response = self._execute_method(RequestMethod.DELETE, token=token, **kwargs)
-        except RequestErrorException:
-            raise
+        response = self._execute_method(RequestMethod.DELETE, token=token, **kwargs)
 
         for attr in self.__dict__:
             setattr(self, attr, None)
@@ -412,7 +391,7 @@ class FikenObject:
                         trial + 1,
                         **kwargs,
                     )
-                except RequestErrorException as e:
+                except Exception as e:
                     logger.error(f"Failed to refresh token: {e}")
 
         if file_data is not None and method != RequestMethod.POST:
@@ -431,7 +410,7 @@ class FikenObject:
             token = cls._AUTH_TOKEN
 
         if url is None:
-            raise RequestWrongMediaTypeException(
+            raise ValueError(
                 f"Object {cls.__name__} does not support {method.name}"
             )
 
@@ -515,7 +494,7 @@ class FikenObject:
             )
         except requests.exceptions.RequestException as e:
             logging.error(f"Request connection failed: {e}")
-            raise RequestConnectionException(e)
+            raise
 
         try:
             response.raise_for_status()
@@ -535,7 +514,7 @@ class FikenObject:
                             trial + 1,
                             **kwargs,
                         )
-                    except RequestErrorException as err:
+                    except Exception as err:
                         logger.error(f"Failed to refresh token: {err}")
                         raise
 
@@ -665,12 +644,9 @@ class FikenObjectAttachable(FikenObject):
             ):
                 kwargs[instance.id_attr[0]] = instance.id_attr[1]
 
-        try:
-            response = cls._execute_method(
-                RequestMethod.GET, url, token=token, **kwargs
-            )
-        except RequestErrorException:
-            raise
+        response = cls._execute_method(
+            RequestMethod.GET, url, token=token, **kwargs
+        )
 
         data = response.json()
 
@@ -711,17 +687,14 @@ class FikenObjectAttachable(FikenObject):
             "comment": (None, comment),
         }
 
-        try:
-            response = cls._execute_method(
-                RequestMethod.POST,
-                url=cls._attachment_url(),
-                dumped_object=instance,
-                file_data=sent_data,
-                token=token,
-                **kwargs,
-            )
-        except RequestErrorException:
-            raise
+        response = cls._execute_method(
+            RequestMethod.POST,
+            url=cls._attachment_url(),
+            dumped_object=instance,
+            file_data=sent_data,
+            token=token,
+            **kwargs,
+        )
 
         if response.status_code != 201:
             return False
@@ -789,12 +762,9 @@ class FikenObjectCountable(FikenObject):
     def get_counter(cls, token: OptionalAccessToken = None, **kwargs) -> int:
         url = cls._get_method_base_URL("COUNTER")
 
-        try:
-            response = cls._execute_method(
-                RequestMethod.GET, url, token=token, **kwargs
-            )
-        except RequestErrorException:
-            raise
+        response = cls._execute_method(
+            RequestMethod.GET, url, token=token, **kwargs
+        )
 
         try:
             return Counter(**response.json()).value
@@ -813,16 +783,13 @@ class FikenObjectCountable(FikenObject):
 
         counter_obj = Counter(value=counter)
 
-        try:
-            response = cls._execute_method(
-                RequestMethod.POST,
-                url,
-                token=token,
-                dumped_object=counter_obj,
-                **kwargs,
-            )
-        except RequestErrorException:
-            raise
+        response = cls._execute_method(
+            RequestMethod.POST,
+            url,
+            token=token,
+            dumped_object=counter_obj,
+            **kwargs,
+        )
 
         if response.status_code != 201:
             return False
@@ -855,18 +822,14 @@ class FikenObjectDeleteFlagable(FikenObject):
         if kwargs.get("companySlug") is None:
             kwargs["companySlug"] = self._company_slug
 
-        try:
-            self._execute_method(
-                RequestMethod.PATCH,
-                url=self._get_method_base_URL(RequestMethod.DELETE),
-                token=token,
-                dumped_object=self,
-                **kwargs,
-            )
-            self._refresh_object(**kwargs)
-        except RequestErrorException as e:
-            raise
-
+        self._execute_method(
+            RequestMethod.PATCH,
+            url=self._get_method_base_URL(RequestMethod.DELETE),
+            token=token,
+            dumped_object=self,
+            **kwargs,
+        )
+        self._refresh_object(**kwargs)
 
 class FikenObjectPaymentable(FikenObject):
 

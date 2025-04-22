@@ -5,8 +5,6 @@ from typing import Optional, ClassVar
 import requests
 from pydantic import BaseModel
 
-from fiken_py.authorization import AccessToken
-from fiken_py.errors import RequestContentNotFoundException
 from fiken_py.fiken_object import (
     FikenObject,
     RequestMethod,
@@ -79,7 +77,7 @@ class InboxDocument(BaseModel, FikenObjectRequiringRequest):
         location = response.headers.get("Location")
 
         if location is None:
-            raise RequestContentNotFoundException("No Location header in response")
+            raise RuntimeError("No Location header in response")
 
         return InboxDocument._get_from_url(location, token=token, **kwargs)
 

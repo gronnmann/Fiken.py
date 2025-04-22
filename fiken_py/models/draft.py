@@ -7,8 +7,6 @@ from typing import Optional, ClassVar, Any
 
 from pydantic import BaseModel, Field
 
-from fiken_py.authorization import AccessToken
-from fiken_py.errors import RequestErrorException
 from fiken_py.fiken_object import (
     FikenObject,
     RequestMethod,
@@ -63,20 +61,17 @@ class DraftObject(FikenObjectAttachable, FikenObjectRequiringRequest, ABC):
         if companySlug is None:
             companySlug = self._company_slug
 
-        try:
-            response = self._execute_method(
-                RequestMethod.POST,
-                url,
-                token=token,
-                companySlug=companySlug,
-                draftId=self.draftId,
-            )
-        except RequestErrorException:
-            raise
+        response = self._execute_method(
+            RequestMethod.POST,
+            url,
+            token=token,
+            companySlug=companySlug,
+            draftId=self.draftId,
+        )
 
         loc = response.headers.get("Location")
         if loc is None:
-            raise RequestErrorException("No Location header in response")
+            raise RuntimeError("No Location header in response")
 
         return self.CREATED_OBJECT_CLASS._get_from_url(
             loc, self._auth_token, companySlug=self._company_slug

@@ -4,10 +4,6 @@ from typing import Optional, List
 
 from pydantic import BaseModel
 
-from fiken_py.errors import (
-    RequestWrongMediaTypeException,
-    RequestContentNotFoundException,
-)
 from fiken_py.fiken_object import FikenObjectAttachable, OptionalAccessToken
 from fiken_py.shared_types import Address, Attachment, Note
 from fiken_py.models import ContactPerson
@@ -62,11 +58,6 @@ class Contact(BaseModel, FikenObjectAttachable):
                     "contactId must be provided to get_attachments_cls without instance"
                 )
             instance = cls.get(token=token, **kwargs)
-
-            if instance is None:
-                raise RequestContentNotFoundException(
-                    f"Contact with id {kwargs.get('contactId')} not found. Can't get attachments."
-                )
 
         return instance.documents or []
 

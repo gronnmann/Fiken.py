@@ -5,7 +5,6 @@ from typing import Optional, ClassVar
 from pydantic import BaseModel, Field
 
 from fiken_py.authorization import AccessToken
-from fiken_py.errors import RequestErrorException
 from fiken_py.fiken_object import (
     FikenObjectAttachable,
     FikenObjectCountable,
@@ -61,10 +60,7 @@ class OrderConfirmation(FikenObjectCountable, FikenObjectAttachable, BaseModel):
     ) -> InvoiceDraft:
         url = cls._get_method_base_URL("TO_INVOICE")
 
-        try:
-            response = cls._execute_method(RequestMethod.POST, url, **kwargs)
-        except RequestErrorException as e:
-            raise e
+        response = cls._execute_method(RequestMethod.POST, url, **kwargs)
 
         return InvoiceDraft._get_from_url(response.headers["Location"], token, **kwargs)
 

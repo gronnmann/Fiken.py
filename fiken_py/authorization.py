@@ -8,7 +8,6 @@ from pydantic import BaseModel
 from requests import Request
 from requests.auth import HTTPBasicAuth
 
-from fiken_py.errors import RequestErrorException
 from fiken_py.util import handle_error
 
 
@@ -162,7 +161,4 @@ class Authorization:
             "grant_type": "refresh_token",
         }
 
-        try:
-            return cls._get_token_from_endpoint(client_id, client_secret, data)
-        except RequestErrorException:
-            raise
+        return cls._get_token_from_endpoint(client_id, client_secret, data)

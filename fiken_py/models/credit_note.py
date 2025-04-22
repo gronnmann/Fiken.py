@@ -7,7 +7,6 @@ from typing import Optional, ClassVar
 from pydantic import BaseModel, Field
 
 from fiken_py.authorization import AccessToken
-from fiken_py.errors import RequestContentNotFoundException, RequestErrorException
 from fiken_py.fiken_object import (
     FikenObjectAttachable,
     RequestMethod,
@@ -101,15 +100,12 @@ class CreditNote(FikenObjectCountable, BaseModel):
         token: OptionalAccessToken = None,
     ) -> typing.Self:
 
-        try:
-            invoice = Invoice.get(
-                invoiceId=invoiceId, companySlug=companySlug, token=token
-            )
-        except RequestErrorException:
-            raise
+        invoice = Invoice.get(
+            invoiceId=invoiceId, companySlug=companySlug, token=token
+        )
 
         if invoice is None:
-            raise RequestContentNotFoundException(
+            raise ValueError(
                 f"Invoice with id {invoiceId} not found."
             )
 
@@ -119,20 +115,17 @@ class CreditNote(FikenObjectCountable, BaseModel):
             creditNoteText=creditNoteText,
         )
 
-        try:
-            response = cls._execute_method(
-                RequestMethod.POST,
-                url=cls._get_method_base_URL("POST_FULL"),
-                dumped_object=credit_note_request,
-                token=token,
-                companySlug=companySlug,
-            )
-        except RequestErrorException:
-            raise
+        response = cls._execute_method(
+            RequestMethod.POST,
+            url=cls._get_method_base_URL("POST_FULL"),
+            dumped_object=credit_note_request,
+            token=token,
+            companySlug=companySlug,
+        )
 
         loc = response.headers.get("Location")
         if loc is None:
-            raise RequestErrorException("No Location header in response")
+            raise RuntimeError("No Location header in response")
 
         return cls._get_from_url(loc, token=token, companySlug=companySlug)
 

@@ -6,7 +6,6 @@ from typing import Optional, ClassVar, Any
 
 from pydantic import BaseModel
 
-from fiken_py.errors import RequestWrongMediaTypeException, RequestErrorException
 from fiken_py.fiken_object import (
     FikenObject,
     RequestMethod,
@@ -50,22 +49,19 @@ class Project(FikenObjectRequiringRequest, BaseModel):
             return super().save(token=token, **kwargs)
 
         if self._get_method_base_URL(RequestMethod.PATCH) is None:
-            raise RequestWrongMediaTypeException(
+            raise ValueError(
                 f"Object {self.__class__.__name__} does not support PATCH"
             )
 
         payload = self._to_request_object()
 
-        try:
-            response = self._execute_method(
-                RequestMethod.PATCH,
-                dumped_object=payload,
-                projectId=self.projectId,
-                token=token,
-                **kwargs,
-            )
-        except RequestErrorException:
-            raise
+        response = self._execute_method(
+            RequestMethod.PATCH,
+            dumped_object=payload,
+            projectId=self.projectId,
+            token=token,
+            **kwargs,
+        )
 
         return self._follow_location_and_update_class(response)
 

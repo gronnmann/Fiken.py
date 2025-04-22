@@ -88,7 +88,7 @@ Generally, all objects have the following methods:
 - `delete` - Deletes the object from Fiken
 
 Not all methods are available for all objects, please check the Fiken API documentation for more information.
-Errors will give a `RequestWrongMediaTypeException`.
+Errors will give a `ValueError`.
 
 You can either access the objects directly, or use the `FikenPy` (or other object classes) to access them.
 

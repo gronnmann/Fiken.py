@@ -2,7 +2,6 @@ import datetime
 
 import pytest
 
-from fiken_py.errors import RequestContentNotFoundException
 from fiken_py.models import Product, Contact, Invoice
 from fiken_py.models.credit_note import (
     CreditNote,
@@ -35,7 +34,7 @@ def test_create_credit_note_full(
     assert credit_note.creditNoteId is not None
     assert credit_note.associatedInvoiceId == invoice.invoiceId
 
-    with pytest.raises(RequestContentNotFoundException):
+    with pytest.raises(ValueError):
         CreditNote.create_from_invoice_full(invoiceId=99999)
 
 

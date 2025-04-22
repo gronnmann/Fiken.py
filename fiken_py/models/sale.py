@@ -4,7 +4,6 @@ from typing import Optional, ClassVar
 
 from pydantic import BaseModel, Field, model_validator
 
-from fiken_py.errors import RequestErrorException
 from fiken_py.fiken_object import (
     FikenObject,
     FikenObjectAttachable,
@@ -40,7 +39,7 @@ class Sale(
     totalPaidInCurrency: Optional[int] = None
     dueDate: Optional[datetime.date] = None
     kid: Optional[str] = Field(None, min_length=2, max_length=25)
-    paymentAccount: Optional[AccountingAccountAssets] = None
+    paymentAccount: Optional[str] = None
     paymentDate: Optional[datetime.date] = None
 
     lastModifiedDate: Optional[datetime.date] = None
@@ -70,17 +69,14 @@ class Sale(
         """Sets the sale as settled with the given date (equivalent to 'Sett til oppgjort uten betaling')."""
         url = self._get_method_base_URL("SET_SETTLED")
 
-        try:
-            response = self._execute_method(
-                RequestMethod.PATCH,
-                url=url,
-                saleId=self.saleId,
-                settledDate=settledDate,
-            )
-        except RequestErrorException:
-            raise
+        response = self._execute_method(
+            RequestMethod.PATCH,
+            url=url,
+            saleId=self.saleId,
+            settledDate=settledDate,
+        )
         if response.status_code != 200:
-            raise RequestErrorException(
+            raise RuntimeError(
                 f"Failed to set sale as settled. Response: {response.status_code} {response.text}"
             )
 
@@ -90,8 +86,8 @@ class Sale(
         self, paymentFee: Optional[int] = None, **kwargs
     ) -> BaseModel:
         return SaleRequest(
-            customerId=self.customer.contactId if self.customer is not None else None,
-            projectId=self.project.projectId if self.project is not None else None,
+            customerId=self.customer.contactId if self.customer is not None else kwargs.get("customerId"),
+            projectId=self.project.projectId if self.project is not None else kwargs.get("projectId"),
             paymentFee=paymentFee,
             **FikenObjectRequiringRequest._pack_common_fields(self, SaleRequest),
         )
@@ -111,7 +107,7 @@ class SaleRequest(BaseModel):
     totalPaidInCurrency: Optional[int] = None
     dueDate: Optional[datetime.date] = None
     kid: Optional[str] = Field(None, min_length=2, max_length=25)
-    paymentAccount: Optional[AccountingAccountAssets] = None
+    paymentAccount: Optional[str] = None
     paymentDate: Optional[datetime.date] = None
 
     @model_validator(mode="after")

@@ -5,7 +5,6 @@ from typing import Optional, ClassVar, Any
 import requests
 from pydantic import BaseModel, Field, model_validator
 
-from fiken_py.errors import RequestWrongMediaTypeException, RequestErrorException
 from fiken_py.fiken_object import (
     FikenObject,
     RequestMethod,
@@ -103,7 +102,7 @@ class Invoice(
             return super().save(token=token, **kwargs)
 
         if self._get_method_base_URL(RequestMethod.PATCH) is None:
-            raise RequestWrongMediaTypeException(
+            raise ValueError(
                 f"Object {self.__class__.__name__} does not support PATCH"
             )
 
@@ -111,15 +110,12 @@ class Invoice(
             newDueDate=self.dueDate, sentManually=self.sentManually
         )
 
-        try:
-            response = self._execute_method(
-                RequestMethod.PATCH,
-                dumped_object=payload,
-                invoiceId=self.invoiceId,
-                **kwargs,
-            )
-        except RequestErrorException:
-            raise
+        response = self._execute_method(
+            RequestMethod.PATCH,
+            dumped_object=payload,
+            invoiceId=self.invoiceId,
+            **kwargs,
+        )
 
         return self._follow_location_and_update_class(response)
 
@@ -128,21 +124,18 @@ class Invoice(
         url_base = cls._get_method_base_URL(RequestMethod.GET_MULTIPLE)
 
         if url_base is None:
-            raise RequestWrongMediaTypeException(
+            raise Exception(
                 f"Object {cls.__name__} does not support GET_MULTIPLE = used for infering 'send' URL"
             )
 
         url = url_base + "/send"
 
-        try:
-            response = cls._execute_method(
-                RequestMethod.POST,
-                url,
-                dumped_object=invoice_request,
-                companySlug=companySlug,
-            )
-        except RequestErrorException:
-            raise
+        response = cls._execute_method(
+            RequestMethod.POST,
+            url,
+            dumped_object=invoice_request,
+            companySlug=companySlug,
+        )
 
         if response.status_code != 200:
             return False

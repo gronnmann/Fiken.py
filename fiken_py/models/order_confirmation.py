@@ -4,7 +4,7 @@ from typing import Optional, ClassVar
 
 from pydantic import BaseModel, Field
 
-from fiken_py.authorization import AccessToken
+from fiken_py.fikenoauth import AccessToken
 from fiken_py.fiken_object import (
     FikenObjectAttachable,
     FikenObjectCountable,

@@ -41,8 +41,9 @@ When the user is authenticated, they will be redirected to the `REDIRECT_URI` wi
 Make sure the `state` parameter is the same as the one you generated.
 
 Then, use the `code` to get the access token:
+
 ```python
-access_token = Authorization.get_access_token_authcode(FIKEN_APP_ID, FIKEN_APP_SECRET, REDIRECT_URI, code)
+access_token = Authorization.get_access_token(FIKEN_APP_ID, FIKEN_APP_SECRET, REDIRECT_URI, code)
 ```
 
 The `redirect_uri` should be the same as the one you used to generate the URL.

@@ -6,7 +6,7 @@ from fastapi import FastAPI, Request, Body, Query
 from pydantic import BaseModel
 from pyngrok import ngrok, conf
 
-from fiken_py.authorization import Authorization, AccessToken
+from fiken_py.fikenoauth import FikenOAuth, AccessToken
 from fiken_py.fiken_object import FikenObject
 from fiken_py.models import UserInfo, Company
 
@@ -40,16 +40,16 @@ def read_root():
 
 @app.get("/authorize")
 def start_auth_process():
-    url = Authorization.generate_auth_url(FIKEN_APP_ID, BASE_URL + "/auth_response")
+    url = FikenOAuth.generate_auth_url(FIKEN_APP_ID, BASE_URL + "/auth_response")
     return {"url": url}
 
 
 @app.get("/auth_response")
 def auth_response(code: str = Query(...), state: str = Query(...)):
 
-    token: AccessToken = Authorization.get_access_token_authcode(FIKEN_APP_ID, FIKEN_APP_SECRET,
-                                                                 code,
-                                                                 BASE_URL + "/auth_response")
+    token: AccessToken = FikenOAuth.get_access_token(FIKEN_APP_ID, FIKEN_APP_SECRET,
+                                                     code,
+                                                     BASE_URL + "/auth_response")
 
     FikenObject.set_auth_token(token.access_token, (FIKEN_APP_ID, FIKEN_APP_SECRET))
 
@@ -59,7 +59,7 @@ def auth_response(code: str = Query(...), state: str = Query(...)):
 
 @app.get("/refresh_token")
 def refresh_token(refresh_token: str = Query(...)):
-    token: AccessToken = Authorization.get_access_token_refresh(FIKEN_APP_ID, FIKEN_APP_SECRET, refresh_token)
+    token: AccessToken = FikenOAuth.refresh_access_token(FIKEN_APP_ID, FIKEN_APP_SECRET, refresh_token)
     return {
         "token": token,
         "expires": token.get_expiration_time()

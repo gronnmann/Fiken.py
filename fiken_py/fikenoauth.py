@@ -12,6 +12,9 @@ from fiken_py.util import handle_error
 
 
 class AccessToken(BaseModel):
+    """
+    Base class for Fiken access token.
+    """
     access_token: str
     token_type: str
     refresh_token: str
@@ -31,7 +34,7 @@ class AccessToken(BaseModel):
         if self.client_id is None or self.client_secret is None:
             raise ValueError("Client id or secret not set")
 
-        new_token = Authorization.get_access_token_refresh(
+        new_token = FikenOAuth.refresh_access_token(
             self.client_id, self.client_secret, self.refresh_token
         )
 
@@ -40,7 +43,10 @@ class AccessToken(BaseModel):
         self.expires_in = new_token.expires_in
 
 
-class Authorization:
+_AUTHORIZATION_URL = "https://fiken.no/oauth/authorize"
+_TOKEN_ENDPOINT_URL = "https://fiken.no/oauth/token"
+
+class FikenOAuth:
     """
     Class for handling authorization with Fiken API
     The authorization is done with OAuth2
@@ -59,20 +65,21 @@ class Authorization:
     4. When the access token expires, use the refresh token to get a new access token (get_access_token_refresh)
     """
 
-    _AUTHORIZATION_URL = "https://fiken.no/oauth/authorize"
-    _TOKEN_ENDPOINT_URL = "https://fiken.no/oauth/token"
 
-    @classmethod
+    @staticmethod
     def generate_auth_url(
-        cls, client_id: str, redirect_uri: str
+        client_id: str, redirect_uri: str, state: str | None = None,
     ) -> Tuple[str, uuid.UUID]:
         """
         Generates the URL for the authorization process.
         :param client_id: The client id provided by Fiken for the application
         :param redirect_uri: The redirect uri for the application
+        :param state random uuid that will be returned. Will be generated with uuid4() if not present
         :return: url and state (random UUID)
         """
-        state = uuid.uuid4()
+
+        if not state:
+            state = uuid.uuid4()
 
         auth_data = {
             "client_id": client_id,
@@ -81,7 +88,7 @@ class Authorization:
             "state": state,
         }
 
-        p = Request("GET", cls._AUTHORIZATION_URL, params=auth_data).prepare()
+        p = Request("GET", _AUTHORIZATION_URL, params=auth_data).prepare()
 
         return p.url, state
 
@@ -92,7 +99,7 @@ class Authorization:
 
         basic_auth = HTTPBasicAuth(client_id, client_secret)
 
-        response = requests.post(cls._TOKEN_ENDPOINT_URL, data=data, auth=basic_auth)
+        response = requests.post(_TOKEN_ENDPOINT_URL, data=data, auth=basic_auth)
 
         try:
             response.raise_for_status()
@@ -120,7 +127,7 @@ class Authorization:
         return token
 
     @classmethod
-    def get_access_token_authcode(
+    def get_access_token(
         cls, client_id: str, client_secret: str, code: str, redirect_uri: str
     ) -> AccessToken:
         """
@@ -139,14 +146,11 @@ class Authorization:
             "state": uuid.uuid4(),
         }
 
-        try:
-            return cls._get_token_from_endpoint(client_id, client_secret, data)
-        except RequestErrorException:
-            raise
+        return cls._get_token_from_endpoint(client_id, client_secret, data)
 
-    @classmethod
-    def get_access_token_refresh(
-        cls, client_id: str, client_secret: str, refresh_token: str
+    @staticmethod
+    def refresh_access_token(
+        client_id: str, client_secret: str, refresh_token: str
     ) -> AccessToken:
         """
         Gets the access token from the refresh token.
@@ -161,4 +165,4 @@ class Authorization:
             "grant_type": "refresh_token",
         }
 
-        return cls._get_token_from_endpoint(client_id, client_secret, data)
+        return FikenOAuth._get_token_from_endpoint(client_id, client_secret, data)

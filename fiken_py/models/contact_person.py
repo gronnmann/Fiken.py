@@ -3,7 +3,7 @@ from typing import Optional, Any
 
 from pydantic import BaseModel
 
-from fiken_py.authorization import AccessToken
+from fiken_py.fikenoauth import AccessToken
 from fiken_py.fiken_object import FikenObject
 from fiken_py.shared_types import Address
 

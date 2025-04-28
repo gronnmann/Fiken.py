@@ -18,7 +18,7 @@ from importlib.metadata import version
 from pydantic import BaseModel, ValidationError
 from requests import HTTPError
 
-from fiken_py.authorization import AccessToken, Authorization
+from fiken_py.fikenoauth import AccessToken, FikenOAuth
 from fiken_py.shared_types import Attachment, Counter
 from fiken_py.util import handle_error
 

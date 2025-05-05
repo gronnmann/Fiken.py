@@ -119,6 +119,7 @@ class FikenObject:
         except HTTPError as e:
             if e.response.status_code == 404:
                 return None
+            raise
         except Exception as e:
             raise e
 

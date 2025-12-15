@@ -1,3 +1,5 @@
+> **Archival Note**: This repository is now archived. It turned out to be buggy, and is now replaced by [fiken-py](https://github.com/gronnmann/fiken-py)
+
 # Fiken.py
 A Python implementation of the [Fiken API](https://api.fiken.no/api/v2/docs/#/contacts/createContact)
 
